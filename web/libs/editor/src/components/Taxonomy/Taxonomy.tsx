@@ -7,6 +7,7 @@ import { useToggle } from "../../hooks/useToggle";
 import type { CNTagName } from "../../utils/bem";
 import { isArraysEqual } from "../../utils/utilities";
 import TreeStructure from "../TreeStructure/TreeStructure";
+import i18n from "i18next";
 
 import styles from "./Taxonomy.module.scss";
 
@@ -191,9 +192,9 @@ const Item: React.FC<RowProps> = ({ style, item, dimensionCallback, maxWidth, is
   const arrowStyle = !isLeaf ? { transform: isOpen ? "rotate(180deg)" : "rotate(90deg)" } : { display: "none" };
 
   const title = onlyLeafsAllowed
-    ? "Only leaf nodes allowed"
+    ? i18n.t('only_leaf_allowed')
     : limitReached
-      ? `Maximum ${maxUsages} items already selected`
+      ? i18n.t('max_items_selected', {num: maxUsages})
       : undefined;
 
   const setIndeterminate = useCallback(
@@ -288,11 +289,11 @@ const Item: React.FC<RowProps> = ({ style, item, dimensionCallback, maxWidth, is
                                 addChild(id);
                               }}
                             >
-                              Add Inside
+                              {i18n.t('add_inside')}
                             </Menu.Item>
                             {item.row.origin === "session" && (
                               <Menu.Item key="delete" className={styles.taxonomy__action} onClick={onDelete}>
-                                Delete
+                                {i18n.t('delete')}
                               </Menu.Item>
                             )}
                           </Menu>
@@ -443,7 +444,7 @@ const TaxonomyDropdown = ({ show, flatten, items, dropdownRef, isEditable }: Tax
                 onClick={addInside}
                 aria-label="Add new label"
               >
-                Add
+                {i18n.t('add')}
               </Button>
             </div>
           ) : null}
@@ -454,14 +455,14 @@ const TaxonomyDropdown = ({ show, flatten, items, dropdownRef, isEditable }: Tax
 };
 
 const Taxonomy = ({
-  items,
-  selected: externalSelected,
-  onChange,
-  onAddLabel,
-  onDeleteLabel,
-  options = {},
-  isEditable = true,
-}: TaxonomyProps) => {
+                    items,
+                    selected: externalSelected,
+                    onChange,
+                    onAddLabel,
+                    onDeleteLabel,
+                    options = {},
+                    isEditable = true,
+                  }: TaxonomyProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const taxonomyRef = useRef<HTMLDivElement>(null);
   const [isOpen, setOpen] = useState(false);
@@ -572,7 +573,7 @@ const Taxonomy = ({
         <SelectedList isEditable={isEditable} flatItems={flatten} />
         <div className={["htx-taxonomy", styles.taxonomy, isOpenClassName].join(" ")} ref={taxonomyRef}>
           <span onClick={() => setOpen((val) => !val)}>
-            {options.placeholder || "Click to add..."}
+            {options.placeholder || i18n.t('click_add')}
             <IconChevron stroke="#09f" />
           </span>
           <TaxonomyDropdown

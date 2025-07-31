@@ -14,6 +14,7 @@ import { RelationsControls } from "./RelationsControls";
 import { EmptyState } from "../Components/EmptyState";
 import { IconCursor, IconRelationLink } from "@humansignal/icons";
 import { getDocsUrl } from "../../../utils/docs";
+import i18n from "i18next";
 
 interface DetailsPanelProps extends PanelProps {
   regions: any;
@@ -78,7 +79,7 @@ const RelationsTab: FC<any> = inject("store")(
             {hasRelations ? (
               <>
                 <Elem name="view-control">
-                  <Elem name="section-head">Relations ({relationStore.size})</Elem>
+                  <Elem name="section-head">{i18n.t('Relations')} ({relationStore.size})</Elem>
                   <RelationsControls relationStore={relationStore} />
                 </Elem>
                 <Elem name="section-content">
@@ -92,7 +93,7 @@ const RelationsTab: FC<any> = inject("store")(
                 description={<>Link regions to define relationships between them</>}
                 learnMore={{
                   href: getDocsUrl("guide/labeling#Add-relations-between-annotations"),
-                  text: "Learn more",
+                  text: i18n.t('learn_more'),
                   testId: "relations-panel-learn-more",
                 }}
               />
@@ -139,8 +140,8 @@ const InfoTab: FC<any> = inject("store")(
             {nothingSelected ? (
               <EmptyState
                 icon={<IconCursor width={24} height={24} />}
-                header="View region details"
-                description={<>Select a region to view its properties, metadata and available actions</>}
+                header={i18n.t('view_reg_details')}
+                description={<>{i18n.t('view_reg_details_desc')}</>}
               />
             ) : (
               <>
@@ -166,7 +167,7 @@ const GeneralPanel: FC<any> = inject("store")(
             enabled={showAnnotationHistory}
             sectionHeader={
               <>
-                Annotation History
+                {i18n.t('anno_history')}
                 <span>#{currentEntity.pk ?? currentEntity.id}</span>
               </>
             }
@@ -174,7 +175,7 @@ const GeneralPanel: FC<any> = inject("store")(
         </Elem>
         <Elem name="section">
           <Elem name="view-control">
-            <Elem name="section-head">Relations ({relationStore.size})</Elem>
+            <Elem name="section-head">{i18n.t('relations')} ({relationStore.size})</Elem>
             <RelationsControls relationStore={relationStore} />
           </Elem>
           <Elem name="section-content">
@@ -183,7 +184,7 @@ const GeneralPanel: FC<any> = inject("store")(
         </Elem>
         {store.hasInterface("annotations:comments") && store.commentStore.isCommentable && (
           <Elem name="section">
-            <Elem name="section-head">Comments</Elem>
+            <Elem name="section-head">{i18n.t('comments')}</Elem>
             <Elem name="section-content">
               <CommentsComponent
                 annotationStore={store.annotationStore}

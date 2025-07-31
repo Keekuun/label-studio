@@ -23,6 +23,7 @@ import { type BaseProps as OrigBaseProps, Side } from "./types";
 import { resizers } from "./utils";
 import "./PanelTabsBase.scss";
 import React from "react";
+import i18n from "i18next";
 
 const distance = (x1: number, x2: number, y1: number, y2: number) => {
   return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
@@ -94,7 +95,7 @@ export const PanelTabsBase: FC<BasePropsWithChildren> = ({
   const isParentOfCollapsedPanel = attachedKeys && attachedKeys[0] === key;
   const isChildOfGroup = attachedKeys && attachedKeys.includes(key) && attachedKeys[0] !== key;
   const collapsedHeader = !(collapsed && !isParentOfCollapsedPanel);
-  const tooltipText = visible && !collapsed ? "Collapse" : "Expand";
+  const tooltipText = visible && !collapsed ? i18n.t('collapse') : i18n.t('expand');
   const settings = props.currentEntity?.store?.settings || props.currentEntity?.settings;
   const [bottomCollapsed, setBottomCollapsed] = useState(() => {
     if (isBottomPanel && settings?.defaultCollapsedBottomPanel) return true;
@@ -415,7 +416,7 @@ export const PanelTabsBase: FC<BasePropsWithChildren> = ({
             >
               <Elem name="header-left">
                 {!collapsed && <Elem name="icon" style={{ pointerEvents: "none" }} tag={IconOutlinerDrag} />}
-                {!visible && !collapsed && <Elem name="title">{panelViews.map((view) => view.title).join(" ")}</Elem>}
+                {!visible && !collapsed && <Elem name="title">{panelViews.map((view) => i18n.t(view.title)).join(" ")}</Elem>}
               </Elem>
               <Elem name="header-right">
                 {(!detached || collapsed) && (
@@ -423,7 +424,7 @@ export const PanelTabsBase: FC<BasePropsWithChildren> = ({
                     name="toggle"
                     mod={{ detached, collapsed, alignment }}
                     onClick={handleGroupPanelToggle}
-                    data-tooltip={`${tooltipText} Group`}
+                    data-tooltip={`${tooltipText} ${i18n.t('group')}`}
                   >
                     {Side.left === alignment ? <IconChevronLeft /> : <IconChevronRight />}
                   </Elem>

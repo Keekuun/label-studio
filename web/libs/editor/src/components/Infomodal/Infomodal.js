@@ -1,4 +1,5 @@
 import { Modal } from "antd";
+import i18n from "i18next";
 
 const wrapper = (_type, value, title) => {
   const custom = {
@@ -9,19 +10,19 @@ const wrapper = (_type, value, title) => {
   switch (_type) {
     case "error":
       custom.type = Modal.error;
-      custom.title = "Error";
+      custom.title = i18n.t('modal_error');
       break;
     case "warning":
       custom.type = Modal.warning;
-      custom.title = "Warning";
+      custom.title = i18n.t('modal_warning');
       break;
     case "success":
       custom.type = Modal.success;
-      custom.title = "Success";
+      custom.title = i18n.t('modal_success');
       break;
     default:
       custom.type = Modal.info;
-      custom.title = "Info";
+      custom.title = i18n.t('modal_info');
   }
 
   return custom.type({

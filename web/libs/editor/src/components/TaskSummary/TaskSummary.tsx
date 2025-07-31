@@ -4,6 +4,7 @@ import { LabelingSummary } from "./LabelingSummary";
 import { NumbersSummary } from "./NumbersSummary";
 import type { ControlTag, ObjectTagEntry, ObjectTypes } from "./types";
 import { getLabelColors, sortControls } from "./utils";
+import i18n from "i18next";
 
 type TaskSummaryProps = {
   annotations: MSTAnnotation[];
@@ -70,22 +71,22 @@ const TaskSummary = ({ annotations: all, store: annotationStore }: TaskSummaryPr
     ...(typeof task?.agreement === "number"
       ? [
           {
-            title: "Agreement",
+            title: i18n.t('agreement'),
             // 2 decimals but without trailing zeros
             value: `${Math.round(task.agreement * 100) / 100}%`,
-            info: "Overall agreement over all submitted annotations",
+            info: i18n.t('overall_agree'),
           },
         ]
       : []),
     {
-      title: "Annotations",
+      title: i18n.t('annotations'),
       value: annotations.filter((a) => a.type === "annotation").length,
-      info: "Number of submitted annotations. Table shows only submitted results, not current drafts.",
+      info: i18n.t('anno_submit_msg'),
     },
     {
-      title: "Predictions",
+      title: i18n.t('predictions'),
       value: annotations.filter((a) => a.type === "prediction").length,
-      info: "Number of predictions. They are not included in the agreement calculation.",
+      info: i18n.t('predictions_msg'),
     },
   ];
 
@@ -99,7 +100,7 @@ const TaskSummary = ({ annotations: all, store: annotationStore }: TaskSummaryPr
         onSelect={onSelect}
         hideInfo={annotationStore.store.hasInterface("annotations:hide-info")}
       />
-      <h2 className="px-4">Task Data</h2>
+      <h2 className="px-4">{i18n.t('task_data')}</h2>
       <DataSummary data_types={dataTypes} />
     </div>
   );

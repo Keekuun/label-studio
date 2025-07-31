@@ -40,6 +40,8 @@ const EDITOR_SETTINGS = {
   invertedZoom_newUI_title: 'Invert zoom direction',
   invertedZoom_newUI_description: 'Invert the direction of scroll-to-zoom',
   invertedZoom_description: 'Enable inverted zoom direction',
+  videoDrawOutside_description: 'Allow drawing outside of video boundaries',
+  videoHopSize_description: 'Video hop size',
 }
 
 const KEY_MAP = {
@@ -220,6 +222,7 @@ const EN_TRANSLATIONS = {
   // CommentForm.tsx
   add_comment: "Add a comment",
   link_to: "Link to...",
+  unlink: "Unlink",
 
   // Controls.jsx
   update_task_title: "Update this task: [ Alt+Enter ]",
@@ -409,6 +412,21 @@ const EN_TRANSLATIONS = {
   predictions_msg: "Number of predictions. They are not included in the agreement calculation.",
   anno_submit_msg: "Number of submitted annotations. Table shows only submitted results, not current drafts.",
 
+  toggle_visibility: "Toggle Visibility",
+  del_relation: "Delete Relation",
+  show_selected_reg: "Show Selected Region",
+  hide_selected_reg: "Hide Selected Region",
+  unlock_region: "Unlock Region",
+  lock_region: "Lock Region",
+
+  pls_comment_skip: "Please enter a comment before skipping",
+  empty_anno_deny: "Empty annotations denied in this project",
+  save_res_key: "Save results: [ Ctrl+Enter ]",
+  update_task_key: "Update this task: [ Ctrl+Enter ]",
+  no_changes_made: "No changes were made",
+
+  cancel_task_key: "Cancel (skip) tapk [ Ctrl+Space ]",
+  cancel_skip_key: "Cancel skip: [ Ctrl+Space ]",
 }
 
 export default EN_TRANSLATIONS

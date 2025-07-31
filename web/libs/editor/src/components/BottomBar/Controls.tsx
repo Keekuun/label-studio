@@ -25,6 +25,7 @@ import {
 } from "./buttons";
 
 import "./Controls.scss";
+import i18n from "i18next";
 
 // these buttons can be reused inside custom buttons or can be replaces with custom buttons
 type SupportedInternalButtons = "accept" | "reject";
@@ -42,8 +43,6 @@ type ControlButtonProps = {
   look?: ButtonProps["look"];
   onClick: (e: React.MouseEvent) => void;
 };
-
-export const EMPTY_SUBMIT_TOOLTIP = "Empty annotations denied in this project";
 
 /**
  * Custom action button component, rendering buttons from store.customButtons
@@ -188,7 +187,7 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
     } else {
       if (store.hasInterface("skip")) {
         const onSkipWithComment = (e: React.MouseEvent, action: () => any) => {
-          handleActionWithComments(e, action, "Please enter a comment before skipping");
+          handleActionWithComments(e, action, i18n.t('pls_comment_skip'));
         };
 
         buttons.push(<SkipButton key="skip" disabled={disabled} store={store} onSkipWithComment={onSkipWithComment} />);
@@ -233,7 +232,7 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
       };
 
       if (userGenerate || (store.explore && !userGenerate && store.hasInterface("submit"))) {
-        const title = submitDisabled ? EMPTY_SUBMIT_TOOLTIP : "Save results: [ Ctrl+Enter ]";
+        const title = submitDisabled ? i18n.t("empty_anno_deny") : i18n.t("save_res_key");
 
         buttons.push(
           <ButtonTooltip key="submit" title={title}>
@@ -279,7 +278,7 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
         const noChanges = isFF(FF_REVIEWER_FLOW) && !history.canUndo && !annotation.draftId;
         const isUpdateDisabled = isDisabled || noChanges;
         const button = (
-          <ButtonTooltip key="update" title={noChanges ? "No changes were made" : "Update this task: [ Ctrl+Enter ]"}>
+          <ButtonTooltip key="update" title={noChanges ? i18n.t("no_changes_made") : i18n.t("update_task_key")}>
             <ButtonGroup>
               <Button
                 aria-label="submit"
@@ -295,7 +294,7 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
                   store.updateAnnotation();
                 }}
               >
-                {isUpdate ? "Update" : "Submit"}
+                {isUpdate ? i18n.t("update") : i18n.t("submit")}
               </Button>
               {useExitOption ? (
                 <Dropdown.Trigger

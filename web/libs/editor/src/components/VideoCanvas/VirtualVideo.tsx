@@ -1,6 +1,7 @@
 import { type DetailedHTMLProps, forwardRef, useCallback, useEffect, useRef, type VideoHTMLAttributes } from "react";
 import InfoModal from "../../components/Infomodal/Infomodal";
 import { FF_LSDV_4711, isFF } from "../../utils/feature-flags";
+import i18n from "i18next"
 
 type VirtualVideoProps = DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>, HTMLVideoElement> & {
   canPlayType?: (supported: boolean) => void;
@@ -63,7 +64,7 @@ export const canPlayUrl = async (url: string) => {
   const modalExists = document.querySelector(".ant-modal");
 
   if (!supported && !modalExists)
-    InfoModal.error("There has been an error rendering your video, please check the format is supported");
+    InfoModal.error(i18n.t('video_render_error'));
   return supported;
 };
 

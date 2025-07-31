@@ -6,6 +6,7 @@ import { Tooltip } from "@humansignal/ui";
 
 import "./NewTaxonomy.scss";
 import { TaxonomySearch, type TaxonomySearchRef } from "./TaxonomySearch";
+import i18n from "i18next";
 
 export type TaxonomyPath = string[];
 type onAddLabelCallback = (path: string[]) => any;
@@ -193,7 +194,7 @@ const NewTaxonomy = ({
       showCheckedStrategy={TreeSelect.SHOW_ALL}
       treeExpandAction={false}
       dropdownMatchSelectWidth={dropdownWidth}
-      placeholder={options.placeholder || "Click to add..."}
+      placeholder={options.placeholder || i18n.t('click_add')}
       style={style}
       className="htx-taxonomy"
       disabled={!isEditable}

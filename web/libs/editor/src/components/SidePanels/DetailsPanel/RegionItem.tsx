@@ -9,6 +9,7 @@ import { Block, Elem } from "../../../utils/bem";
 import { NodeIcon } from "../../Node/Node";
 import { LockButton } from "../Components/LockButton";
 import { RegionLabels } from "./RegionLabels";
+import i18n from "i18next";
 
 interface RegionItemProps {
   region: any;
@@ -152,24 +153,24 @@ const RegionAction: FC<any> = observer(({ region, annotation, editMode, onEditMo
           displayedHotkey="region:lock"
           variant="neutral"
           look="string"
-          aria-label="Unlock Region"
-          tooltip="Unlock Region"
+          aria-label={i18n.t('unlock_region')}
+          tooltip={i18n.t('unlock_region')}
         />
         <RegionActionButton
-          aria-label={`${region.hidden ? "Show" : "Hide"} selected region`}
+          aria-label={`${region.hidden ? i18n.t('show_selected_reg') : i18n.t('hide_selected_reg')}`}
           variant="neutral"
           look="string"
           onClick={region.toggleHidden}
-          tooltip={`${region.hidden ? "Show" : "Hide"} selected region`}
+          tooltip={`${region.hidden ? i18n.t('show_selected_reg') : i18n.t('hide_selected_reg')}`}
         >
           {region.hidden ? <IconEyeClosed /> : <IconEyeOpened />}
         </RegionActionButton>
         <RegionActionButton
           variant="negative"
           look="string"
-          aria-label="Delete selected region"
+          aria-label={i18n.t('region_delete_description')}
           disabled={region.isReadOnly()}
-          tooltip="Delete selected region"
+          tooltip={i18n.t('region_delete_description')}
           onClick={() => annotation.deleteRegion(region)}
         >
           <IconTrash />

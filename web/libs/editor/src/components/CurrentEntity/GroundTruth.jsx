@@ -4,11 +4,12 @@ import { Button, Tooltip } from "@humansignal/ui";
 import { BemWithSpecifiContext } from "../../utils/bem";
 import { FF_DEV_3873, isFF } from "../../utils/feature-flags";
 import "./GroundTruth.scss";
+import i18n from "i18next";
 
 const { Block, Elem } = BemWithSpecifiContext();
 
 export const GroundTruth = observer(({ entity, disabled = false, size = "md" }) => {
-  const title = entity.ground_truth ? "Unset this result as a ground truth" : "Set this result as a ground truth";
+  const title = entity.ground_truth ? i18n.t('unset_as_truth') :  i18n.t('set_as_truth');
 
   return (
     !entity.skipped &&

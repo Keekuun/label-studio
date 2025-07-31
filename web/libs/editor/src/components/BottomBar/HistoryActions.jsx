@@ -2,13 +2,14 @@ import { observer } from "mobx-react";
 import { IconRedo, IconRemove, IconUndo } from "@humansignal/icons";
 import { Tooltip, Button, Space } from "@humansignal/ui";
 import "./HistoryActions.scss";
+import i18n from "i18next";
 
 export const EditingHistory = observer(({ entity }) => {
   const { history } = entity;
 
   return (
     <Space size="small">
-      <Tooltip title="Undo">
+      <Tooltip title={i18n.t('undo')}>
         <Button
           variant="neutral"
           size="small"
@@ -21,7 +22,7 @@ export const EditingHistory = observer(({ entity }) => {
           <IconUndo />
         </Button>
       </Tooltip>
-      <Tooltip title="Redo">
+      <Tooltip title={i18n.t('redo')}>
         <Button
           variant="neutral"
           size="small"
@@ -34,7 +35,7 @@ export const EditingHistory = observer(({ entity }) => {
           <IconRedo />
         </Button>
       </Tooltip>
-      <Tooltip title="Reset">
+      <Tooltip title={i18n.t('reset')}>
         <Button
           variant="negative"
           look="string"

@@ -16,28 +16,29 @@ import {
 
 import Utils from "../../utils";
 import styles from "./Annotations.module.scss";
+import i18n from "i18next";
 
 /** @deprecated this file is not used; DraftPanel is moved to separate component */
 
 export const DraftPanel = observer(({ item }) => {
   if (!item.draftSaved && !item.versions.draft) return null;
-  const saved = item.draft && item.draftSaved ? ` saved ${Utils.UDate.prettyDate(item.draftSaved)}` : "";
+  const saved = item.draft && item.draftSaved ? ` ${i18n.t("saved")} ${Utils.UDate.prettyDate(item.draftSaved)}` : "";
 
   if (!item.selected) {
     if (!item.draft) return null;
-    return <div>draft{saved}</div>;
+    return <div>{i18n.t('draft')}{saved}</div>;
   }
   if (!item.versions.result || !item.versions.result.length) {
-    return <div>{saved ? `draft${saved}` : "not submitted draft"}</div>;
+    return <div>{saved ? `${i18n.t('draft')}${saved}` : i18n.t('not_submitted_draft')}</div>;
   }
   return (
     <div>
       <Button
         look="string"
         onClick={item.toggleDraft}
-        tooltip={item.draftSelected ? "switch to submitted result" : "switch to current draft"}
+        title={item.draftSelected ?  i18n.t('switch_to_submitted') : i18n.t('switch_to_current')}
       >
-        {item.draftSelected ? "draft" : "submitted"}
+        {item.draftSelected ? i18n.t("draft") : i18n.t("submitted")}
       </Button>
       {saved}
     </div>
@@ -48,7 +49,7 @@ const Annotation = observer(({ item, store }) => {
   const removeHoney = () => (
     <Button
       size="small"
-      tooltip="Unset this result as a ground truth"
+      tooltip={i18n.t('unset_truth_title')}
       onClick={(ev) => {
         ev.preventDefault();
         item.setGroundTruth(false);
@@ -60,7 +61,7 @@ const Annotation = observer(({ item, store }) => {
   );
 
   const setHoney = () => {
-    const title = item.ground_truth ? "Unset this result as a ground truth" : "Set this result as a ground truth";
+    const title = item.ground_truth ? i18n.t('unset_truth_title') : i18n.t('set_truth_title');
 
     return (
       <Button
@@ -71,7 +72,7 @@ const Annotation = observer(({ item, store }) => {
           ev.preventDefault();
           item.setGroundTruth(!item.ground_truth);
         }}
-        aria-label={item.ground_truth ? "Unset ground truth" : "Set ground truth"}
+        aria-label={title}
       >
         {item.ground_truth ? <StarFilled /> : <StarOutlined />}
       </Button>
@@ -148,16 +149,16 @@ const Annotation = observer(({ item, store }) => {
         {store.hasInterface("ground-truth") && (item.ground_truth ? removeHoney() : setHoney())}
         &nbsp;
         {store.hasInterface("annotations:delete") && (
-          <Tooltip placement="topLeft" title="Delete selected annotation">
+          <Tooltip placement="topLeft" title={i18n.t('delete_s_annotation')}>
             <Popconfirm
               placement="bottomLeft"
-              title={"Please confirm you want to delete this annotation"}
+              title={i18n.t("pls_confirm_del")}
               onConfirm={confirm}
-              okText="Delete"
+              okText={i18n.t('delete')}
               okType="danger"
-              cancelText="Cancel"
+              cancelText={i18n.t('Cancel')}
             >
-              <Button size="small" look="string" variant="negative" aria-label="Delete selected annotation">
+              <Button size="small" look="string" variant="negative" aria-label={i18n.t('delete_s_annotation')}>
                 <DeleteOutlined />
               </Button>
             </Popconfirm>
@@ -183,14 +184,14 @@ const Annotation = observer(({ item, store }) => {
             {badge}
             {annotationID}
           </div>
-          {item.pk ? "Created" : "Started"}
-          <i>{item.createdAgo ? ` ${item.createdAgo} ago` : ` ${Utils.UDate.prettyDate(item.createdDate)}`}</i>
-          {item.createdBy && item.pk ? ` by ${item.createdBy}` : null}
+          {item.pk ? i18n.t('created') : i18n.t('started')}
+          <i>{item.createdAgo ? ` ${i18n.t('time_ago', {time: item.createdAgo})}` : ` ${Utils.UDate.prettyDate(item.createdDate)}`}</i>
+          {item.createdBy && item.pk ? ` ${i18n.t('by_name', {name: item.createdBy})}` : null}
           <DraftPanel item={item} />
         </div>
         {/* platform uses was_cancelled so check both */}
         {store.hasInterface("skip") && (item.skipped || item.was_cancelled) && (
-          <Tooltip alignment="top-left" title="Skipped annotation">
+          <Tooltip alignment="top-left" title={i18n.t('skip_anno')}>
             <StopOutlined className={styles.skipped} />
           </Tooltip>
         )}
@@ -224,7 +225,7 @@ class Annotations extends Component {
           {store.hasInterface("annotations:add-new") && (
             <Button
               size="small"
-              tooltip="Create new annotation"
+              tooltip={i18n.t('create_anno')}
               onClick={(ev) => {
                 ev.preventDefault();
                 const c = store.annotationStore.createAnnotation();
@@ -239,7 +240,7 @@ class Annotations extends Component {
           &nbsp;
           <Button
             size="small"
-            tooltip="View all annotations"
+            tooltip={i18n.t('view_all_annotations')}
             look={store.annotationStore.viewingAll ? "filled" : "outlined"}
             onClick={(ev) => {
               ev.preventDefault();
@@ -257,7 +258,7 @@ class Annotations extends Component {
 
     return (
       <Card title={title} size="small" bodyStyle={{ padding: "0", paddingTop: "1px" }}>
-        <List>{store.annotationStore.annotations ? content : <p>No annotations submitted yet</p>}</List>
+        <List>{store.annotationStore.annotations ? content : <p>{i18n.t('no_anno_sub_yet')}</p>}</List>
       </Card>
     );
   }

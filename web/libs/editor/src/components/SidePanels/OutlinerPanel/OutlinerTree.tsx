@@ -28,6 +28,7 @@ import "./TreeView.scss";
 import type { EventDataNode, Key } from "rc-tree/es/interface";
 import ResizeObserver from "../../../utils/resize-observer";
 import { RegionLabel } from "./RegionLabel";
+import i18n from "i18next";
 
 const { localStorage } = window;
 const localStoreName = "collapsed-label-pos";
@@ -418,7 +419,7 @@ const RootTitle: FC<any> = observer(
             {item?.text && <Elem name="text">{item.text.replace(/\\n/g, "\n")}</Elem>}
             {item?.isDrawing && (
               <Elem tag="span" name="incomplete">
-                <Tooltip title={`Incomplete ${item.type?.replace("region", "") ?? "region"}`}>
+                <Tooltip title={`${i18n.t('incomplete')} ${item.type?.replace("region", "") ?? i18n.t('region')}`}>
                   <IconWarning />
                 </Tooltip>
               </Elem>
@@ -545,7 +546,7 @@ const RegionControls: FC<RegionControlsProps> = injector(
               onClick={onToggleLocked}
               variant="neutral"
               look="string"
-              tooltip={item?.locked ? "Unlock Region" : "Lock Region"}
+              tooltip={item?.locked ? i18n.t('unlock_region') : i18n.t('lock_region')}
             />
           </Elem>
           <Elem name="control" mod={{ type: "visibility" }}>

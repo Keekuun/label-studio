@@ -11,6 +11,7 @@ import {
 
 import styles from "./Panel.module.scss";
 import Hint from "../Hint/Hint";
+import i18n from "i18next";
 
 /**
  * Panel component with buttons:
@@ -40,7 +41,7 @@ export default observer(({ store }) => {
             ev.preventDefault();
           }}
         >
-          Undo
+          {i18n.t('undo')}
           {store.settings.enableHotkeys && store.settings.enableTooltips && <Hint>[ Ctrl+z ]</Hint>}
         </Button>
         <Button
@@ -52,7 +53,7 @@ export default observer(({ store }) => {
             ev.preventDefault();
           }}
         >
-          Redo
+          {i18n.t('redo')}
         </Button>
         <Button
           type="ghost"
@@ -62,7 +63,7 @@ export default observer(({ store }) => {
             history && history.reset();
           }}
         >
-          Reset
+          {i18n.t('reset')}
         </Button>
         {store.setPrelabeling && (
           <Button
@@ -72,13 +73,13 @@ export default observer(({ store }) => {
               store.resetPrelabeling();
             }}
           >
-            Reset Prelabeling
+            {i18n.t('reset_prelabel')}
           </Button>
         )}
         {store.hasInterface("debug") && (
           <span>
             {history.undoIdx} / {history.history.length}
-            {history.isFrozen && " (frozen)"}
+            {history.isFrozen && ` (${i18n.t('frozen')})`}
           </span>
         )}
       </div>
@@ -91,7 +92,7 @@ export default observer(({ store }) => {
               store.toggleDescription();
             }}
           >
-            Hide Instructions
+            {i18n.t('hide_instructions')}
           </Button>
         )}
         {store.description && !store.showingDescription && (
@@ -101,7 +102,7 @@ export default observer(({ store }) => {
               store.toggleDescription();
             }}
           >
-            Instructions
+            {i18n.t('instructions')}
           </Button>
         )}
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { PropTypes } from "prop-types";
 import { Tag } from "antd";
+import i18n from "i18next";
 
 import styles from "./Dialog.module.scss";
 
@@ -23,7 +24,7 @@ export default class DialogView extends React.Component {
       selectedStyle = `${selectedStyle} ${styles.block_selected}`;
       hint = (
         <div>
-          <Tag color="magenta">Selected Message</Tag>
+          <Tag color="magenta">{i18n.t('selected_msg')}</Tag>
         </div>
       );
 

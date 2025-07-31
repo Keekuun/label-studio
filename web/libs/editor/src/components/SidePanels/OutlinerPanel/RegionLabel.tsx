@@ -1,5 +1,6 @@
 import { observer } from "mobx-react";
 import { Block, Elem } from "../../../utils/bem";
+import i18n from "i18next";
 
 export type RegionLabelProps = {
   item: any;
@@ -7,7 +8,7 @@ export type RegionLabelProps = {
 export const RegionLabel = observer(({ item }: RegionLabelProps) => {
   const { type } = item ?? {};
   if (!type) {
-    return "No Label";
+    return i18n.t('no_label');
   }
   if (type.includes("label")) {
     return item.value;
@@ -25,7 +26,7 @@ export const RegionLabel = observer(({ item }: RegionLabelProps) => {
           return [
             index ? ", " : null,
             <Elem key={label.id} style={{ color }}>
-              {label.value || "No label"}
+              {label.value || i18n.t('no_label')}
             </Elem>,
           ];
         })}

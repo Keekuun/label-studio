@@ -12,6 +12,7 @@ import { Actions } from "./Actions";
 import { Annotations } from "./Annotations";
 import { Controls } from "./Controls";
 import { CurrentTask } from "./CurrentTask";
+import i18n from "i18next"
 
 import "./TopBar.scss";
 
@@ -34,11 +35,11 @@ export const TopBar = observer(({ store }) => {
             <Button
               className={"topbar__button"}
               type={isViewAll ? undefined : "string"}
-              aria-label="Compare all annotations"
+              aria-label={i18n.t('compare_all_anno')}
               onClick={annotationStore.toggleViewingAllAnnotations}
               variant={isViewAll ? "primary" : "neutral"}
               look={isViewAll ? "filled" : "string"}
-              tooltip="Compare all annotations"
+              tooltip={i18n.t('compare_all_anno')}
               size="small"
             >
               <IconViewAll />
@@ -48,11 +49,11 @@ export const TopBar = observer(({ store }) => {
             <Button
               className={"topbar__button"}
               type={isViewAll ? undefined : "text"}
-              aria-label="Create an annotation"
+              aria-label={i18n.t('create_anno')}
               variant="neutral"
               size="small"
               look="string"
-              tooltip="Create a new annotation"
+              tooltip={i18n.t('create_anno')}
               onClick={(event) => {
                 event.preventDefault();
                 const created = store.annotationStore.createAnnotation();

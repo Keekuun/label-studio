@@ -7,6 +7,7 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { FF_DEV_3391, isFF } from "../../utils/feature-flags";
 import { isDefined } from "../../utils/utilities";
 import NodesConnector from "./NodesConnector";
+import i18n from "i18next";
 
 import styles from "./RelationsOverlay.module.scss";
 
@@ -224,7 +225,7 @@ class RelationsOverlay extends PureComponent {
             xmlns="http://www.w3.org/2000/svg"
             style={style}
           >
-            <title>{this.state.shouldRender ? "Arrow Marker" : ""}</title>
+            <title>{this.state.shouldRender ? i18n.t('arr_marker') : ""}</title>
             {this.state.shouldRender && this.renderRelations(relations, visible, hasHighlight, highlighted)}
             {
               // moving a highlighted relation into the foreground

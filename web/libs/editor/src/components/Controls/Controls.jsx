@@ -1,5 +1,6 @@
 import { inject, observer } from "mobx-react";
 import { CheckCircleOutlined, CheckOutlined } from "@ant-design/icons";
+import i18n from "i18next";
 
 import Hint from "../Hint/Hint";
 import { DraftPanel } from "../Annotations/Annotations";
@@ -60,10 +61,10 @@ export default inject("store")(
             disabled={disabled}
             look="danger"
             onClick={store.skipTask}
-            tooltip="Cancel (skip) task: [ Ctrl+Space ]"
+            tooltip={i18n.t('cancel_task_title')}
             className={`${styles.skip} ${skipButtonClassName}`}
           >
-            Skip {buttons.skip}
+            {i18n.t('skip')} {buttons.skip}
           </Button>
         );
       }
@@ -75,10 +76,10 @@ export default inject("store")(
             look="primary"
             icon={<CheckOutlined />}
             onClick={store.submitAnnotation}
-            tooltip="Save results: [ Ctrl+Enter ]"
+            tooltip={i18n.t('save_res_title')}
             className={`${styles.submit} ${submitButtonClassName}`}
           >
-            Submit {buttons.submit}
+            {i18n.t('submit')} {buttons.submit}
           </Button>
         );
       }
@@ -90,10 +91,10 @@ export default inject("store")(
             look="primary"
             icon={<CheckCircleOutlined />}
             onClick={store.updateAnnotation}
-            tooltip="Update this task: [ Alt+Enter ]"
+            tooltip={i18n.t('update_task_title')}
             className={updateButtonClassName}
           >
-            {sentUserGenerate || versions.result ? "Update" : "Submit"} {buttons.update}
+            {sentUserGenerate || versions.result ? i18n.t('update') : i18n.t('submit')} {buttons.update}
           </Button>
         );
       }

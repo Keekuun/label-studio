@@ -4,7 +4,7 @@ import { IconCheck, IconCross } from "@humansignal/icons";
 import { Button, Toggle } from "@humansignal/ui";
 import { Space } from "../../common/Space/Space";
 import { Block, Elem } from "../../utils/bem";
-
+import i18n from "i18next";
 import "./AutoAcceptToggle.scss";
 
 // we need to inject all of them to trigger rerender on changes to suggestions
@@ -57,7 +57,7 @@ export const AutoAcceptToggle = injector(
                 <Toggle
                   checked={store.autoAcceptSuggestions}
                   onChange={(e) => store.setAutoAcceptSuggestions(e.target.checked)}
-                  label="Auto-Accept Suggestions"
+                  label={i18n.t("auto_accept_suggestions")}
                 />
               )}
             </Space>

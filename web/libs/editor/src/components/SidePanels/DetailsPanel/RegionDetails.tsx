@@ -4,6 +4,7 @@ import { Block, Elem, useBEM } from "../../../utils/bem";
 import { RegionEditor } from "./RegionEditor";
 import "./RegionDetails.scss";
 import { Typography } from "@humansignal/ui";
+import i18n from "i18next";
 
 const TextResult: FC<{ mainValue: string[] }> = observer(({ mainValue }) => {
   return (
@@ -49,7 +50,7 @@ export const ResultItem: FC<{ result: any }> = observer(({ result }) => {
     if (type === "rating") {
       return (
         <Elem name="result">
-          <Typography size="small">Rating: </Typography>
+          <Typography size="small">{i18n.t('rating')}: </Typography>
           <Elem name="value">
             <RatingResult mainValue={mainValue} />
           </Elem>
@@ -59,7 +60,7 @@ export const ResultItem: FC<{ result: any }> = observer(({ result }) => {
     if (type === "textarea") {
       return (
         <Elem name="result">
-          <Typography size="small">Text: </Typography>
+          <Typography size="small">{i18n.t('text')}: </Typography>
           <Elem name="value">
             <TextResult mainValue={mainValue} />
           </Elem>
@@ -69,7 +70,7 @@ export const ResultItem: FC<{ result: any }> = observer(({ result }) => {
     if (type === "choices") {
       return (
         <Elem name="result">
-          <Typography size="small">Choices: </Typography>
+          <Typography size="small">{i18n.t('choices')}: </Typography>
           <Elem name="value">
             <ChoicesResult mainValue={mainValue} />
           </Elem>
@@ -79,7 +80,7 @@ export const ResultItem: FC<{ result: any }> = observer(({ result }) => {
     if (type === "taxonomy") {
       return (
         <Elem name="result">
-          <Typography size="small">Taxonomy: </Typography>
+          <Typography size="small">{i18n.t('taxonomy')}: </Typography>
           <Elem name="value">
             <ChoicesResult mainValue={mainValue.map((v: string[]) => v.join("/"))} />
           </Elem>

@@ -7,6 +7,7 @@ import "./Tabs.scss";
 import { type BaseProps, Side, type TabProps } from "./types";
 import { determineDroppableArea, determineLeftOrRight } from "./utils";
 import { Button } from "../../../common/Button/Button";
+import i18n from "i18next";
 
 const classAddedTabs: (Element | undefined)[] = [];
 
@@ -219,7 +220,7 @@ export const Tabs = (
                   panelKey={props.name}
                   tabIndex={index}
                   active={view.active}
-                  tabTitle={view.title}
+                  tabTitle={i18n.t(view.title)}
                   panelWidth={props.width}
                   viewLength={props.panelViews.length}
                   locked={props.locked}

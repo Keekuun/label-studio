@@ -3,6 +3,7 @@ import { Block } from "../../utils/bem";
 
 import "./TimeDurationControl.scss";
 import { TimeBox } from "./TimeBox";
+import i18n from "i18next";
 
 export interface TimerProps {
   isSidepanel: boolean | undefined;
@@ -50,7 +51,7 @@ export const TimeDurationControl: FC<TimerProps> = ({
         readonly={startTimeReadonly}
         value={_currentTime}
         onChange={handleChangeCurrentTime}
-        label={showLabels ? "Start" : undefined}
+        label={showLabels ? i18n.t('start') : undefined}
         data-testid="timebox-current-time"
       />
       <TimeBox
@@ -59,7 +60,7 @@ export const TimeDurationControl: FC<TimerProps> = ({
         value={endTime}
         onChange={handleChangeEndTime}
         data-testid="timebox-end-time"
-        label={showLabels ? "End" : undefined}
+        label={showLabels ? i18n.t('end') : undefined}
       />
       {showDuration && (
         <TimeBox
@@ -68,7 +69,7 @@ export const TimeDurationControl: FC<TimerProps> = ({
           value={endTime - startTime}
           onChange={() => {}}
           data-testid="timebox-duration-time"
-          label={showLabels ? "Duration" : undefined}
+          label={showLabels ? i18n.t('duration') : undefined}
         />
       )}
     </Block>

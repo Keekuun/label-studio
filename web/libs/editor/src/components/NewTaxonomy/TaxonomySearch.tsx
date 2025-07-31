@@ -12,6 +12,7 @@ import "./TaxonomySearch.scss";
 import { Block } from "../../utils/bem";
 import type { AntTaxonomyItem } from "./NewTaxonomy";
 import { debounce } from "lodash";
+import i18n from "i18next";
 
 type TaxonomySearchProps = {
   treeData: AntTaxonomyItem[];
@@ -128,7 +129,7 @@ const TaxonomySearch = React.forwardRef<TaxonomySearchRef, TaxonomySearchProps>(
         // to prevent selected items from being deleted
         if (e.key === "Backspace" || e.key === "Delete") e.stopPropagation();
       }}
-      placeholder={"Search"}
+      placeholder={i18n.t('search')}
       data-testid={"taxonomy-search"}
       name={"taxonomy-search-input"}
     />

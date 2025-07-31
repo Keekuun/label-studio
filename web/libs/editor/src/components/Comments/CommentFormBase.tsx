@@ -1,6 +1,7 @@
 import { type FC, type RefObject, useCallback, useRef } from "react";
 import { Block, Elem } from "../../utils/bem";
 import { IconSend } from "@humansignal/icons";
+import i18n from "i18next";
 
 import { TextArea } from "../../common/TextArea/TextArea";
 import { observer } from "mobx-react";
@@ -49,7 +50,7 @@ export const CommentFormBase: FC<CommentFormProps> = observer(
         <TextArea
           actionRef={actionRef}
           name="comment"
-          placeholder="Add a comment"
+          placeholder={i18n.t('add_comment')}
           value={value}
           rows={rows}
           maxRows={maxRows}

@@ -5,6 +5,7 @@ import { Toggle } from "@humansignal/ui";
 import ToolsManager from "../../tools/Manager";
 import { Block, Elem } from "../../utils/bem";
 import "./DynamicPreannotationsToggle.scss";
+import i18n from "i18next";
 
 export const DynamicPreannotationsToggle = inject("store")(
   observer(({ store }) => {
@@ -29,7 +30,7 @@ export const DynamicPreannotationsToggle = inject("store")(
                   ToolsManager.allInstances().forEach((inst) => inst.selectDefault());
                 }
               }}
-              label="Auto-Annotation"
+              label={i18n.t("auto_annotation")}
             />
           </Space>
         </Elem>

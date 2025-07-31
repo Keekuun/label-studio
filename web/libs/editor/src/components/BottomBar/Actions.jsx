@@ -7,6 +7,7 @@ import { AutoAcceptToggle } from "../AnnotationTab/AutoAcceptToggle";
 import { DynamicPreannotationsToggle } from "../AnnotationTab/DynamicPreannotationsToggle";
 import { GroundTruth } from "../CurrentEntity/GroundTruth";
 import { EditingHistory } from "./HistoryActions";
+import i18n from "i18next";
 
 export const Actions = ({ store }) => {
   const annotationStore = store.annotationStore;
@@ -26,7 +27,7 @@ export const Actions = ({ store }) => {
           size="small"
           variant="neutral"
           look="string"
-          tooltip="Show instructions"
+          tooltip={i18n.t('show_inst')}
           onClick={() => store.toggleDescription()}
         >
           <IconInfoOutline />
@@ -39,7 +40,7 @@ export const Actions = ({ store }) => {
         look="string"
         variant="neutral"
         onClick={() => store.toggleSettings()}
-        tooltip="Settings"
+        tooltip={i18n.t('settings')}
         className="!p-0"
       >
         <IconSettings />

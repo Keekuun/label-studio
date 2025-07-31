@@ -7,6 +7,7 @@ import { CommentsList as CommentsListOld } from "./OldComment/CommentsList";
 import { CommentsList as CommentsListNew } from "./Comment/CommentsList";
 import { useMounted } from "../../common/Utils/useMounted";
 import { FF_DEV_3034, FF_PER_FIELD_COMMENTS, isFF } from "../../utils/feature-flags";
+import i18n from "i18next";
 
 import "./Comments.scss";
 
@@ -41,7 +42,7 @@ export const Comments: FC<{ annotationStore: any; commentStore: any; cacheKey?: 
     useEffect(() => {
       const confirmCommentsLoss = (e: any) => {
         if (commentStore.hasUnsaved) {
-          e.returnValue = "You have unpersisted comments which will be lost if continuing.";
+          e.returnValue = i18n.t('unsaved_tips');
         }
 
         return e;

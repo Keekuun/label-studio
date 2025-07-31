@@ -55,6 +55,7 @@ import { SidePanels } from "../SidePanels/SidePanels";
 import { SideTabsPanels } from "../SidePanels/TabPanels/SideTabsPanels";
 import { TopBar } from "../TopBar/TopBar";
 import { ViewAll } from "./ViewAll";
+import i18n from "i18next";
 
 /**
  * Styles
@@ -110,7 +111,7 @@ class App extends Component {
             className="mx-0 my-4"
             aria-label="Previous task"
           >
-            Go to Previous Task
+            {i18n.t('go_prev_task')}
           </Button>
         )}
       </Block>
@@ -131,7 +132,7 @@ class App extends Component {
         <Elem name="annotation">
           <TreeValidation errors={this.props.store.annotationStore.validation} />
         </Elem>
-        {!isFF(FF_DEV_3873) && store.hasInterface("infobar") && <Elem name="infobar">Task #{store.task.id}</Elem>}
+        {!isFF(FF_DEV_3873) && store.hasInterface("infobar") && <Elem name="infobar">{i18n.t('task')} #{store.task.id}</Elem>}
       </Block>
     );
   }
@@ -260,7 +261,7 @@ class App extends Component {
               <InstructionsModal
                 visible={store.showingDescription}
                 onCancel={() => store.toggleDescription()}
-                title={store.hasInterface("review") ? "Review Instructions" : "Labeling Instructions"}
+                title={store.hasInterface("review") ? i18n.t('review_instr') : i18n.t('label_inst')}
               >
                 {store.description}
               </InstructionsModal>
@@ -295,7 +296,7 @@ class App extends Component {
                     currentEntity={as.selectedHistory ?? as.selected}
                     regions={as.selected.regionStore}
                     showComments={store.hasInterface("annotations:comments")}
-                    focusTab={store.commentStore.tooltipMessage ? "comments" : null}
+                    focusTab={store.commentStore.tooltipMessage ? i18n.t('comments') : null}
                   >
                     {mainContent}
                     {store.hasInterface("topbar") && <BottomBar store={store} />}

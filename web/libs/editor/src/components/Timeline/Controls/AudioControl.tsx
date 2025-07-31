@@ -6,6 +6,7 @@ import "./AudioControl.scss";
 import { IconSoundConfig, IconSoundMutedConfig } from "@humansignal/ui";
 import { ControlButton } from "../Controls";
 import { Slider } from "./Slider";
+import i18n from "i18next";
 
 const MAX_VOL = 100;
 
@@ -59,8 +60,8 @@ export const AudioControl: FC<AudioControlProps> = ({ volume, onVolumeChange, on
           max={MAX_VOL}
           value={Math.round(volume * MAX_VOL)}
           onChange={handleSetVolume}
-          description={"Volume"}
-          info={"Increase or decrease the volume of the audio"}
+          description={i18n.t('volume')}
+          info={i18n.t('volume_info')}
         />
         {renderMuteButton()}
       </Elem>
@@ -71,7 +72,7 @@ export const AudioControl: FC<AudioControlProps> = ({ volume, onVolumeChange, on
     return (
       <Elem name={"mute"}>
         <Elem name="mute-button" onClick={handleSetMute}>
-          {isMuted ? "Unmute" : "Mute"}
+          {isMuted ? i18n.t('unmute') : i18n.t('mute')}
         </Elem>
       </Elem>
     );

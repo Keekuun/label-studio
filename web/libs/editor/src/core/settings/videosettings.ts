@@ -2,12 +2,12 @@ import type { SettingsProperties } from "./types";
 
 export default {
   videoDrawOutside: {
-    description: "Allow drawing outside of video boundaries",
+    description: "videoDrawOutside_description",
     defaultValue: false,
     type: "boolean",
   },
   videoHopSize: {
-    description: "Video hop size",
+    description: "videoHopSize_description",
     defaultValue: 10,
     type: "number",
   },

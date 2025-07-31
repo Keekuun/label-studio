@@ -1,3 +1,5 @@
+import { observer } from "mobx-react";
+import { type FC, useCallback, useMemo, useState } from "react";
 import {
   IconEyeClosed,
   IconEyeOpened,
@@ -7,13 +9,13 @@ import {
   IconRelationRight,
   IconTrash,
 } from "@humansignal/icons";
-import { Button, Select } from "@humansignal/ui";
-import { observer } from "mobx-react";
-import { type FC, useCallback, useMemo, useState } from "react";
+import { Button } from "@humansignal/ui";
 import { Block, Elem } from "../../../utils/bem";
 import { wrapArray } from "../../../utils/utilities";
 import { RegionItem } from "./RegionItem";
+import { Select } from "@humansignal/ui";
 import "./Relations.scss";
+import i18n from "i18next";
 
 const RealtionsComponent: FC<any> = ({ relationStore }) => {
   const relations = relationStore.orderedRelations;
@@ -105,7 +107,7 @@ const RelationItem: FC<{ relation: any }> = observer(({ relation }) => {
                 variant="neutral"
                 look="string"
                 size="small"
-                tooltip="Toggle Visibility"
+                tooltip={i18n.t('toggle_visibility')}
                 onClick={relation.toggleVisibility}
                 aria-label={`${relation.visible ? "Hide" : "Show"} Relation`}
               >
@@ -124,7 +126,7 @@ const RelationItem: FC<{ relation: any }> = observer(({ relation }) => {
                 look="string"
                 size="small"
                 aria-label="Delete Relation"
-                tooltip="Delete Relation"
+                tooltip={i18n.t('del_relation')}
                 onClick={() => {
                   relation.node1.setHighlight(false);
                   relation.node2.setHighlight(false);
@@ -159,11 +161,7 @@ const RelationMeta: FC<any> = observer(({ relation }) => {
     [relation],
   );
   const options = useMemo(
-    () =>
-      children.map((c: any) => ({
-        value: c.value,
-        style: { background: c.background },
-      })),
+    () => children.map((c: any) => ({ value: c.value, style: { background: c.background } })),
     [children],
   );
 
@@ -172,7 +170,7 @@ const RelationMeta: FC<any> = observer(({ relation }) => {
       <Select
         multiple={selectionMode}
         style={{ width: "100%" }}
-        placeholder="Select labels"
+        placeholder={i18n.t('select_labels')}
         value={selectedValues}
         onChange={onChange}
         options={options}

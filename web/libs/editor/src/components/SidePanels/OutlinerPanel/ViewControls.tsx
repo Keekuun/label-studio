@@ -1,16 +1,16 @@
+import { type FC, useCallback, useContext, useMemo } from "react";
 import {
-  IconBoundingBox,
-  IconClockTimeFourOutline,
   IconCursor,
+  IconClockTimeFourOutline,
   IconList,
   IconOutlinerEyeClosed,
   IconOutlinerEyeOpened,
-  IconPredictions,
   IconSortDown,
   IconSortUp,
+  IconBoundingBox,
+  IconPredictions,
 } from "@humansignal/icons";
 import { Button } from "@humansignal/ui";
-import { type FC, useCallback, useContext, useMemo } from "react";
 import { Dropdown } from "../../../common/Dropdown/Dropdown";
 // eslint-disable-next-line
 // @ts-ignore
@@ -18,8 +18,9 @@ import { Menu } from "../../../common/Menu/Menu";
 import { BemWithSpecifiContext } from "../../../utils/bem";
 import { SidePanelsContext } from "../SidePanelsContext";
 import "./ViewControls.scss";
-import { observer } from "mobx-react";
 import { FF_DEV_3873, isFF } from "../../../utils/feature-flags";
+import { observer } from "mobx-react";
+import i18n from "i18next";
 
 const { Block, Elem } = BemWithSpecifiContext();
 
@@ -48,34 +49,34 @@ export const ViewControls: FC<ViewControlsProps> = observer(
           return {
             label: (
               <>
-                <IconList /> Group Manually
+                <IconList /> {i18n.t('group_manul')}
               </>
             ),
-            selectedLabel: isFF(FF_DEV_3873) ? "Manual" : "Manual Grouping",
+            selectedLabel: isFF(FF_DEV_3873) ?  i18n.t('manul') : i18n.t('manual_grouping'),
             icon: <IconList width={16} height={16} />,
-            tooltip: "Manually Grouped",
+            tooltip: i18n.t('manual_grouped'),
           };
         case "label":
           return {
             label: (
               <>
-                <IconBoundingBox /> Group by Label
+                <IconBoundingBox /> {i18n.t('group_by_label')}
               </>
             ),
-            selectedLabel: isFF(FF_DEV_3873) ? "By Label" : "Grouped by Label",
+            selectedLabel: isFF(FF_DEV_3873) ? i18n.t('by_label') : i18n.t('grouped_by_label'),
             icon: <IconBoundingBox width={16} height={16} />,
-            tooltip: "Grouped by Label",
+            tooltip: i18n.t('grouped_by_label'),
           };
         case "type":
           return {
             label: (
               <>
-                <IconCursor /> Group by Tool
+                <IconCursor /> {i18n.t('group_by_tool')}
               </>
             ),
-            selectedLabel: isFF(FF_DEV_3873) ? "By Tool" : "Grouped by Tool",
+            selectedLabel: isFF(FF_DEV_3873) ? i18n.t('by_tool') : i18n.t('grouped_by_tool'),
             icon: <IconCursor width={16} height={16} />,
-            tooltip: "Grouped by Tool",
+            tooltip: i18n.t('grouped_by_tool'),
           };
       }
     }, []);
@@ -86,20 +87,20 @@ export const ViewControls: FC<ViewControlsProps> = observer(
           return {
             label: (
               <>
-                <IconClockTimeFourOutline /> Order by Time
+                <IconClockTimeFourOutline /> {i18n.t('order_by_time')}
               </>
             ),
-            selectedLabel: "By Time",
+            selectedLabel: i18n.t('by_time'),
             icon: <IconClockTimeFourOutline width={16} height={16} />,
           };
         case "score":
           return {
             label: (
               <>
-                <IconPredictions /> Order by Score
+                <IconPredictions /> {i18n.t('order_by_score')}
               </>
             ),
-            selectedLabel: "By Score",
+            selectedLabel: i18n.t('by_score'),
             icon: <IconPredictions width={16} height={16} />,
           };
       }
@@ -275,8 +276,8 @@ const ToggleRegionsVisibilityButton = observer<FC<ToggleRegionsVisibilityButton>
       look="string"
       disabled={isDisabled}
       onClick={toggleRegionsVisibility}
-      aria-label={isAllHidden ? "Show all regions" : "Hide all regions"}
-      tooltip={isAllHidden ? "Show all regions" : "Hide all regions"}
+      aria-label={isAllHidden ? i18n.t('show_all_regs') : i18n.t('hide_all_regs')}
+      tooltip={isAllHidden ? i18n.t('show_all_regs') : i18n.t('hide_all_regs')}
     >
       {isAllHidden ? (
         <IconOutlinerEyeClosed width={16} height={16} />

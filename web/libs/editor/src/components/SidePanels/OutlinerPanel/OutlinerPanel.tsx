@@ -9,6 +9,8 @@ import { IconInfo } from "@humansignal/icons";
 import { IconLsLabeling } from "@humansignal/ui";
 import { EmptyState } from "../Components/EmptyState";
 import { getDocsUrl } from "../../../utils/docs";
+import i18n from "i18next";
+import { Trans } from 'react-i18next';
 
 // Local type definitions based on ViewControls and RegionStore
 type GroupingOptions = "manual" | "label" | "type";
@@ -61,7 +63,7 @@ const OutlinerPanelComponent: FC<OutlinerPanelProps> = ({ regions, ...props }) =
   regions.setGrouping(group);
 
   return (
-    <PanelBase {...props} name="outliner" mix={OutlinerFFClasses} title="Outliner">
+    <PanelBase {...props} name="outliner" mix={OutlinerFFClasses} title={i18n.t('outliner')}>
       <ViewControls
         ordering={regions.sort}
         regions={regions}
@@ -115,17 +117,15 @@ const OutlinerStandAlone: FC<OutlinerPanelProps> = ({ regions }) => {
 const OutlinerEmptyState = () => (
   <EmptyState
     icon={<IconLsLabeling width={24} height={24} />}
-    header="Labeled regions will appear here"
+    header={i18n.t("labeled_reg_appear")}
     description={
       <>
         <span>
-          Start labeling and track your results
-          <br />
-          using this panel
+          <Trans i18nKey="start_track_res" />
         </span>
       </>
     }
-    learnMore={{ href: getDocsUrl("guide/labeling"), text: "Learn more", testId: "regions-panel-learn-more" }}
+    learnMore={{ href: getDocsUrl("guide/labeling"), text: i18n.t('learn_more'), testId: "regions-panel-learn-more" }}
   />
 );
 
@@ -143,8 +143,8 @@ const OutlinerTreeComponent: FC<OutlinerTreeComponentProps> = observer(({ region
       {allRegionsHidden ? (
         <Block name="filters-info">
           <IconInfo width={21} height={20} />
-          <Elem name="filters-title">All regions hidden</Elem>
-          <Elem name="filters-description">Adjust or remove the filters to view</Elem>
+          <Elem name="filters-title">{i18n.t('all_regions_hidden')}</Elem>
+          <Elem name="filters-description">{i18n.t('adjust_to_view')}</Elem>
         </Block>
       ) : regions?.regions?.length > 0 ? (
         <>
@@ -155,9 +155,9 @@ const OutlinerTreeComponent: FC<OutlinerTreeComponentProps> = observer(({ region
                 <Block name="filters-info">
                   <IconInfo width={21} height={20} />
                   <Elem name="filters-title">
-                    There {hiddenRegions === 1 ? "is" : "are"} {hiddenRegions} hidden region{hiddenRegions > 1 && "s"}
+                    {i18n.t('there_regions_hidden', {num: hiddenRegions})}
                   </Elem>
-                  <Elem name="filters-description">Adjust or remove filters to view</Elem>
+                  <Elem name="filters-description">{i18n.t('adjust_to_view')}</Elem>
                 </Block>
               )
             }

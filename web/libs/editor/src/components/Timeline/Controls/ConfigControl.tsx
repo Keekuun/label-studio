@@ -11,6 +11,7 @@ import { Slider } from "./Slider";
 import { SpectrogramControl } from "./SpectrogramControl";
 import "./ConfigControl.scss";
 import { FF_AUDIO_SPECTROGRAMS, isFF } from "../../../utils/feature-flags";
+import i18n from "i18next";
 
 // Define Scale Options Type
 type SpectrogramScale = "linear" | "log" | "mel";
@@ -158,14 +159,14 @@ export const ConfigControl: FC<ConfigControlProps> = ({
     return (
       <Elem name={"buttons"}>
         <Elem name="menu-button" onClick={handleSetTimeline}>
-          {isTimeline ? "Hide" : "Show"} timeline
+          {isTimeline ? i18n.t('hide') : i18n.t('show')} {i18n.t('timeline')}
         </Elem>
         <Elem name="menu-button" onClick={handleSetAudioWave}>
-          {isAudioWave ? "Hide" : "Show"} audio wave
+          {isAudioWave ? i18n.t('hide') : i18n.t('show')} {i18n.t('audio_wave')}
         </Elem>
         {isFF(FF_AUDIO_SPECTROGRAMS) && (
           <Elem name="menu-button" onClick={handleSetSpectrogram}>
-            {isSpectrogram ? "Hide" : "Show"} spectrogram
+            {isSpectrogram ? i18n.t('hide') : i18n.t('show')} {i18n.t('spectrogram')}
           </Elem>
         )}
       </Elem>
@@ -188,8 +189,8 @@ export const ConfigControl: FC<ConfigControlProps> = ({
             max={MAX_SPEED}
             step={0.1}
             value={speed}
-            description={"Playback speed"}
-            info={"Increase or decrease the playback speed"}
+            description={i18n.t('play_speed')}
+            info={i18n.t('play_speed_info')}
             onChange={handleChangePlaybackSpeed}
           />
           <Slider
@@ -197,15 +198,15 @@ export const ConfigControl: FC<ConfigControlProps> = ({
             max={MAX_ZOOM}
             step={0.1}
             value={amp}
-            description={"Audio zoom y-axis"}
-            info={"Increase or decrease the appearance of amplitude"}
+            description={i18n.t('audio_zoom')}
+            info={i18n.t('audio_zoom_info')}
             onChange={handleChangeAmp}
           />
           <Elem name="toggle">
             <Toggle
               checked={settings?.loopRegion}
               onChange={(e) => changeSetting?.("loopRegion", e.target.checked)}
-              label="Loop Regions"
+              label={i18n.t('loop_region')}
               labelProps={{ size: "small" }}
             />
           </Elem>
@@ -213,7 +214,7 @@ export const ConfigControl: FC<ConfigControlProps> = ({
             <Toggle
               checked={settings?.autoPlayNewSegments}
               onChange={(e) => changeSetting?.("autoPlayNewSegments", e.target.checked)}
-              label="Auto-play New Regions"
+              label={i18n.t('auto_play_region')}
               labelProps={{ size: "small" }}
             />
           </Elem>

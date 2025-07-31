@@ -21,6 +21,7 @@ import { Block, cn, Elem } from "../../utils/bem";
 import { humanDateDiff, userDisplayName } from "../../utils/utilities";
 import { EmptyState } from "../SidePanels/Components/EmptyState";
 import "./AnnotationHistory.scss";
+import i18n from "i18next";
 
 type HistoryItemType =
   | "prediction"
@@ -133,8 +134,8 @@ const AnnotationHistoryComponent: FC<any> = ({
   const defaultEmptyState = (
     <EmptyState
       icon={<IconHistoryRewind width={24} height={24} />}
-      header="View annotation activity"
-      description={<>See a log of user actions for this annotation</>}
+      header={i18n.t('view_anno_history')}
+      description={<>{i18n.t('view_anno_history_desc')}</>}
     />
   );
 
@@ -225,34 +226,7 @@ const HistoryItemComponent: FC<{
 }) => {
   const isPrediction = entity?.type === "prediction";
 
-  const reason = useMemo(() => {
-    switch (acceptedState) {
-      case "accepted":
-        return "Accepted";
-      case "rejected":
-        return "Rejected";
-      case "fixed_and_accepted":
-        return "Fixed";
-      case "updated":
-        return "Updated";
-      case "submitted":
-        return "Submitted";
-      case "prediction":
-        return "From prediction";
-      case "imported":
-        return "Imported";
-      case "skipped":
-        return "Skipped";
-      case "draft_created":
-        return "Draft";
-      case "deleted_review":
-        return "Review deleted";
-      case "propagated_annotation":
-        return "Propagated";
-      default:
-        return null;
-    }
-  }, []);
+  const reason = acceptedState ? i18n.t(acceptedState) : null;
 
   const handleClick = useCallback(
     (e) => {
@@ -339,7 +313,7 @@ const HistoryComment: FC<{
             setCollapsed((v) => !v);
           }}
         >
-          {collapsed ? "Show more" : "Show less"}
+          {collapsed ? i18n.t("show_more") : i18n.t("show_less")}
         </Elem>
       )}
     </Elem>

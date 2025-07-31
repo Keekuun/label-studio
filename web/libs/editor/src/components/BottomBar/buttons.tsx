@@ -9,6 +9,7 @@ import type React from "react";
 import { memo, type ReactElement } from "react";
 import { Tooltip, Button } from "@humansignal/ui";
 import type { MSTStore } from "../../stores/types";
+import i18n from "i18next";
 
 type MixedInParams = {
   store: MSTStore;
@@ -101,7 +102,7 @@ export const SkipButton = memo(
         aria-label="skip-task"
         disabled={disabled}
         look="outlined"
-        tooltip="Cancel (skip) tapk [ Ctrl+Space ]"
+        tooltip={i18n.t("cancel_task_key")}
         onClick={async (e) => {
           const action = () => store.skipTask({});
           const selected = store.annotationStore?.selected;
@@ -115,7 +116,7 @@ export const SkipButton = memo(
           }
         }}
       >
-        Skip
+        {i18n.t("skip")}
       </Button>
     );
   }),
@@ -126,7 +127,7 @@ export const UnskipButton = memo(
     return (
       <Button
         key="cancel-skip"
-        tooltip="Cancel skip: []"
+        tooltip={i18n.t("cancel_skip_key")}
         aria-label="cancel-skip"
         look="outlined"
         disabled={disabled}

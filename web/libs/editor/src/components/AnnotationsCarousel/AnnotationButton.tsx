@@ -19,6 +19,8 @@ import {
 import { Tooltip, Userpic, ToastType, useToast } from "@humansignal/ui";
 import { TimeAgo } from "../../common/TimeAgo/TimeAgo";
 import { useDropdown } from "../../common/Dropdown/DropdownTrigger";
+import i18n from "i18next";
+import { Trans } from 'react-i18next';
 
 // eslint-disable-next-line
 // @ts-ignore
@@ -47,10 +49,10 @@ const renderCommentIcon = (ent: any) => {
 
 const renderCommentTooltip = (ent: any) => {
   if (ent.unresolved_comment_count > 0) {
-    return "Unresolved Comments";
+    return i18n.t('unresolved_comments');
   }
   if (ent.comment_count > 0) {
-    return "All Comments Resolved";
+    return i18n.t('all_comments_resolved');
   }
 
   return "";
@@ -137,23 +139,18 @@ export const AnnotationButton = observer(
           copyLink();
           dropdown?.close();
           toast.show({
-            message: "Annotation link copied to clipboard",
+            message: i18n.t('anno_copied'),
             type: ToastType.info,
           });
         }, [entity, copyLink]);
         const deleteAnnotation = useCallback(() => {
           clickHandler();
           confirm({
-            title: "Delete annotation?",
-            body: (
-              <>
-                This will <strong>delete all existing regions</strong>. Are you sure you want to delete them?
-                <br />
-                This action cannot be undone.
-              </>
-            ),
+            title: i18n.t('del_anno_title'),
+            body: <Trans i18nKey="del_anno_desc" />,
             buttonLook: "destructive",
-            okText: "Delete",
+            okText: i18n.t('delete'),
+            cancelText: i18n.t('cancel'),
             onOk: () => {
               entity.list.deleteAnnotation(entity);
             },
@@ -166,7 +163,7 @@ export const AnnotationButton = observer(
         const actions = useMemo<ContextMenuAction[]>(
           () => [
             {
-              label: `${isGroundTruth ? "Unset " : "Set "} as Ground Truth`,
+              label: `${isGroundTruth ? i18n.t('unset') + ' ' : i18n.t('set') + ' '} ${i18n.t('as_gt')}`,
               onClick: setGroundTruth,
               icon: isGroundTruth ? (
                 <IconStar color="#FFC53D" width={iconSize} height={iconSize} />
@@ -176,19 +173,19 @@ export const AnnotationButton = observer(
               enabled: showGroundTruth,
             },
             {
-              label: "Duplicate Annotation",
+              label: i18n.t('dp_anno'),
               onClick: duplicateAnnotation,
               icon: <IconDuplicate width={20} height={20} />,
               enabled: showDuplicateAnnotation,
             },
             {
-              label: "Copy Annotation Link",
+              label: i18n.t('anno_copy_link'),
               onClick: linkAnnotation,
               icon: <IconLink />,
               enabled: !isDraft && store.hasInterface("annotations:copy-link"),
             },
             {
-              label: "Delete Annotation",
+              label: i18n.t('del_anno'),
               onClick: deleteAnnotation,
               icon: <IconTrashRect />,
               separator: true,
@@ -271,14 +268,14 @@ export const AnnotationButton = observer(
                 </Tooltip>
               )}
               {entity.skipped && (
-                <Tooltip title="Skipped">
+                <Tooltip title={i18n.t('skipped')}>
                   <Elem name="icon" mod={{ skipped: true }}>
                     <IconAnnotationSkipped2 color="#DD0000" />
                   </Elem>
                 </Tooltip>
               )}
               {isGroundTruth && (
-                <Tooltip title="Ground-truth">
+                <Tooltip title={i18n.t('ground_truth')}>
                   <Elem name="icon" mod={{ groundTruth: true }}>
                     <IconAnnotationGroundTruth />
                   </Elem>

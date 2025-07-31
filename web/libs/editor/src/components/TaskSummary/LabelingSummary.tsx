@@ -7,6 +7,7 @@ import { renderers } from "./labelings";
 import { ResizeHandler } from "./ResizeHandler";
 import { SummaryBadge } from "./SummaryBadge";
 import type { AnnotationSummary, ControlTag, RendererType } from "./types";
+import i18n from "i18next";
 
 type Props = {
   annotations: MSTAnnotation[];
@@ -72,7 +73,7 @@ export const LabelingSummary = ({ hideInfo, annotations: all, controls, onSelect
       }),
     );
     columns.unshift({
-      header: "Annotation ID",
+      header: i18n.t('anno_id'),
       accessorKey: "id",
       size: 200,
       minSize: 150,

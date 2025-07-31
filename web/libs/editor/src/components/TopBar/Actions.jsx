@@ -8,6 +8,7 @@ import { GroundTruth } from "../CurrentEntity/GroundTruth";
 import { EditingHistory } from "./HistoryActions";
 import { confirm } from "../../common/Modal/Modal";
 import { useCallback } from "react";
+import i18n from "i18next";
 
 export const Actions = ({ store }) => {
   const annotationStore = store.annotationStore;
@@ -24,10 +25,10 @@ export const Actions = ({ store }) => {
   return (
     <Elem name="section">
       {store.hasInterface("annotations:view-all") && !isBulkMode && (
-        <Tooltip title="Compare all annotations">
+        <Tooltip title={i18n.t('compare_all_anno')}>
           <Button
             icon={<IconViewAll />}
-            aria-label="Compare all annotations"
+            aria-label={i18n.t('compare_all_anno')}
             onClick={() => onToggleVisibility()}
             variant={isViewAll ? "primary" : "neutral"}
             look={isViewAll ? "filled" : "string"}
@@ -45,7 +46,7 @@ export const Actions = ({ store }) => {
       {!isPrediction && !isViewAll && store.hasInterface("edit-history") && <EditingHistory entity={entity} />}
 
       {!isViewAll && !isBulkMode && store.hasInterface("annotations:delete") && (
-        <Tooltip title="Delete annotation">
+        <Tooltip title={i18n.t('del_anno')}>
           <Button
             icon={<IconTrash />}
             variant="negative"
@@ -54,10 +55,10 @@ export const Actions = ({ store }) => {
             aria-label="Delete"
             onClick={() => {
               confirm({
-                title: "Delete annotation",
-                body: "This action cannot be undone",
+                title: i18n.t('del_anno'),
+                body: i18n.t('del_anno_body'),
                 buttonLook: "destructive",
-                okText: "Proceed",
+                okText: i18n.t('proceed'),
                 onOk: () => entity.list.deleteAnnotation(entity),
               });
             }}
@@ -71,7 +72,7 @@ export const Actions = ({ store }) => {
       )}
 
       {!isViewAll && !isBulkMode && store.hasInterface("annotations:add-new") && saved && (
-        <Tooltip title={`Create copy of current ${entity.type}`}>
+        <Tooltip title={i18n.t('creat_copy_type', {type: entity.type})}>
           <Button
             icon={<IconCopy style={{ width: 36, height: 36 }} />}
             variant="neutral"

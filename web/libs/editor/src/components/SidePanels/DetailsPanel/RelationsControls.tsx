@@ -4,6 +4,7 @@ import { type FC, useCallback } from "react";
 import { Block, Elem } from "../../../utils/bem";
 import "./RelationsControls.scss";
 import { IconOutlinerEyeClosed, IconOutlinerEyeOpened, IconSortDown, IconSortUp } from "@humansignal/icons";
+import i18n from "i18next";
 
 const RelationsControlsComponent: FC<any> = ({ relationStore }) => {
   return (
@@ -40,7 +41,7 @@ const ToggleRelationsVisibilityButton = observer<FC<ToggleRelationsVisibilityBut
       disabled={isDisabled}
       onClick={toggleRelationsVisibility}
       mod={{ hidden: isAllHidden }}
-      aria-label={isAllHidden ? "Show all" : "Hide all"}
+      aria-label={isAllHidden ? i18n.t('show_all') : i18n.t('hide_all')}
       icon={
         isAllHidden ? (
           <IconOutlinerEyeClosed width={16} height={16} />
@@ -48,7 +49,7 @@ const ToggleRelationsVisibilityButton = observer<FC<ToggleRelationsVisibilityBut
           <IconOutlinerEyeOpened width={16} height={16} />
         )
       }
-      tooltip={isAllHidden ? "Show all" : "Hide all"}
+      tooltip={isAllHidden ? i18n.t('show_all') : i18n.t('hide_all')}
       tooltipTheme="dark"
     />
   );
@@ -80,9 +81,9 @@ const ToggleRelationsOrderButton = observer<FC<ToggleRelationsOrderButtonProps>>
       onClick={toggleRelationsOrder}
       disabled={isDisabled}
       mod={{ order: relationStore.order }}
-      aria-label={isAsc ? "Order by oldest" : "Order by newest"}
+      aria-label={isAsc ? i18n.t('order_by_old') : i18n.t('order_by_new')}
       icon={isAsc ? <IconSortUp /> : <IconSortDown />}
-      tooltip={isAsc ? "Order by oldest" : "Order by newest"}
+      tooltip={isAsc ? i18n.t('order_by_old') : i18n.t('order_by_new')}
       tooltipTheme="dark"
     />
   );

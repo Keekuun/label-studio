@@ -109,7 +109,9 @@ const KEY_MAP = {
   tool_move_description: "选择移动工具重新定位标注",
   tool_brush_description: "选择画笔工具",
   tool_decrease_tool_description: "减小工具大小",
-  tool_increase_tool_description: "增大工具大小"
+  tool_increase_tool_description: "增大工具大小",
+  videoDrawOutside_description: '允许在视频边界外绘制',
+  videoHopSize_description: '视频跳跃步长',
 }
 
 const ANNOTATION_HISTORY_REASON = {
@@ -222,6 +224,7 @@ const ZH_TRANSLATIONS = {
   // CommentForm.tsx
   add_comment: "添加评论",
   link_to: "链接到...",
+  unlink: "取消链接",
 
   // Controls.jsx
   update_task_title: "更新此任务：[ Alt+Enter ]",
@@ -410,6 +413,16 @@ const ZH_TRANSLATIONS = {
   task_data: "任务数据",
   predictions_msg: "预测数量。这些不包含在一致性计算中。",
   anno_submit_msg: "已提交注释的数量。表格仅显示已提交的结果，不显示当前草稿。",
+
+  toggle_visibility: "切换可见性",
+  del_relation: "删除关系",
+  show_selected_reg: "显示选中区域",
+  hide_selected_reg: "隐藏选中区域",
+  unlock_region: "解锁区域",
+  lock_region: "锁定区域",
+
+  cancel_task_key: "取消（跳过）[ Ctrl+Space ]",
+  cancel_skip_key: "取消跳过: [ Ctrl+Space ]",
 }
 
 export default ZH_TRANSLATIONS

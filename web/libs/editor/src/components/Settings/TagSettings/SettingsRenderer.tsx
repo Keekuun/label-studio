@@ -5,6 +5,7 @@ import type { FC } from "react";
 import type { SettingsProperties, SettingsProperty } from "../../../core/settings/types";
 import { Block, Elem } from "../../../utils/bem";
 import { isFF } from "../../../utils/feature-flags";
+import i18n from "i18next";
 
 const SettingsRendererPure: FC<{ store: any; settings: SettingsProperties }> = ({ store, settings }) => {
   return (
@@ -56,10 +57,10 @@ const SettingsField: FC<{
   return (
     <Elem name="field" key={name}>
       {value.type === "boolean" ? (
-        <Checkbox {...props}>{value.description}</Checkbox>
+        <Checkbox {...props}>{i18n.t(value.description)}</Checkbox>
       ) : (
         <label>
-          {value.description}
+          {i18n.t(value.description)}
           <Input {...props} />
         </label>
       )}

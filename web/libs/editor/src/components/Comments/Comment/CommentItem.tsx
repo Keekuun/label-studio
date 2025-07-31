@@ -13,6 +13,7 @@ import { CommentFormBase } from "../CommentFormBase";
 import { CommentsContext } from "./CommentsList";
 import { NewTaxonomy as Taxonomy, type TaxonomyPath } from "../../../components/NewTaxonomy/NewTaxonomy";
 import { taxonomyPathsToSelectedItems, COMMENT_TAXONOMY_OPTIONS } from "../../../utils/commentClassification";
+import i18n from "i18next";
 
 import "./CommentItem.scss";
 import { LinkState } from "./LinkState";
@@ -146,7 +147,7 @@ export const CommentItem: FC<CommentItemProps> = observer(
         return (
           <Elem name="date">
             <Tooltip alignment="top-right" title={new Date(time).toLocaleString()}>
-              <span>{`${isEdited ? "updated" : ""} ${humanDateDiff(time)}`}</span>
+              {`${isEdited ? i18n.t('updated') : ""} ${humanDateDiff(time)}`}
             </Tooltip>
           </Elem>
         );
@@ -201,7 +202,7 @@ export const CommentItem: FC<CommentItemProps> = observer(
               </>
             ) : isConfirmDelete ? (
               <Elem name="confirmForm">
-                <Elem name="question">Are you sure?</Elem>
+                <Elem name="question">{i18n.t('are_sure')}</Elem>
                 <Elem name="controls">
                   <Button
                     onClick={() => deleteComment()}
@@ -210,10 +211,10 @@ export const CommentItem: FC<CommentItemProps> = observer(
                     autoFocus
                     aria-label="Delete comment"
                   >
-                    Yes
+                    {i18n.t('yes')}
                   </Button>
                   <Button onClick={() => setConfirmMode(false)} size="small" aria-label="Cancel delete">
-                    No
+                    {i18n.t('no')}
                   </Button>
                 </Elem>
               </Elem>
@@ -247,7 +248,7 @@ export const CommentItem: FC<CommentItemProps> = observer(
               <Dropdown.Trigger
                 content={
                   <Menu size="auto">
-                    <Menu.Item onClick={toggleResolve}>{resolved ? "Unresolve" : "Resolve"}</Menu.Item>
+                    <Menu.Item onClick={toggleResolve}>{resolved ? i18n.t('unresolve') : i18n.t('resolve')}</Menu.Item>
                     {isCreator && (
                       <>
                         <Menu.Item
@@ -260,16 +261,16 @@ export const CommentItem: FC<CommentItemProps> = observer(
                             }
                           }}
                         >
-                          {isEditMode ? "Cancel edit" : "Edit"}
+                          {isEditMode ? i18n.t('cancel_edit') : i18n.t('edit')}
                         </Menu.Item>
-                        <Menu.Item onClick={toggleLink}>{regionRef?.region ? "Unlink" : "Link to..."}</Menu.Item>
+                        <Menu.Item onClick={toggleLink}>{regionRef?.region ? i18n.t('unlink') : i18n.t('link_to')}</Menu.Item>
                         {!isConfirmDelete && (
                           <Menu.Item
                             onClick={() => {
                               setConfirmMode(true);
                             }}
                           >
-                            Delete
+                            {i18n.t('delete')}
                           </Menu.Item>
                         )}
                       </>
