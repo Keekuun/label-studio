@@ -1,0 +1,59 @@
+/* BEM 命名规范：block__element--modifier */
+.language-switcher {
+  position: relative;
+  display: inline-block;
+  min-width: 100px;
+}
+
+.language-switcher__select {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-weight: bold;
+}
+
+.language-switcher__select:hover {
+  border-color: #999;
+}
+
+.language-switcher__select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.language-switcher__arrow {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  color: #666;
+}
+
+.language-switcher__option {
+  padding: 8px 12px;
+  background-color: #fff;
+  color: #333;
+}
+
+.language-switcher__option:hover {
+  background-color: #f0f7ff;
+}
+
+.language-switcher__option--selected {
+  background-color: #e6f0ff;
+  color: #1a73e8;
+}

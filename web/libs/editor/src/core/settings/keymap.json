@@ -2,257 +2,256 @@
   "audio:back": {
     "key": "ctrl+b",
     "mac": "command+b",
-    "description": "Back for one second"
+    "description": "audio_back_description"
   },
   "audio:playpause": {
     "key": "ctrl+p",
     "mac": "command+p",
-    "description": "Play/pause"
+    "description": "audio_playpause_description"
   },
   "audio:step-backward": {
     "key": "alt+a",
-    "description": "Go one step back"
+    "description": "audio_step_backward"
   },
   "audio:step-forward": {
     "key": "alt+d",
-    "description": "Go one step forward"
+    "description": "audio_step_forward"
   },
   "ts:grow-left": {
     "key": "left",
-    "description": "Increase region to the left"
+    "description": "ts_grow-left_description"
   },
   "ts:grow-right": {
     "key": "right",
-    "description": "Increase region to the right"
+    "description": "ts_grow-right_description"
   },
   "ts:shrink-left": {
     "key": "alt+left",
-    "description": "Decrease region on the left"
+    "description": "ts_shrink-left_description"
   },
   "ts:shrink-right": {
     "key": "alt+right",
-    "description": "Decrease region on the right"
+    "description": "ts_shrink-right_description"
   },
-  "ts:grow-left-large": {
+  "ts:grow-left-largre": {
     "key": "shift+left"
   },
-  "ts:grow-right-large": {
+  "ts:grow-right-largre": {
     "key": "shift+right"
   },
-  "ts:shrink-left-large": {
+  "ts:shrink-left-largre": {
     "key": "shift+alt+left"
   },
-  "ts:shrink-right-large": {
+  "ts:shrink-right-largre": {
     "key": "shift+alt+right"
   },
   "annotation:submit": {
     "key": "ctrl+enter",
     "mac": "command+enter",
-    "description": "Submit annotation"
+    "description": "annotation_submit_description"
   },
   "annotation:skip": {
     "key": "ctrl+space",
     "mac": "alt+enter",
-    "description": "Skip task"
+    "description": "annotation_skip_description"
   },
   "annotation:undo": {
     "key": "ctrl+z",
     "mac": "command+z",
-    "description": "Undo"
+    "description": "annotation_undo_description"
   },
   "annotation:redo": {
     "key": "ctrl+shift+z",
     "mac": "command+shift+z",
-    "description": "Redo"
+    "description": "annotation_redo_description"
   },
   "polygon:undo": {
     "key": "ctrl+z",
     "mac": "command+z",
-    "description": "Undo"
+    "description": "polygon_undo_description"
   },
   "polygon:redo": {
     "key": "ctrl+shift+z",
     "mac": "command+shift+z",
-    "description": "Redo"
+    "description": "polygon_redo_description"
   },
   "region:delete-all": {
     "key": "ctrl+backspace",
     "mac": "command+backspace",
-    "description": "Delete all regions"
+    "description": "region_delete-all_description"
   },
   "region:focus": {
     "key": "enter",
-    "description": "Focus first focusable region"
+    "description": "region_focus_description"
   },
   "region:relation": {
     "key": "alt+r",
-    "description": "Create relation between regions"
+    "description": "region_relation_description"
   },
   "region:visibility": {
     "key": "alt+h",
-    "description": "Toggle selected region visibility"
+    "description": "region_visibility_description"
   },
   "region:visibility-all": {
     "key": "ctrl+h",
     "mac": "command+h",
-    "description": "Toggle all regions visibility"
+    "description": "region_visibility_all_description"
   },
   "region:lock": {
     "key": "alt+l",
-    "description": "Lock selected region"
+    "description": "region_lock_description"
   },
   "region:meta": {
     "key": "alt+m",
-    "description": "Edit selected region meta"
+    "description": "region_meta_description"
   },
   "region:unselect": {
     "key": "u",
-    "description": "Unselect region"
+    "description": "region_unselect_description"
   },
   "region:exit": {
     "key": "escape",
-    "description": "Exit relation mode, unselect region"
+    "description": "region_exit_description"
   },
   "region:delete": {
     "key": "backspace",
-    "description": "Delete selected region"
+    "description": "region_delete_description"
   },
   "region:cycle": {
     "key": "alt+.",
-    "description": "Cycle through regions"
+    "description": "region_cycle_description"
   },
   "region:duplicate": {
     "key": "ctrl+d",
     "mac": "command+d",
-    "description": "Duplicate selected region"
+    "description": "region_duplicate_description"
   },
   "segment:delete": {
     "key": "delete",
-    "description": "Delete selected region"
+    "description": "segment_delete_description"
   },
   "media:playpause": {
-    "key": "ctrl+alt+space",
-    "mac": "command+alt+space",
-    "description": "Play/pause"
+    "key": "alt+space",
+    "description": "media_playpause_description"
   },
   "media:step-backward": {
     "key": "alt+left",
-    "description": "Go one step back"
+    "description": "media_step-backward_description"
   },
   "media:step-forward": {
     "key": "alt+right",
-    "description": "Go one step forward"
+    "description": "media_step-forward_description"
   },
   "video:keyframe-backward": {
     "key": "ctrl+alt+left",
     "mac": "command+alt+left",
-    "description": "Go to previous keyframe"
+    "description": "video_keyframe-backward_description"
   },
   "video:keyframe-forward": {
     "key": "ctrl+alt+right",
     "mac": "command+alt+right",
-    "description": "Go to next keyframe"
+    "description": "video_keyframe-forward_description"
   },
   "video:backward": {
     "key": "alt+left",
-    "description": "Go back"
+    "description": "video_backward_description"
   },
   "video:rewind": {
     "key": "shift+ctrl+alt+left",
     "mac": "shift+command+alt+left",
-    "description": "Go to first frame"
+    "description": "video_rewind_description"
   },
   "video:forward": {
     "key": "shift+alt+right",
-    "description": "Go forward"
+    "description": "video_forward_description"
   },
   "video:fastforward": {
     "key": "shift+ctrl+alt+right",
     "mac": "shift+command+alt+right",
-    "description": "Go to last frame"
+    "description": "video_fastforward_description"
   },
   "video:hop-backward": {
     "key": "shift+alt+left",
-    "description": "Hop Backward"
+    "description": "video_hop-backward_description"
   },
   "video:hop-forward": {
     "key": "shift+alt+right",
-    "description": "Hop Forward"
+    "description": "video_hop-forward_description"
   },
   "repeater:next-page": {
     "key": "alt+right",
-    "description": "Next Page"
+    "description": "repeater_next-page_description"
   },
   "repeater:previous-page": {
     "key": "alt+left",
-    "description": "Previous Page"
+    "description": "repeater_previous-page_description"
   },
   "image:prev": {
     "key": "ctrl+left",
     "mac": "command+left",
-    "description": "Previous Image"
+    "description": "image_prev_description"
   },
   "image:next": {
     "key": "ctrl+right",
     "mac": "command+right",
-    "description": "Next Image"
+    "description": "image_next_description"
   },
 
   "tool:zoom-in": {
     "key": "ctrl+plus",
     "mac": "command+plus",
-    "description": "Zoom in on the image"
+    "description": "tool_zoom_in_description"
   },
 
   "tool:pan-image": {
     "key": "H",
-    "description": "Pan around the image"
+    "description": "tool_pan_image_description"
   },
 
   "tool:zoom-to-fit": {
     "key": "shift+1",
-    "description": "Zoom to fit the full image in view"
+    "description": "tool_zoom_to_fit_description"
   },
 
   "tool:zoom-to-actual": {
     "key": "shift+2",
-    "description": "Zoom to actual image size (100%)"
+    "description": "tool_zoom_to_actual"
   },
 
   "tool:zoom-out": {
     "key": "ctrl+minus",
     "mac": "command+minus",
-    "description": "Zoom out of the image"
+    "description": "tool_zoom_out_description"
   },
 
   "tool:ellipse": {
     "key": "O",
-    "description": "Select the ellipse tool"
+    "description": "tool_ellipse_description"
   },
 
   "tool:eraser": {
     "key": "E",
-    "description": "Select the eraser tool"
+    "description": "tool_eraser_description"
   },
 
   "tool:auto-detect": {
     "key": "M",
-    "description": "Use the auto-detect tool to automatically suggest regions"
+    "description": "tool_auto_detect_description"
   },
 
   "tool:rect-3point": {
     "key": "shift+R",
-    "description": "Draw a rotated rectangle using 3-point selection"
+    "description": "tool_rect_3point_description"
   },
 
   "tool:key-point": {
     "key": "K",
-    "description": "Select the key point annotation tool"
+    "description": "tool_key_point_description"
   },
 
   "tool:magic-wand": {
     "key": "W",
-    "description": "Select the magic wand tool for smart region selection"
+    "description": "tool_magic_wand_description"
   },
 
   "tool:polygon": {
@@ -262,36 +261,36 @@
 
   "tool:rect": {
     "key": "R",
-    "description": "Select the rectangle annotation tool"
+    "description": "tool_rect_description"
   },
 
   "tool:rotate-left": {
     "key": "alt+left",
-    "description": "Rotate the image 90° to the left"
+    "description": "tool_rotate_left_description"
   },
 
   "tool:rotate-right": {
     "key": "alt+right",
-    "description": "Rotate the image 90° to the right"
+    "description": "tool_rotate_right_description"
   },
 
   "tool:move": {
     "key": "V",
-    "description": "Select the move tool to reposition annotations"
+    "description": "tool_move_description"
   },
 
   "tool:brush": {
     "key": "B",
-    "description": "Select the brush tool"
+    "description": "tool_brush_description"
   },
 
   "tool:decrease-tool": {
     "key": "[",
-    "description": "Decrease tool size"
+    "description": "tool_decrease_tool_description"
   },
 
   "tool:increase-tool": {
     "key": "]",
-    "description": "Increase tool size"
+    "description": "tool_increase_tool_description"
   }
 }
