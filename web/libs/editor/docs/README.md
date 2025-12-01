@@ -225,7 +225,7 @@ yarn lsf:e2e
 
 Editor 支持开发自定义组件来扩展功能。详细的开发指南请参考：
 
-📖 **[自定义组件开发指南](./DEVELOPING_COMPONENTS.md)**
+📖 **[自定义组件开发指南](DEVELOPING_COMPONENTS.md)**
 
 该文档包含：
 - 组件开发步骤（Model、View、注册）
@@ -238,7 +238,7 @@ Editor 支持开发自定义组件来扩展功能。详细的开发指南请参�
 
 了解 XML 配置如何转换为 React 组件的完整流程和原理：
 
-📖 **[XML 配置到 React 组件渲染原理](./XML_TO_REACT_RENDERING.md)**
+📖 **[XML 配置到 React 组件渲染原理](XML_TO_REACT_RENDERING.md)**
 
 该文档详细说明：
 - XML 解析和配置转换过程
