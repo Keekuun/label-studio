@@ -2,7 +2,16 @@ title: Intent Classification
 type: community
 group: Audio/Speech Processing
 image: /static/templates/intent-classification.png
-details: <h1>Do voice activity segmentation and choose spoken intent</h1>
+details: |
+  <h1>Do voice activity segmentation and choose spoken intent</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>voice assistants, smart speakers, customer service automation, call routing, voice user interfaces, chatbots, IVR systems, automotive voice control, smart home devices, mobile voice apps, healthcare voice interfaces, banking voice systems</dd>
+    <dt>Associated Models</dt>
+    <dd>spoken language understanding, end-to-end speech intent, speech-to-intent, voice command classification</dd>
+    <dt>Domain Terminology</dt>
+    <dd>voice intent, spoken intent recognition, conversational AI, voice user experience, speech NLU</dd>
+  </dl>
 config: |
   <View>
     <Labels name="labels" toName="audio">

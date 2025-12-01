@@ -1,6 +1,7 @@
-import { toStudlyCaps } from "strman";
+import { toStudlyCaps } from "@humansignal/core";
 
 export { Agreement } from "./Agreement/Agreement";
+export { AgreementSelected } from "./AgreementSelected";
 export {
   Annotators,
   Annotators as Reviewers,
@@ -16,6 +17,7 @@ export { StringCell as String } from "./StringCell";
 export { StringCell as Text } from "./StringCell";
 export { VideoCell as Video } from "./VideoCell";
 export { ProjectCell as Project } from "./ProjectCell";
+export { TaskState } from "./TaskState";
 
 export function normalizeCellAlias(alias) {
   // remove trailing separators to make `toStudlyCaps` safe

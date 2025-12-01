@@ -10,6 +10,7 @@ import { LabelOnVideoBbox } from "../../../components/ImageView/LabelOnRegion";
 type RectPropsExtend = typeof Rect;
 
 interface RectProps extends RectPropsExtend {
+  id: string;
   reg: any;
   frame: number;
   selected: boolean;
@@ -21,6 +22,7 @@ interface RectProps extends RectPropsExtend {
 }
 
 const RectanglePure: FC<RectProps> = ({
+  id,
   reg,
   box,
   frame,
@@ -69,6 +71,7 @@ const RectanglePure: FC<RectProps> = ({
         adjacent
       />
       <Rect
+        id={id}
         {...newBox}
         fill={style.fillColor ?? "#fff"}
         stroke={style.strokeColor}

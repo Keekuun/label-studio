@@ -19,6 +19,7 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
+from label_studio_sdk.label_interface import LabelInterface
 from projects.models import Project, ProjectImport, ProjectReimport
 from ranged_fileresponse import RangedFileResponse
 from rest_framework import generics, status
@@ -220,29 +221,7 @@ task_create_response_scheme = {
         """.format(
             host=(settings.HOSTNAME or 'https://localhost:8080')
         ),
-        request={
-            'type': 'array',
-            'items': {'type': 'object'},
-            # TODO: this example doesn't work - perhaps we need to migrate to drf-spectacular for "anyOf" support
-            # also fern will change to at least provide a list of examples FER-1969
-            # right now we can only rely on documenation examples
-            # properties={
-            #     'data': openapi.Schema(type=OpenApiTypes.OBJECT, description='Data of the task'),
-            #     'annotations': openapi.Schema(
-            #         many=True,
-            #         description='Annotations for this task',
-            #     ),
-            #     'predictions': openapi.Schema(
-            #         many=True,
-            #         description='Predictions for this task',
-            #     )
-            # },
-            # example={
-            #     'data': {'image': 'http://example.com/image.jpg'},
-            #     'annotations': [annotation_response_example],
-            #     'predictions': [prediction_response_example]
-            # }
-        },
+        request=ImportApiSerializer(many=True),
         extensions={
             'x-fern-sdk-group-name': 'projects',
             'x-fern-sdk-method-name': 'import_tasks',
@@ -288,7 +267,38 @@ class ImportAPI(generics.CreateAPIView):
 
         if preannotated_from_fields:
             # turn flat task JSONs {"column1": value, "column2": value} into {"data": {"column1"..}, "predictions": [{..."column2"}]
-            parsed_data = reformat_predictions(parsed_data, preannotated_from_fields)
+            raise_errors = flag_set('fflag_feat_utc_210_prediction_validation_15082025', user='auto')
+            logger.info(f'Reformatting predictions with raise_errors: {raise_errors}')
+            parsed_data = reformat_predictions(parsed_data, preannotated_from_fields, project, raise_errors)
+
+        # Conditionally validate predictions: skip when label config is default during project creation
+        if project.label_config_is_not_default:
+            validation_errors = []
+            li = LabelInterface(project.label_config)
+
+            for i, task in enumerate(parsed_data):
+                if 'predictions' in task:
+                    for j, prediction in enumerate(task['predictions']):
+                        try:
+                            validation_errors_list = li.validate_prediction(prediction, return_errors=True)
+                            if validation_errors_list:
+                                for error in validation_errors_list:
+                                    validation_errors.append(f'Task {i}, prediction {j}: {error}')
+                        except Exception as e:
+                            error_msg = f'Task {i}, prediction {j}: Error validating prediction - {str(e)}'
+                            validation_errors.append(error_msg)
+
+            if validation_errors:
+                error_message = f'Prediction validation failed ({len(validation_errors)} errors):\n'
+                for error in validation_errors:
+                    error_message += f'- {error}\n'
+
+                if flag_set('fflag_feat_utc_210_prediction_validation_15082025', user='auto'):
+                    raise ValidationError({'predictions': [error_message]})
+                else:
+                    logger.error(
+                        f'Prediction validation failed, not raising error - ({len(validation_errors)} errors):\n{error_message}'
+                    )
 
         if commit_to_project:
             # Immediately create project tasks and update project states and counters
@@ -405,8 +415,59 @@ class ImportAPI(generics.CreateAPIView):
 
 
 # Import
-@extend_schema(exclude=True)
+@method_decorator(
+    name='post',
+    decorator=extend_schema(
+        tags=['Import'],
+        summary='Import predictions',
+        description='Import model predictions for tasks in the specified project.',
+        parameters=[
+            OpenApiParameter(
+                name='id',
+                type=OpenApiTypes.INT,
+                location='path',
+                description='A unique integer value identifying this project.',
+            ),
+        ],
+        request=PredictionSerializer(many=True),
+        responses={
+            201: OpenApiResponse(
+                description='Predictions successfully imported',
+                response={
+                    'title': 'Predictions import response',
+                    'description': 'Import result',
+                    'type': 'object',
+                    'properties': {
+                        'created': {
+                            'title': 'created',
+                            'description': 'Number of predictions created',
+                            'type': 'integer',
+                        }
+                    },
+                },
+            ),
+            400: OpenApiResponse(
+                description='Bad Request',
+            ),
+        },
+        extensions={
+            'x-fern-sdk-group-name': 'projects',
+            'x-fern-sdk-method-name': 'import_predictions',
+            'x-fern-audiences': ['public'],
+        },
+    ),
+)
 class ImportPredictionsAPI(generics.CreateAPIView):
+    """
+    API for importing predictions to a project.
+
+    Memory optimization controlled by feature flag:
+    'fflag_fix_back_4620_memory_efficient_predictions_import_08012025_short'
+
+    When flag is enabled: Uses memory-efficient batch processing (reduces memory usage by 90-99%)
+    When flag is disabled: Uses legacy implementation for safe fallback
+    """
+
     permission_required = all_permissions.projects_change
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     serializer_class = PredictionSerializer
@@ -416,27 +477,145 @@ class ImportPredictionsAPI(generics.CreateAPIView):
         # check project permissions
         project = self.get_object()
 
+        # Use feature flag to control memory-efficient implementation rollout
+        if flag_set('fflag_fix_back_4620_memory_efficient_predictions_import_08012025_short', user=self.request.user):
+            return self._create_memory_efficient(project)
+        else:
+            return self._create_legacy(project)
+
+    def _create_memory_efficient(self, project):
+        """Memory-efficient batch processing implementation"""
+        # Configure batch processing settings
+        # Use smaller batch size for processing to avoid memory issues
+        PROCESSING_BATCH_SIZE = getattr(settings, 'PREDICTION_IMPORT_BATCH_SIZE', 500)
+
+        request_data = self.request.data
+        total_predictions = len(request_data)
+
+        logger.debug(
+            f'Importing {total_predictions} predictions to project {project} using memory-efficient batch processing (batch size: {PROCESSING_BATCH_SIZE})'
+        )
+
+        total_created = 0
+        all_task_ids = set()
+
+        # Process predictions in smaller batches to avoid memory issues
+        for batch_start in range(0, total_predictions, PROCESSING_BATCH_SIZE):
+            batch_end = min(batch_start + PROCESSING_BATCH_SIZE, total_predictions)
+            batch_items = request_data[batch_start:batch_end]
+
+            # Extract task IDs for this batch
+            batch_task_ids = [item.get('task') for item in batch_items]
+
+            # Validate that all task IDs in this batch exist in the project
+            # This is much more memory efficient than loading all project task IDs upfront
+            existing_task_ids = set(
+                Task.objects.filter(project=project, id__in=batch_task_ids).values_list('id', flat=True)
+            )
+
+            # Build predictions for this batch
+            batch_predictions = []
+            for item in batch_items:
+                task_id = item.get('task')
+
+                if task_id not in existing_task_ids:
+                    raise ValidationError(
+                        f'{item} contains invalid "task" field: task ID {task_id} ' f'not found in project {project}'
+                    )
+
+                batch_predictions.append(
+                    Prediction(
+                        task_id=task_id,
+                        project_id=project.id,
+                        result=Prediction.prepare_prediction_result(item.get('result'), project),
+                        score=item.get('score'),
+                        model_version=item.get('model_version', 'undefined'),
+                    )
+                )
+                all_task_ids.add(task_id)
+
+            # Bulk create this batch with the configured batch size
+            batch_created = Prediction.objects.bulk_create(batch_predictions, batch_size=settings.BATCH_SIZE)
+            total_created += len(batch_created)
+
+            logger.debug(
+                f'Processed batch {batch_start}-{batch_end-1}: created {len(batch_created)} predictions '
+                f'(total so far: {total_created})'
+            )
+
+        # Update task counters for all affected tasks
+        # Only pass the unique task IDs that were actually processed
+        if all_task_ids:
+            start_job_async_or_sync(update_tasks_counters, Task.objects.filter(id__in=all_task_ids))
+
+        return Response({'created': total_created}, status=status.HTTP_201_CREATED)
+
+    def _create_legacy(self, project):
+        """Legacy implementation - kept for safe rollback"""
         tasks_ids = set(Task.objects.filter(project=project).values_list('id', flat=True))
 
         logger.debug(
-            f'Importing {len(self.request.data)} predictions to project {project} with {len(tasks_ids)} tasks'
+            f'Importing {len(self.request.data)} predictions to project {project} with {len(tasks_ids)} tasks (legacy mode)'
         )
+
+        li = LabelInterface(project.label_config)
+
+        # Validate all predictions before creating any
+        validation_errors = []
         predictions = []
-        for item in self.request.data:
+
+        for i, item in enumerate(self.request.data):
+            # Validate task ID
             if item.get('task') not in tasks_ids:
-                raise ValidationError(
-                    f'{item} contains invalid "task" field: corresponding task ID couldn\'t be retrieved '
-                    f'from project {project} tasks'
+                if flag_set('fflag_feat_utc_210_prediction_validation_15082025', user='auto'):
+                    validation_errors.append(
+                        f'Prediction {i}: Invalid task ID {item.get("task")} - task not found in project'
+                    )
+                    continue
+                else:
+                    # Before change we raised only here
+                    raise ValidationError(
+                        f'{item} contains invalid "task" field: corresponding task ID couldn\'t be retrieved '
+                        f'from project {project} tasks'
+                    )
+
+            # Validate prediction using LabelInterface only
+            try:
+                validation_errors_list = li.validate_prediction(item, return_errors=True)
+
+                # If prediction is invalid, add error to validation_errors list and continue to next prediction
+                if validation_errors_list:
+                    # Format errors for better readability
+                    for error in validation_errors_list:
+                        validation_errors.append(f'Prediction {i}: {error}')
+                    continue
+
+            except Exception as e:
+                validation_errors.append(f'Prediction {i}: Error validating prediction - {str(e)}')
+                continue
+
+            # If prediction is valid, add it to predictions list to be created
+            try:
+                predictions.append(
+                    Prediction(
+                        task_id=item['task'],
+                        project_id=project.id,
+                        result=Prediction.prepare_prediction_result(item.get('result'), project),
+                        score=item.get('score'),
+                        model_version=item.get('model_version', 'undefined'),
+                    )
                 )
-            predictions.append(
-                Prediction(
-                    task_id=item['task'],
-                    project_id=project.id,
-                    result=Prediction.prepare_prediction_result(item.get('result'), project),
-                    score=item.get('score'),
-                    model_version=item.get('model_version', 'undefined'),
-                )
-            )
+            except Exception as e:
+                validation_errors.append(f'Prediction {i}: Failed to create prediction - {str(e)}')
+                continue
+
+        # If there are validation errors, raise them before creating any predictions
+        if validation_errors:
+            if flag_set('fflag_feat_utc_210_prediction_validation_15082025', user='auto'):
+                raise ValidationError(validation_errors)
+            else:
+                logger.error(f'Prediction validation failed ({len(validation_errors)} errors):\n{validation_errors}')
+
         predictions_obj = Prediction.objects.bulk_create(predictions, batch_size=settings.BATCH_SIZE)
         start_job_async_or_sync(update_tasks_counters, Task.objects.filter(id__in=tasks_ids))
         return Response({'created': len(predictions_obj)}, status=status.HTTP_201_CREATED)
@@ -582,7 +761,7 @@ class ReImportAPI(ImportAPI):
         Retrieve the list of uploaded files used to create labeling tasks for a specific project.
         """,
         extensions={
-            'x-fern-sdk-group-name': ['projects', 'file_uploads'],
+            'x-fern-sdk-group-name': ['files'],
             'x-fern-sdk-method-name': 'list',
             'x-fern-audiences': ['public'],
         },
@@ -597,7 +776,7 @@ class ReImportAPI(ImportAPI):
         Delete uploaded files for a specific project.
         """,
         extensions={
-            'x-fern-sdk-group-name': ['projects', 'file_uploads'],
+            'x-fern-sdk-group-name': ['files'],
             'x-fern-sdk-method-name': 'delete_many',
             'x-fern-audiences': ['public'],
         },
@@ -646,7 +825,7 @@ class FileUploadListAPI(generics.mixins.ListModelMixin, generics.mixins.DestroyM
         summary='Get file upload',
         description='Retrieve details about a specific uploaded file.',
         extensions={
-            'x-fern-sdk-group-name': ['projects', 'file_uploads'],
+            'x-fern-sdk-group-name': ['files'],
             'x-fern-sdk-method-name': 'get',
             'x-fern-audiences': ['public'],
         },
@@ -660,7 +839,7 @@ class FileUploadListAPI(generics.mixins.ListModelMixin, generics.mixins.DestroyM
         description='Update a specific uploaded file.',
         request=FileUploadSerializer,
         extensions={
-            'x-fern-sdk-group-name': ['projects', 'file_uploads'],
+            'x-fern-sdk-group-name': ['files'],
             'x-fern-sdk-method-name': 'update',
             'x-fern-audiences': ['public'],
         },
@@ -673,7 +852,7 @@ class FileUploadListAPI(generics.mixins.ListModelMixin, generics.mixins.DestroyM
         summary='Delete file upload',
         description='Delete a specific uploaded file.',
         extensions={
-            'x-fern-sdk-group-name': ['projects', 'file_uploads'],
+            'x-fern-sdk-group-name': ['files'],
             'x-fern-sdk-method-name': 'delete',
             'x-fern-audiences': ['public'],
         },
@@ -706,7 +885,7 @@ class FileUploadAPI(generics.RetrieveUpdateDestroyAPIView):
         summary='Download file',
         description='Download a specific uploaded file.',
         extensions={
-            'x-fern-sdk-group-name': ['projects', 'file_uploads'],
+            'x-fern-sdk-group-name': ['files'],
             'x-fern-sdk-method-name': 'download',
             'x-fern-audiences': ['public'],
         },

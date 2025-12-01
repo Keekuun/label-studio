@@ -3,7 +3,7 @@ title: Coreference Resolution and Entity Linking
 type: templates
 category: Conversational AI
 cat: conversational-ai
-order: 403
+order: 810
 meta_title: Coreference Entity Resolution and Linking Data Labeling Template
 meta_description: Template for labeling text data with coreferences to perform entity resolution and entity linking with Label Studio for your machine learning and data science projects.
 ---

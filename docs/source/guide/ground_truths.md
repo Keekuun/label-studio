@@ -27,6 +27,14 @@ Open the task to review its annotations. Click the star icon at the bottom to se
 !!! note
     A task can only have one annotation set as the ground truth annotation for the task. If you set a new annotation for a task as a ground truth, the previous annotation for that task set as a ground truth is updated to no longer be a ground truth annotation.
 
+## Set ground truths by user
+
+To bulk update tasks to ensure that annotations from a specific annotator should be considered ground truth, first select the tasks you want to update. 
+
+Then select **Actions >Set Ground Truths**. You can then select from a list of annotators. 
+
+![screenshot of ground truth column](/images/review/ground-truth-set.png)
+
 ## Review existing ground truth annotations
 
 You can identify which tasks already have a ground truth using the **Ground Truth** column in the Data Manager:
@@ -35,10 +43,16 @@ You can identify which tasks already have a ground truth using the **Ground Trut
 
 You can also use a filter to include or exclude tasks that have ground truths set. 
 
-### Remove ground truth annotations
+## View ground truths in the inter-annotator agreement popover
+
+Hover over the **Agreement** column to view a pop-over showing inter-annotator agreement. Annotations that have been marked ground truth are indicated with a star icon ⭐️:
+
+<img src="/images/review/iaa-popover.png" alt="" class="gif-border" style="max-width:705px" />
+
+
+## Remove ground truth annotations
 
 To remove a single ground truth annotation, simply open the task and click the star icon again to unset it. 
 
-To remove multiple ground truth annotations, select the checkboxes next to the tasks in the Data Manager and then select **Delete Ground Truths**. 
+To remove multiple ground truth annotations, select the checkboxes next to the tasks in the Data Manager and then select **Actions > Delete Ground Truths**. 
 
-![screenshot of Tasks menu](/images/tasks_menu.png)

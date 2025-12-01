@@ -49,6 +49,31 @@ export const multipleTimelineRegionsResult = [
   },
 ];
 
+export const multipleTimelineRegionsLongResult = [
+  {
+    value: {
+      ranges: [{ start: 5, end: 10 }],
+      timelinelabels: ["Movement"],
+    },
+    id: "timeline_region_1",
+    from_name: "timeline",
+    to_name: "video",
+    type: "timeserieslabels",
+    origin: "manual",
+  },
+  {
+    value: {
+      ranges: [{ start: 15, end: 50 }],
+      timelinelabels: ["Nothing"],
+    },
+    id: "timeline_region_2",
+    from_name: "timeline",
+    to_name: "video",
+    type: "timeserieslabels",
+    origin: "manual",
+  },
+];
+
 // Overlapping timeline regions (frames 8-12 and 10-18)
 export const overlappingTimelineRegionsResult = [
   {

@@ -1,14 +1,14 @@
 # syntax=docker/dockerfile:1
 ARG NODE_VERSION=22
-ARG PYTHON_VERSION=3.12
-ARG POETRY_VERSION=2.1.3
+ARG PYTHON_VERSION=3.13
+ARG POETRY_VERSION=2.1.4
 ARG VERSION_OVERRIDE
 ARG BRANCH_OVERRIDE
 
 ################################ Overview
 
 # This Dockerfile builds a Label Studio environment.
-# It consists of three main stages:
+# It consists of five main stages:
 # 1. "frontend-builder" - Compiles the frontend assets using Node.
 # 2. "frontend-version-generator" - Generates version files for frontend sources.
 # 3. "venv-builder" - Prepares the virtualenv environment.
@@ -16,7 +16,7 @@ ARG BRANCH_OVERRIDE
 # 5. "prod" - Creates the final production image with the Label Studio, Nginx, and other dependencies.
 
 ################################ Stage: frontend-builder (build frontend assets)
-FROM --platform=${BUILDPLATFORM} node:${NODE_VERSION} AS frontend-builder
+FROM --platform=${BUILDPLATFORM} node:${NODE_VERSION}-trixie AS frontend-builder
 ENV BUILD_NO_SERVER=true \
     BUILD_NO_HASH=true \
     BUILD_NO_CHUNKS=true \
@@ -34,25 +34,25 @@ RUN yarn config set network-timeout 1200000 # HTTP timeout used when downloading
 COPY web/package.json .
 COPY web/yarn.lock .
 COPY web/tools tools
-RUN --mount=type=cache,target=${YARN_CACHE_FOLDER},sharing=locked \
-    --mount=type=cache,target=${NX_CACHE_DIRECTORY},sharing=locked \
+RUN --mount=type=cache,target=/root/web/.yarn,id=yarn-cache,sharing=locked \
+    --mount=type=cache,target=/root/web/.nx,id=nx-cache,sharing=locked \
     yarn install --prefer-offline --no-progress --pure-lockfile --frozen-lockfile --ignore-engines --non-interactive --production=false
 
-COPY web .
+COPY web/ .
 COPY pyproject.toml ../pyproject.toml
-RUN --mount=type=cache,target=${YARN_CACHE_FOLDER},sharing=locked \
-    --mount=type=cache,target=${NX_CACHE_DIRECTORY},sharing=locked \
+RUN --mount=type=cache,target=/root/web/.yarn,id=yarn-cache,sharing=locked \
+    --mount=type=cache,target=/root/web/.nx,id=nx-cache,sharing=locked \
     yarn run build
 
 ################################ Stage: frontend-version-generator
 FROM frontend-builder AS frontend-version-generator
-RUN --mount=type=cache,target=${YARN_CACHE_FOLDER},sharing=locked \
-    --mount=type=cache,target=${NX_CACHE_DIRECTORY},sharing=locked \
+RUN --mount=type=cache,target=/root/web/.yarn,id=yarn-cache,sharing=locked \
+    --mount=type=cache,target=/root/web/.nx,id=nx-cache,sharing=locked \
     --mount=type=bind,source=.git,target=../.git \
     yarn version:libs
 
 ################################ Stage: venv-builder (prepare the virtualenv)
-FROM python:${PYTHON_VERSION}-slim AS venv-builder
+FROM python:${PYTHON_VERSION}-slim-trixie AS venv-builder
 ARG POETRY_VERSION
 
 ENV PYTHONUNBUFFERED=1 \
@@ -64,13 +64,14 @@ ENV PYTHONUNBUFFERED=1 \
     POETRY_CACHE_DIR="/.poetry-cache" \
     POETRY_HOME="/opt/poetry" \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON=true \
     PATH="/opt/poetry/bin:$PATH"
 
 ADD https://install.python-poetry.org /tmp/install-poetry.py
 RUN python /tmp/install-poetry.py
 
-RUN --mount=type=cache,target="/var/cache/apt",sharing=locked \
-    --mount=type=cache,target="/var/lib/apt/lists",sharing=locked \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     set -eux; \
     apt-get update; \
     apt-get install --no-install-recommends -y \
@@ -90,8 +91,8 @@ COPY pyproject.toml poetry.lock README.md ./
 # Set a default build argument for including dev dependencies
 ARG INCLUDE_DEV=false
 
-# Install dependencies without dev packages
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR,sharing=locked \
+# Install dependencies
+RUN --mount=type=cache,target=/.poetry-cache,id=poetry-cache,sharing=locked \
     poetry check --lock && \
     if [ "$INCLUDE_DEV" = "true" ]; then \
         poetry install --no-root --extras uwsgi --with test; \
@@ -101,7 +102,7 @@ RUN --mount=type=cache,target=$POETRY_CACHE_DIR,sharing=locked \
 
 # Install LS
 COPY label_studio label_studio
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR,sharing=locked \
+RUN --mount=type=cache,target=/.poetry-cache,id=poetry-cache,sharing=locked \
     # `--extras uwsgi` is mandatory here due to poetry bug: https://github.com/python-poetry/poetry/issues/7302
     poetry install --only-root --extras uwsgi && \
     python3 label_studio/manage.py collectstatic --no-input
@@ -116,7 +117,7 @@ RUN --mount=type=bind,source=.git,target=./.git \
     VERSION_OVERRIDE=${VERSION_OVERRIDE} BRANCH_OVERRIDE=${BRANCH_OVERRIDE} poetry run python label_studio/core/version.py
 
 ################################### Stage: prod
-FROM python:${PYTHON_VERSION}-slim AS production
+FROM python:${PYTHON_VERSION}-slim-trixie AS production
 
 ENV LS_DIR=/label-studio \
     HOME=/label-studio \
@@ -130,25 +131,13 @@ ENV LS_DIR=/label-studio \
 WORKDIR $LS_DIR
 
 # install prerequisites for app
-RUN --mount=type=cache,target="/var/cache/apt",sharing=locked \
-    --mount=type=cache,target="/var/lib/apt/lists",sharing=locked \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     set -eux; \
     apt-get update; \
     apt-get upgrade -y; \
-    apt-get install --no-install-recommends -y libexpat1 libgl1-mesa-glx libglib2.0-0 \
-        gnupg2 curl; \
-    apt-get autoremove -y
-
-# install nginx
-RUN --mount=type=cache,target="/var/cache/apt",sharing=locked \
-    --mount=type=cache,target="/var/lib/apt/lists",sharing=locked \
-    set -eux; \
-    curl -sSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o /etc/apt/keyrings/nginx-archive-keyring.gpg >/dev/null; \
-    DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release); \
-    printf "deb [signed-by=/etc/apt/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/debian ${DEBIAN_VERSION} nginx\n" > /etc/apt/sources.list.d/nginx.list; \
-    printf "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" > /etc/apt/preferences.d/99nginx; \
-    apt-get update; \
-    apt-get install --no-install-recommends -y nginx; \
+    apt-get install --no-install-recommends -y libexpat1 libgl1 libglx-mesa0 libglib2.0-0t64 \
+        gnupg2 curl nginx; \
     apt-get autoremove -y
 
 RUN set -eux; \

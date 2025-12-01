@@ -1,7 +1,8 @@
 import { configure } from "mobx";
-import { createRoot } from "react-dom/client";
-import { toCamelCase } from "strman";
 import { destroy } from "mobx-state-tree";
+import { render, unmountComponentAtNode } from "react-dom";
+import { createRoot } from "react-dom/client";
+import camelCase from "lodash/camelCase";
 import { LabelStudio as LabelStudioReact } from "./Component";
 import App from "./components/App/App";
 import { configureStore } from "./configureStore";
@@ -10,12 +11,11 @@ import { Hotkey } from "./core/Hotkey";
 import defaultOptions from "./defaultOptions";
 import { destroy as destroySharedStore } from "./mixins/SharedChoiceStore/mixin";
 import { EventInvoker } from "./utils/events";
-import { isDefined } from "./utils/utilities";
+import { FF_LSDV_4620_3_ML, isFF } from "./utils/feature-flags";
 import { cleanDomAfterReact, findReactKey } from "./utils/reactCleaner";
-import { render, unmountComponentAtNode } from "react-dom";
-import { isFF } from "./utils/feature-flags";
-import { FF_LSDV_4620_3_ML } from "./utils/feature-flags";
+import { isDefined } from "./utils/utilities";
 
+// Extend window interface for TypeScript
 declare global {
   interface Window {
     Htx: any;
@@ -96,6 +96,10 @@ export class LabelStudio {
     } else {
       this.createAppV17();
     }
+
+    // @todo whole approach to hotkeys should be rewritten,
+    // @todo but for now we need a way to export Hotkey to different app
+    if (window.Htx) window.Htx.Hotkey = Hotkey;
 
     this.supportLegacyEvents();
 
@@ -253,7 +257,7 @@ export class LabelStudio {
       const callback = this.options[key];
 
       if (isDefined(callback)) {
-        const eventName = toCamelCase(key.replace(/^on/, ""));
+        const eventName = camelCase(key.replace(/^on/, ""));
 
         this.events.on(eventName, callback);
       }

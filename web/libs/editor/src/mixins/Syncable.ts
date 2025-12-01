@@ -2,13 +2,14 @@ import { type Instance, types } from "mobx-state-tree";
 import { ff } from "@humansignal/core";
 import { FF_DEV_3391 } from "../utils/feature-flags";
 
+const isSyncedBuffering = ff.isActive(ff.FF_SYNCED_BUFFERING);
 /**
  * Supress all additional events during this window in ms.
  * 100ms is too short to notice, but covers enough frames (~6) for back and forth events.
  */
 export const SYNC_WINDOW = 100;
 
-export type SyncEvent = "play" | "pause" | "seek" | "speed";
+export type SyncEvent = "play" | "pause" | "seek" | "speed" | "buffering";
 
 /**
  * Currently only for reference, MST mixins don't allow to apply this interface
@@ -26,6 +27,7 @@ export interface SyncDataFull {
   time: number;
   playing: boolean;
   speed: number;
+  buffering: boolean;
 }
 
 export type SyncData = Partial<SyncDataFull>;
@@ -37,6 +39,15 @@ export class SyncManager {
   syncTargets = new Map<string, Instance<typeof SyncableMixin>>();
   locked: string | null = null; // refers to the main tag, which locked this sync
   audioTags = 0; // number of audio tags in the group to control muted state
+  bufferingOrigins = new Set<string>(); // tracks which components are currently buffering
+
+  get isBuffering(): boolean {
+    return isSyncedBuffering ? this.bufferingOrigins.size > 0 : false;
+  }
+
+  isBufferingOrigin(name: string) {
+    return this.bufferingOrigins.has(name);
+  }
 
   register(syncTarget: Instance<typeof SyncableMixin>) {
     this.syncTargets.set(syncTarget.name, syncTarget);
@@ -49,6 +60,22 @@ export class SyncManager {
     // @todo remove manager on empty set
   }
 
+  isLockable(event: SyncEvent) {
+    if (!isSyncedBuffering) return true;
+
+    // buffering does not cause loops at all, so it should not lock the sync
+    if (event === "buffering") {
+      return false;
+    }
+
+    // play/pause events during buffering should not cause loops and should be processed anyhow, so we should avoid locking for them
+    if (this.isBuffering && ["play", "pause"].includes(event)) {
+      return false;
+    }
+
+    return true;
+  }
+
   /**
    * Sync `origin` state (in `data`) to connected tags.
    * No back-sync to origin of the event.
@@ -59,15 +86,30 @@ export class SyncManager {
    * @returns {boolean} false if event was suppressed, because it's inside other event sync window
    */
   sync(data: SyncData, event: SyncEvent, origin: string) {
-    // @todo remove
-    if (!this.locked || this.locked === origin) console.log("SYNC", { event, locked: this.locked, data, origin });
+    // Buffering event logging
+    if (event === "buffering") {
+      if (data.buffering) {
+        this.bufferingOrigins.add(origin);
+      } else {
+        this.bufferingOrigins.delete(origin);
+      }
+    }
 
-    ///// locking mechanism
-    // also send events came from original tag even when sync window is locked,
-    // this allows to correct state in case of coupled events like play + seek.
-    if (this.locked && this.locked !== origin) return false;
-    if (!this.locked) setTimeout(() => (this.locked = null), SYNC_WINDOW);
-    this.locked = origin;
+    const shouldSkipLocking = !this.isLockable(event);
+
+    // @todo remove
+    if (shouldSkipLocking || !this.locked || this.locked === origin)
+      console.log("SYNC", { event, locked: this.locked, data, origin });
+
+    if (!shouldSkipLocking) {
+      if (this.locked && this.locked !== origin)
+        ///// locking mechanism
+        // also send events came from original tag even when sync window is locked,
+        // this allows to correct state in case of coupled events like play + seek.
+        return false;
+      if (!this.locked) setTimeout(() => (this.locked = null), SYNC_WINDOW);
+      this.locked = origin;
+    }
 
     for (const target of this.syncTargets.values()) {
       if (origin !== target.name) {
@@ -126,6 +168,8 @@ const SyncableMixin = types
   .volatile<SyncableProps>(() => ({
     syncHandlers: new Map(),
     syncManager: null,
+    isBuffering: false,
+    wasPlayingBeforeBuffering: false,
   }))
   .actions(() => ({
     syncMuted(_muted: boolean) {

@@ -3,7 +3,6 @@ import React, {} from "react";
 import { observer } from "mobx-react";
 import * as d3 from "d3";
 import { errorBuilder } from "../../core/DataValidator/ConfigValidator";
-import { cloneNode } from "../../core/Helpers";
 import { checkD3EventLoop, getOptimalWidth, getRegionColor, sparseValues } from "../../tags/object/TimeSeries/helpers";
 import { markerSymbol } from "../../tags/object/TimeSeries/symbols";
 import {} from "../../utils/feature-flags";
@@ -113,7 +112,7 @@ class TimeSeriesVisualizerD3 extends React.Component {
       if (newRegion && Math.abs(newRegion.x - x) < 4) {
         clearTimeout(this.newRegionTimer);
         if (!readonly) {
-          parent?.regionChanged(newRegion.range, ranges.length, newRegion.states);
+          parent?.regionChanged(newRegion.range, ranges.length);
         }
         this.newRegion = null;
         this.newRegionTimer = null;
@@ -121,7 +120,6 @@ class TimeSeriesVisualizerD3 extends React.Component {
         // 1st click - store the data
         this.newRegion = {
           range: this.getRegion([x, x]),
-          states: activeStates.map((s) => cloneNode(s)),
           x,
         };
         // clear it in 300ms if there no 2nd click
@@ -715,10 +713,6 @@ class TimeSeriesVisualizerD3 extends React.Component {
       channel.optimizedSeries = series;
     }
 
-    const times = series.map((x) => {
-      return x[time];
-    });
-
     const values = series.map((x) => {
       return x[column];
     });
@@ -826,8 +820,8 @@ class TimeSeriesVisualizerD3 extends React.Component {
           : item.fixedscale
         : channelItem.fixedscale;
 
-    if (item.timerange) {
-      const timerange = item.timerange.split(",").map(Number);
+    if (channelItem.timerange) {
+      const timerange = channelItem.timerange.split(",").map(Number);
 
       channel.x.domain(timerange);
     }
@@ -848,8 +842,8 @@ class TimeSeriesVisualizerD3 extends React.Component {
         if (max < values[i]) max = values[i];
       }
 
-      if (item.datarange) {
-        const datarange = item.datarange.split(",");
+      if (channelItem.datarange) {
+        const datarange = channelItem.datarange.split(",");
 
         if (datarange[0] !== "") min = new Number(datarange[0]);
         if (datarange[1] !== "") max = new Number(datarange[1]);

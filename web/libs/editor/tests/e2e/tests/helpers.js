@@ -237,6 +237,44 @@ const waitForAudio = async () => {
   console.log("All audio elements are ready or timed out");
 };
 
+const waitForAudioCanvases = async () => {
+  const audioCanvases = document.querySelectorAll("canvas.waveform-layer-main");
+
+  await Promise.all(
+    [...audioCanvases].map((canvas, index) => {
+      return Promise.race([
+        new Promise((resolve) => {
+          const checkCanvas = () => {
+            const isCanvasReady = canvas.width > 0 && canvas.height > 0;
+            if (isCanvasReady) {
+              const ctx = canvas.getContext("2d");
+              const pixel = ctx.getImageData(1, 1, 1, 1);
+              const isTransparent =
+                pixel.datap[0] === 0 && pixel.datap[1] === 0 && pixel.datap[2] === 0 && pixel.data[3] === 0;
+              if (!isTransparent) {
+                console.log(`Audio canvas ${index} is ready`);
+                resolve(true);
+              }
+            } else {
+              console.log(`Audio canvas ${index} not ready yet, checking again...`);
+              setTimeout(checkCanvas, 100);
+            }
+          };
+
+          checkCanvas();
+        }),
+        // Add a timeout to prevent hanging indefinitely
+        new Promise((resolve) =>
+          setTimeout(() => {
+            console.log(`Audio ${index} timeout reached, current readyState: ${audio.readyState}`);
+            resolve(true);
+          }, 5000),
+        ),
+      ]);
+    }),
+  );
+};
+
 /**
  * Wait for objects ready
  */
@@ -921,6 +959,7 @@ module.exports = {
   createAddEventListenerScript,
   waitForImage,
   waitForAudio,
+  waitForAudioCanvases,
   getCurrentMedia,
   waitForObjectsReady,
   delay,

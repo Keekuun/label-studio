@@ -1,6 +1,6 @@
 import type React from "react";
 import { type FC, type MouseEvent, useEffect, useState } from "react";
-import { Block, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 
 import "./AudioControl.scss";
 import { IconSoundConfig, IconSoundMutedConfig } from "@humansignal/ui";
@@ -54,7 +54,7 @@ export const AudioControl: FC<AudioControlProps> = ({ volume, onVolumeChange, on
 
   const renderModal = () => {
     return (
-      <Elem name="modal">
+      <div className={cn("audio-control").elem("modal").toClassName()}>
         <Slider
           min={0}
           max={MAX_VOL}
@@ -64,26 +64,29 @@ export const AudioControl: FC<AudioControlProps> = ({ volume, onVolumeChange, on
           info={i18n.t('volume_info')}
         />
         {renderMuteButton()}
-      </Elem>
+      </div>
     );
   };
 
   const renderMuteButton = () => {
     return (
-      <Elem name={"mute"}>
-        <Elem name="mute-button" onClick={handleSetMute}>
+      <div className={cn("audio-control").elem("mute").toClassName()}>
+        <div className={cn("audio-control").elem("mute-button").toClassName()} onClick={handleSetMute}>
           {isMuted ? i18n.t('unmute') : i18n.t('mute')}
-        </Elem>
-      </Elem>
+        </div>
+      </div>
     );
   };
 
   return (
-    <Block name="audio-control" onClick={(e: MouseEvent<HTMLButtonElement>) => e.stopPropagation()}>
+    <div
+      className={cn("audio-control").toClassName()}
+      onClick={(e: MouseEvent<HTMLButtonElement>) => e.stopPropagation()}
+    >
       <ControlButton look={audioModal ? "filled" : undefined} onClick={onSetModal}>
         {isMuted ? <IconSoundMutedConfig /> : <IconSoundConfig />}
       </ControlButton>
       {audioModal && renderModal()}
-    </Block>
+    </div>
   );
 };

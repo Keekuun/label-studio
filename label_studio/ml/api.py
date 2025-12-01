@@ -440,7 +440,25 @@ class MLBackendInteractiveAnnotating(APIView):
         tags=['Machine Learning'],
         summary='Get model versions',
         description='Get available versions of the model.',
-        responses={'200': 'List of available versions.'},
+        responses={
+            200: OpenApiResponse(
+                description='List of available versions.',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'versions': {
+                            'type': 'array',
+                            'items': {
+                                'type': 'string',
+                            },
+                        },
+                        'message': {
+                            'type': 'string',
+                        },
+                    },
+                },
+            ),
+        },
         extensions={
             'x-fern-sdk-group-name': 'ml',
             'x-fern-sdk-method-name': 'list_model_versions',
@@ -449,7 +467,7 @@ class MLBackendInteractiveAnnotating(APIView):
     ),
 )
 class MLBackendVersionsAPI(generics.RetrieveAPIView):
-
+    # TODO(jo): implement this view with a serializer and replace the handwritten schema above with it
     permission_required = all_permissions.projects_change
 
     def get(self, request, *args, **kwargs):

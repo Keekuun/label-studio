@@ -1,25 +1,34 @@
+import { IconQuestionOutline } from "@humansignal/icons";
+import { Tooltip } from "@humansignal/ui";
 import { inject } from "mobx-react";
 import { getRoot } from "mobx-state-tree";
 import { useCallback, useMemo } from "react";
 import { useShortcut } from "../../../sdk/hotkeys";
-import { Block, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import { FF_DEV_2536, isFF } from "../../../utils/feature-flags";
 import * as CellViews from "../../CellViews";
 import { Icon } from "../../Common/Icon/Icon";
-import { ImportButton } from "../../Common/SDKButtons";
 import { Spinner } from "../../Common/Spinner";
 import { Table } from "../../Common/Table/Table";
 import { Tag } from "../../Common/Tag/Tag";
-import { Tooltip } from "@humansignal/ui";
-import { IconQuestionOutline } from "@humansignal/icons";
 import { GridView } from "../GridView/GridView";
 import "./Table.scss";
 import { Button } from "@humansignal/ui";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { EmptyState } from "./empty-state";
+import {
+  DENSITY_STORAGE_KEY,
+  DENSITY_COMFORTABLE,
+  DENSITY_COMPACT,
+  ROW_HEIGHT_COMFORTABLE,
+  ROW_HEIGHT_COMPACT,
+} from "../../DataManager/Toolbar/DensityToggle";
 
 const injector = inject(({ store }) => {
   const { dataStore, currentView } = store;
+  const totalTasks = store.project?.task_count ?? store.project?.task_number ?? 0;
+  const foundTasks = dataStore?.total ?? 0;
+
   const props = {
     store,
     dataStore,
@@ -37,6 +46,11 @@ const injector = inject(({ store }) => {
     isLocked: currentView?.locked ?? false,
     hasData: (store.project?.task_count ?? store.project?.task_number ?? dataStore?.total ?? 0) > 0,
     focusedItem: dataStore?.selected ?? dataStore?.highlighted,
+    // Role-based empty state props
+    role: store.SDK?.role ?? null,
+    project: store.project ?? {},
+    hasFilters: (currentView?.filtersApplied ?? 0) > 0,
+    canLabel: totalTasks > 0 && foundTasks > 0,
   };
 
   return props;
@@ -57,12 +71,29 @@ export const DataView = injector(
     hiddenColumns = [],
     hasData = false,
     isLocked,
+    role,
+    project,
+    hasFilters,
+    canLabel,
     ...props
   }) => {
     const [datasetStatusID, setDatasetStatusID] = useState(store.SDK.dataset?.status?.id);
+    const [density, setDensity] = useState(() => {
+      return localStorage.getItem(DENSITY_STORAGE_KEY) ?? DENSITY_COMFORTABLE;
+    });
     const focusedItem = useMemo(() => {
       return props.focusedItem;
     }, [props.focusedItem]);
+
+    // Listen for density changes from any DensityToggle component
+    useEffect(() => {
+      const handleDensityChange = (e) => {
+        setDensity(e.detail);
+      };
+
+      window.addEventListener("dm:density:changed", handleDensityChange);
+      return () => window.removeEventListener("dm:density:changed", handleDensityChange);
+    }, []);
 
     const loadMore = useCallback(async () => {
       if (!dataStore.hasNextPage || dataStore.loading) return Promise.resolve();
@@ -89,7 +120,13 @@ export const DataView = injector(
           <Tag
             key="column-type"
             color="blue"
-            style={{ fontWeight: "500", fontSize: 14, cursor: "pointer", width: 45, padding: 0 }}
+            style={{
+              fontWeight: "500",
+              fontSize: 14,
+              cursor: "pointer",
+              width: 45,
+              padding: 0,
+            }}
           >
             {original?.readableType ?? parent.title}
           </Tag>,
@@ -131,19 +168,19 @@ export const DataView = injector(
       (content) => {
         if (isLoading && total === 0 && !isLabeling) {
           return (
-            <Block name="fill-container">
+            <div className={cn("fill-container").toClassName()}>
               <Spinner size="large" />
-            </Block>
+            </div>
           );
         }
         if (store.SDK.type === "DE" && ["canceled", "failed"].includes(datasetStatusID)) {
           return (
-            <Block name="syncInProgress">
-              <Elem name="title" tag="h3">
-                Failed to sync data
-              </Elem>
-              <Elem name="text">Check your storage settings. You may need to recreate this dataset</Elem>
-            </Block>
+            <div className={cn("syncInProgress").toClassName()}>
+              <h3 className={cn("syncInProgress").elem("title").toClassName()}>Failed to sync data</h3>
+              <div className={cn("syncInProgress").elem("text").toClassName()}>
+                Check your storage settings. You may need to recreate this dataset
+              </div>
+            </div>
           );
         }
         if (
@@ -152,61 +189,84 @@ export const DataView = injector(
           datasetStatusID === "completed"
         ) {
           return (
-            <Block name="syncInProgress">
-              <Elem name="title" tag="h3">
-                Nothing found
-              </Elem>
-              <Elem name="text">Try adjusting the filter or similarity search parameters</Elem>
-            </Block>
+            <div className={cn("syncInProgress").toClassName()}>
+              <h3 className={cn("syncInProgress").elem("title").toClassName()}>Nothing found</h3>
+              <div className={cn("syncInProgress").elem("text").toClassName()}>
+                Try adjusting the filter or similarity search parameters
+              </div>
+            </div>
           );
         }
         if (store.SDK.type === "DE" && (total === 0 || data.length === 0 || !hasData)) {
           return (
-            <Block name="syncInProgress">
-              <Elem name="title" tag="h3">
+            <div className={cn("syncInProgress").toClassName()}>
+              <h3 className={cn("syncInProgress").elem("title").toClassName()}>
                 Hang tight! Records are syncing in the background
-              </Elem>
-              <Elem name="text">Press the button below to see any synced records</Elem>
+              </h3>
+              <div className={cn("syncInProgress").elem("text").toClassName()}>
+                Press the button below to see any synced records
+              </div>
               <Button
                 size="small"
                 look="outlined"
                 onClick={async () => {
-                  await store.fetchProject({ force: true, interaction: "refresh" });
+                  await store.fetchProject({
+                    force: true,
+                    interaction: "refresh",
+                  });
                   await store.currentView?.reload();
                 }}
               >
                 Refresh
               </Button>
-            </Block>
+            </div>
           );
         }
+        // Unified empty state handling - EmptyState now handles all cases internally
         if (total === 0 || !hasData) {
+          // Use unified EmptyState for all cases
           return (
-            <Block name="no-results">
-              <Elem name="description">
-                {hasData ? (
-                  <>
-                    <h3>Nothing found</h3>
-                    Try adjusting the filter
-                  </>
-                ) : (
-                  "Looks like you have not imported any data yet"
-                )}
-              </Elem>
-              {!hasData && !!store.interfaces.get("import") && (
-                <Elem name="navigation">
-                  <ImportButton variant="primary" look="filled" href="./import">
-                    Go to import
-                  </ImportButton>
-                </Elem>
-              )}
-            </Block>
+            <div className={cn("no-results").toClassName()}>
+              <EmptyState
+                // Import functionality props
+                canImport={!!store.interfaces.get("import")}
+                onOpenSourceStorageModal={() => getRoot(store)?.SDK?.invoke?.("openSourceStorageModal")}
+                onOpenImportModal={() => getRoot(store)?.SDK?.invoke?.("importClicked")}
+                // Role-based functionality props
+                userRole={role}
+                project={project}
+                hasData={hasData}
+                hasFilters={hasFilters}
+                canLabel={canLabel}
+                onLabelAllTasks={() => {
+                  // Use the same logic as the main Label All Tasks button
+                  // Set localStorage to indicate "label all" mode (same as main button)
+                  localStorage.setItem("dm:labelstream:mode", "all");
+
+                  // Start label stream mode (DataManager's equivalent of navigating to labeling)
+                  store.startLabelStream();
+                }}
+                onClearFilters={() => {
+                  // Clear all filters from the current view
+                  const currentView = store.currentView;
+                  if (currentView && currentView.filters) {
+                    // Create a copy of the filters array to avoid modification during iteration
+                    const filtersToDelete = [...currentView.filters];
+                    filtersToDelete.forEach((filter) => {
+                      currentView.deleteFilter(filter);
+                    });
+                    // Reload the view to refresh the data
+                    currentView.reload();
+                  }
+                }}
+              />
+            </div>
           );
         }
 
         return content;
       },
-      [hasData, isLabeling, isLoading, total, datasetStatusID],
+      [hasData, isLabeling, isLoading, total, datasetStatusID, role, project, hasFilters, canLabel],
     );
 
     const decorationContent = (col) => {
@@ -266,12 +326,14 @@ export const DataView = injector(
       [commonDecoration],
     );
 
+    const rowHeight = density === DENSITY_COMPACT ? ROW_HEIGHT_COMPACT : ROW_HEIGHT_COMFORTABLE;
+
     const content =
       view.root.isLabeling || viewType === "list" ? (
         <Table
           view={view}
           data={data}
-          rowHeight={70}
+          rowHeight={rowHeight}
           total={total}
           loadMore={loadMore}
           fitContent={isLabeling}
@@ -296,6 +358,7 @@ export const DataView = injector(
           onColumnReset={(col) => {
             col.original.resetWidth();
           }}
+          onDensityChange={setDensity}
         />
       ) : (
         <GridView
@@ -349,9 +412,12 @@ export const DataView = injector(
 
     // Render the UI for your table
     return (
-      <Block name="data-view-dm" className="dm-content" style={{ pointerEvents: isLocked ? "none" : "auto" }}>
+      <div
+        className={cn("data-view-dm").mix("dm-content").toClassName()}
+        style={{ pointerEvents: isLocked ? "none" : "auto" }}
+      >
         {renderContent(content)}
-      </Block>
+      </div>
     );
   },
 );

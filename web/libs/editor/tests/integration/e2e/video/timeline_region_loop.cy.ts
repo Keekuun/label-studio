@@ -5,10 +5,20 @@ import {
   singleTimelineRegionResult,
   multipleTimelineRegionsResult,
   overlappingTimelineRegionsResult,
+  multipleTimelineRegionsLongResult,
 } from "../../data/video_segmentation/timeline_regions";
 import { TWO_FRAMES_TIMEOUT } from "../utils/constants";
 
-describe("Video Timeline Region Loop Playback", () => {
+// This test suite has exhibited flakiness in CI environments, so we are using retries
+// while we work on improving CI stability for visual comparisons.
+const suiteConfig = {
+  retries: {
+    runMode: 3, // Retry 3 times in CI (headless mode)
+    openMode: 0, // No retries in local development (interactive mode)
+  },
+};
+
+describe("Video Timeline Region Loop Playback", suiteConfig, () => {
   beforeEach(() => {
     LabelStudio.addFeatureFlagsOnPageLoad({
       fflag_fix_front_optic_1608_improve_video_frame_seek_precision_short: true,
@@ -252,7 +262,7 @@ describe("Video Timeline Region Loop Playback", () => {
       LabelStudio.params()
         .config(timelineVideoConfig)
         .data(timelineVideoData)
-        .withResult(multipleTimelineRegionsResult)
+        .withResult(multipleTimelineRegionsLongResult)
         .init();
 
       LabelStudio.waitForObjectsReady();

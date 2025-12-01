@@ -66,18 +66,32 @@ def test_views_ordering(ordering, element_index, undefined, business_client, pro
         user=project.created_by, project=project, file=ContentFile('', name='file_upload1')
     )
 
-    task_id_1 = make_task({'data': {task_field_name: 1}, 'file_upload': file_upload1}, project).id
+    task_id_1 = make_task({'data': {task_field_name: 1, 'data': 1}, 'file_upload': file_upload1}, project).id
     make_annotation({'result': [{'1': True}]}, task_id_1)
-    make_prediction({'result': [{'1': True}], 'score': 1}, task_id_1)
+    make_prediction(
+        {
+            'result': [{'from_name': 'test_batch_predictions', 'to_name': 'text', 'value': {'choices': ['class_A']}}],
+            'score': 0.5,
+        },
+        task_id_1,
+    )
 
     file_upload2 = FileUpload.objects.create(
         user=project.created_by, project=project, file=ContentFile('', name='file_upload2')
     )
-    task_id_2 = make_task({'data': {task_field_name: 2}, 'file_upload': file_upload2}, project).id
+    task_id_2 = make_task({'data': {task_field_name: 2, 'data': 2}, 'file_upload': file_upload2}, project).id
     for _ in range(0, 2):
         make_annotation({'result': [{'2': True}], 'was_cancelled': True}, task_id_2)
     for _ in range(0, 2):
-        make_prediction({'result': [{'2': True}], 'score': 2}, task_id_2)
+        make_prediction(
+            {
+                'result': [
+                    {'from_name': 'test_batch_predictions', 'to_name': 'text', 'value': {'choices': ['class_B']}}
+                ],
+                'score': 1,
+            },
+            task_id_2,
+        )
 
     task_ids = [task_id_1, task_id_2]
 
@@ -336,29 +350,61 @@ def test_views_filters(filters, ids, business_client, project_id):
 
     task_data_field_name = settings.DATA_UNDEFINED_NAME
 
-    task_id_1 = make_task({'data': {task_data_field_name: 'some text1'}}, project).id
+    task_id_1 = make_task({'data': {task_data_field_name: 'some text1', 'data': 'some text1'}}, project).id
     make_annotation(
-        {'result': [{'from_name': '1_first', 'to_name': '', 'value': {}}], 'completed_by': ann1}, task_id_1
+        {
+            'result': [
+                {
+                    'from_name': 'test_batch_predictions',
+                    'to_name': 'text',
+                    'value': {'choices': ['class_A']},
+                    'text': 'first annotation',
+                }
+            ],
+            'completed_by': ann1,
+        },
+        task_id_1,
     )
-    make_prediction({'result': [{'from_name': '1_first', 'to_name': '', 'value': {}}], 'score': 1}, task_id_1)
+    make_prediction(
+        {
+            'result': [{'from_name': 'test_batch_predictions', 'to_name': 'text', 'value': {'choices': ['class_A']}}],
+            'score': 1,
+        },
+        task_id_1,
+    )
 
-    task_id_2 = make_task({'data': {task_data_field_name: 'some text2'}}, project).id
+    task_id_2 = make_task({'data': {task_data_field_name: 'some text2', 'data': 'some text2'}}, project).id
     for ann in (ann1, ann2):
         make_annotation(
             {
-                'result': [{'from_name': '2_second', 'to_name': '', 'value': {}}],
+                'result': [
+                    {
+                        'from_name': 'test_batch_predictions',
+                        'to_name': 'text',
+                        'value': {'choices': ['class_B']},
+                        'text': 'second annotation',
+                    }
+                ],
                 'was_cancelled': True,
                 'completed_by': ann,
             },
             task_id_2,
         )
     for _ in range(0, 2):
-        make_prediction({'result': [{'from_name': '2_second', 'to_name': '', 'value': {}}], 'score': 2}, task_id_2)
+        make_prediction(
+            {
+                'result': [
+                    {'from_name': 'test_batch_predictions', 'to_name': 'text', 'value': {'choices': ['class_B']}}
+                ],
+                'score': 2,
+            },
+            task_id_2,
+        )
 
     task_ids = [0, task_id_1, task_id_2]
 
     for _ in range(0, 2):
-        task_id = make_task({'data': {task_data_field_name: 'some text_'}}, project).id
+        task_id = make_task({'data': {task_data_field_name: 'some text_', 'data': 'some text_'}}, project).id
         task_ids.append(task_id)
 
     for item in filters['items']:

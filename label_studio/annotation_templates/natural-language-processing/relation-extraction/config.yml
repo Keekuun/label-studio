@@ -3,7 +3,16 @@ type: community
 group: Natural Language Processing
 order: 5
 image: /static/templates/relation-extraction.png
-details: <h1>Predict attributes and relations for entities in a sentence</h1>
+details: |
+  <h1>Predict attributes and relations for entities in a sentence</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>knowledge base construction, biomedical literature mining, financial entity relationships, legal document analysis, news event extraction, corporate intelligence, supply chain mapping, scientific paper analysis, patent mining, social network analysis, genealogy research, business intelligence</dd>
+    <dt>Associated Models</dt>
+    <dd>distant supervision, joint extraction, transformer models, graph neural networks</dd>
+    <dt>Domain Terminology</dt>
+    <dd>NLP, entity linking, knowledge graph construction, semantic relationships, structured information extraction</dd>
+  </dl>
 config: |
   <View>
      <Relations>

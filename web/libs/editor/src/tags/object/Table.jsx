@@ -31,16 +31,43 @@ const Model = types
     valuetype: types.optional(types.string, "json"),
   })
   .views((self) => ({
+    get isJsonArrayOfObjects() {
+      const value = self._value;
+      return (
+        Array.isArray(value) &&
+        value.length > 0 &&
+        typeof value[0] === "object" &&
+        value[0] !== null &&
+        !Array.isArray(value[0])
+      );
+    },
     get dataSource() {
       const { type } = parseTypeAndOption(self.valuetype);
 
       if (type === "json") {
-        return Object.keys(self._value)
+        const value = self._value;
+
+        // If JSON is an array of objects, treat each object as a row for a normal table
+        if (self.isJsonArrayOfObjects) {
+          return value;
+        }
+
+        // Array of primitives or mixed values → key/value representation with index as key
+        if (Array.isArray(value)) {
+          return value.map((v, idx) => {
+            let val = v;
+            if (typeof val === "object") val = JSON.stringify(val);
+            return { type: String(idx), value: val };
+          });
+        }
+
+        // Object case → key/value representation
+        return Object.keys(value)
           .sort((a, b) => {
             return a.toLowerCase().localeCompare(b.toLowerCase());
           })
           .map((k) => {
-            let val = self._value[k];
+            let val = value[k];
 
             if (typeof val === "object") val = JSON.stringify(val);
             return { type: k, value: val };
@@ -49,7 +76,31 @@ const Model = types
       return self._value;
     },
     get columns() {
-      if (self.valuetype === "json" || !self._value[0]) {
+      const { type } = parseTypeAndOption(self.valuetype);
+      if (type === "json") {
+        const value = self._value;
+        // JSON array of objects → derive columns from union of keys across all rows
+        if (self.isJsonArrayOfObjects) {
+          const allKeys = Array.from(
+            new Set(
+              value.reduce((acc, row) => {
+                if (row && typeof row === "object" && !Array.isArray(row)) {
+                  acc.push(...Object.keys(row));
+                }
+                return acc;
+              }, []),
+            ),
+          );
+
+          return allKeys.map((key) => ({ title: key, dataIndex: key }));
+        }
+        // Otherwise, use generic Name/Value columns
+        return [
+          { title: "Name", dataIndex: "type" },
+          { title: "Value", dataIndex: "value" },
+        ];
+      }
+      if (!self._value[0]) {
         return [
           { title: "Name", dataIndex: "type" },
           { title: "Value", dataIndex: "value" },

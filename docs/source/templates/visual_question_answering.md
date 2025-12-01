@@ -3,7 +3,7 @@ title: Visual Question Answering
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 107
+order: 143
 meta_title: Visual Question Answering Data Labeling Template
 meta_description: Template for performing visual question answering data labeling tasks with Label Studio for your machine learning and data science projects.
 ---

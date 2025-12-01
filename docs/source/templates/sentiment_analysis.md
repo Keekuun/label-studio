@@ -3,7 +3,7 @@ title: Sentiment Analysis Text Classification
 type: templates
 category: Natural Language Processing
 cat: natural-language-processing
-order: 202
+order: 205
 meta_title: Sentiment Analysis Data Labeling Template
 meta_description: Template for classifying the sentiment of text with Label Studio for your machine learning and data science projects.
 ---

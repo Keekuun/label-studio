@@ -18,9 +18,9 @@ stages:
       result:
         - value:
             choices:
-            - Negative
+            - neg
           id: qpQHs3Yy4K
-          from_name: sentiment
+          from_name: label
           to_name: text
           type: choices
       model_version: 'test'
@@ -43,9 +43,9 @@ stages:
       result:
         - value:
             choices:
-            - Negative
+            - neg
           id: qpQHs3Yy4K
-          from_name: sentiment
+          from_name: label
           to_name: text
           type: choices
     status_code: 200
@@ -61,9 +61,9 @@ stages:
         result:
           - value:
               choices:
-              - Negative
+              - neg
             id: qpQHs3Yy4K
-            from_name: sentiment
+            from_name: label
             to_name: text
             type: choices
     status_code: 200
@@ -129,9 +129,9 @@ stages:
       result:
         - value:
             choices:
-            - Negative
+            - neg
           id: qpQHs3Yy4K
-          from_name: sentiment
+          from_name: label
           to_name: text
           type: choices
           model_version: "test"
@@ -179,7 +179,14 @@ stages:
   name: create_prediction
   request:
     json:
-      result: Negative
+      result:
+        - value:
+            choices:
+              - neg
+          id: qpQHs3Yy4K
+          from_name: label
+          to_name: text
+          type: choices
       score: 0.987
       model_version: test_model
       task: '{task_pk}'
@@ -201,7 +208,7 @@ stages:
       result:
         - value:
             choices:
-              - Negative
+              - neg
           from_name: label
           to_name: text
           type: choices

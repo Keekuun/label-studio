@@ -1,8 +1,9 @@
 import { IconExternal, IconFolderAdd, IconHumanSignal, IconUserAdd, IconFolderOpen } from "@humansignal/icons";
-import { Button, SimpleCard, Spinner, Typography } from "@humansignal/ui";
+import { Button, SimpleCard, Spinner, Tooltip, Typography } from "@humansignal/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useUpdatePageTitle } from "@humansignal/core";
 import { HeidiTips } from "../../components/HeidiTips/HeidiTips";
 import { useAPI } from "../../providers/ApiProvider";
 import { CreateProject } from "../CreateProject/CreateProject";
@@ -41,9 +42,9 @@ const actions = [
     type: "createProject",
   },
   {
-    title: "Invite People",
+    title: "Invite Members",
     icon: IconUserAdd,
-    type: "invitePeople",
+    type: "inviteMembers",
   },
 ] as const;
 
@@ -53,6 +54,8 @@ export const HomePage: Page = () => {
   const api = useAPI();
   const [creationDialogOpen, setCreationDialogOpen] = useState(false);
   const [invitationOpen, setInvitationOpen] = useState(false);
+
+  useUpdatePageTitle("Home");
   const { data, isFetching, isSuccess, isError } = useQuery({
     queryKey: ["projects", { page_size: 10 }],
     async queryFn() {
@@ -68,7 +71,7 @@ export const HomePage: Page = () => {
         case "createProject":
           setCreationDialogOpen(true);
           break;
-        case "invitePeople":
+        case "inviteMembers":
           setInvitationOpen(true);
           break;
       }
@@ -209,7 +212,9 @@ function ProjectSimpleCard({
         style={{ borderLeftColor: color }}
       >
         <div className="flex flex-col gap-1">
-          <span className="text-neutral-content">{project.title}</span>
+          <Tooltip title={project.title}>
+            <span className="text-neutral-content truncate">{project.title}</span>
+          </Tooltip>
           <div className="text-neutral-content-subtler text-sm">
             {finished} of {total} Tasks ({total > 0 ? Math.round((finished / total) * 100) : 0}%)
           </div>

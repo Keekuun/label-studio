@@ -183,21 +183,29 @@ class TimeSeriesHelper {
     );
   }
 
-  // Simple region creation using clicks
-  createSimpleRegion(startPercent: number, endPercent: number) {
-    cy.log(`Creating region from ${startPercent}% to ${endPercent}%`);
+  // Simple region creation using dragging
+  drawRegionRelative(x1: number, x2: number) {
+    this.channelContainer
+      .eq(0)
+      .find(".new_brush .overlay")
+      .should("be.visible")
+      .then(($overlay) => {
+        const rect = $overlay[0].getBoundingClientRect();
+        // Calculate relative coordinates (relative to the element, not the viewport)
+        const startX = rect.width * x1;
+        const endX = rect.width * x2;
+        const centerY = rect.height * 0.5;
 
-    this.channelOverlay.should("be.visible").then(($overlay) => {
-      const rect = $overlay[0].getBoundingClientRect();
-      const startX = rect.left + rect.width * (startPercent / 100);
-      const endX = rect.left + rect.width * (endPercent / 100);
-      const centerY = rect.top + rect.height * 0.5;
-
-      // Simple click approach
-      cy.wrap($overlay).click(startX - rect.left, centerY - rect.top, { force: true });
-      cy.wait(100);
-      cy.wrap($overlay).click(endX - rect.left, centerY - rect.top, { force: true });
-    });
+        const eventOptions = {
+          eventConstructor: "MouseEvent",
+          buttons: 1,
+          force: true,
+        };
+        cy.wrap($overlay)
+          .trigger("mousedown", startX, centerY, eventOptions)
+          .trigger("mousemove", endX, centerY, eventOptions)
+          .trigger("mouseup", endX, centerY, eventOptions);
+      });
 
     return this;
   }

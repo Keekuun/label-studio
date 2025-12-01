@@ -26,9 +26,9 @@ stages:
       result:
         - value:
             choices:
-            - Negative
+            - neg
           id: qpQHs3Yy4K
-          from_name: sentiment
+          from_name: label
           to_name: text
           type: choices
           model_version: 1
@@ -52,9 +52,9 @@ stages:
       result:
         - value:
             choices:
-            - Negative
+            - neg
           id: qpQHs3Yy4K
-          from_name: sentiment
+          from_name: label
           to_name: text
           type: choices
           model_version: 1
@@ -78,9 +78,9 @@ stages:
         result:
           - value:
               choices:
-              - Negative
+              - neg
             id: qpQHs3Yy4K
-            from_name: sentiment
+            from_name: label
             to_name: text
             type: choices
     status_code: 200
@@ -177,9 +177,9 @@ stages:
       result:
         - value:
             choices:
-            - Negative
+            - neg
           id: qpQHs3Yy4K
-          from_name: sentiment
+          from_name: label
           to_name: text
           type: choices
           model_version: 1
@@ -203,9 +203,9 @@ stages:
       result:
         - value:
             choices:
-            - Negative
+            - neg
           id: qpQHs3Yy4K
-          from_name: sentiment
+          from_name: label
           to_name: text
           type: choices
           model_version: 1
@@ -229,9 +229,9 @@ stages:
         result:
           - value:
               choices:
-              - Negative
+              - neg
             id: qpQHs3Yy4K
-            from_name: sentiment
+            from_name: label
             to_name: text
             type: choices
     status_code: 200

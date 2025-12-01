@@ -4,6 +4,7 @@ from typing import List, Tuple, Union
 
 from core.feature_flags import flag_set
 from core.utils.common import conditional_atomic, db_is_not_sqlite, load_func
+from core.utils.db import fast_first
 from django.conf import settings
 from django.db.models import BooleanField, Case, Count, Exists, F, Max, OuterRef, Q, QuerySet, Value, When
 from django.db.models.fields import DecimalField
@@ -14,7 +15,17 @@ from users.models import User
 
 logger = logging.getLogger(__name__)
 
+
+# Hook for GT-first gating (Enterprise can override via settings)
+def _oss_should_attempt_gt_first(user: User, project: Project) -> bool:
+    # Open-source default: if project enables GT-first, allow it without onboarding gates
+    return bool(project.show_ground_truth_first)
+
+
 get_tasks_agreement_queryset = load_func(settings.GET_TASKS_AGREEMENT_QUERYSET)
+should_attempt_ground_truth_first = (
+    load_func(settings.SHOULD_ATTEMPT_GROUND_TRUTH_FIRST) or _oss_should_attempt_gt_first
+)
 
 
 def get_next_task_logging_level(user: User) -> int:
@@ -67,10 +78,16 @@ def _try_tasks_with_overlap(tasks: QuerySet[Task]) -> Tuple[Union[Task, None], Q
         return None, tasks.filter(overlap=1)
 
 
-def _try_breadth_first(tasks: QuerySet[Task], user: User) -> Union[Task, None]:
+def _try_breadth_first(tasks: QuerySet[Task], user: User, project: Project) -> Union[Task, None]:
     """Try to find tasks with maximum amount of annotations, since we are trying to label tasks as fast as possible"""
 
-    tasks = tasks.annotate(annotations_count=Count('annotations', filter=~Q(annotations__completed_by=user)))
+    # Exclude ground truth annotations from the count when not in onboarding mode
+    # to prevent GT tasks from being prioritized via breadth-first logic
+    annotation_filter = ~Q(annotations__completed_by=user)
+    if not project.show_ground_truth_first:
+        annotation_filter &= ~Q(annotations__ground_truth=True)
+
+    tasks = tasks.annotate(annotations_count=Count('annotations', filter=annotation_filter))
     max_annotations_count = tasks.aggregate(Max('annotations_count'))['annotations_count__max']
     if max_annotations_count == 0:
         # there is no any labeled tasks found
@@ -142,7 +159,12 @@ def _try_uncertainty_sampling(
 
 
 def get_not_solved_tasks_qs(
-    user: User, project: Project, prepared_tasks: QuerySet[Task], assigned_flag: Union[bool, None], queue_info: str
+    user: User,
+    project: Project,
+    prepared_tasks: QuerySet[Task],
+    assigned_flag: Union[bool, None],
+    queue_info: str,
+    allow_gt_first: bool,
 ) -> Tuple[QuerySet[Task], List[int], str, bool]:
     user_solved_tasks_array = user.annotations.filter(project=project, task__isnull=False)
     user_solved_tasks_array = user_solved_tasks_array.distinct().values_list('task__pk', flat=True)
@@ -157,33 +179,41 @@ def get_not_solved_tasks_qs(
     prioritized_on_agreement = False
     # if annotator is assigned for tasks, he must solve it regardless of is_labeled=True
     if not assigned_flag:
-        # include tasks that have been completed if their agreement is not at threshold if threshold setting is set
+        # low agreement strategy for auto-assigned annotators:
+        # Include tasks that have been completed if their agreement is not at threshold if threshold setting is set
         lse_project = getattr(project, 'lse_project', None)
         if (
             lse_project
-            and flag_set('fflag_feat_optic_161_project_settings_for_low_agreement_threshold_score_short', user='auto')
             and lse_project.agreement_threshold is not None
             and get_tasks_agreement_queryset
             and user.is_project_annotator(project)
         ):
-            not_solved_tasks = (
-                get_tasks_agreement_queryset(not_solved_tasks)
-                # include tasks that are not labeled or are labeled but fall below the agreement threshold
-                .filter(
-                    Q(_agreement__lt=lse_project.agreement_threshold, is_labeled=True) | Q(is_labeled=False)
-                ).annotate(annotators=Count('annotations__completed_by', distinct=True))
-                # skip tasks that have been annotated by the maximum additional number of annotators
-                .filter(annotators__lt=F('overlap') + lse_project.max_additional_annotators_assignable)
+            # Onboarding mode (GT-first) should keep GT tasks eligible regardless of is_labeled/agreement
+            qs = get_tasks_agreement_queryset(not_solved_tasks)
+            qs = qs.annotate(annotators=Count('annotations__completed_by', distinct=True))
+
+            low_agreement_pred = Q(_agreement__lt=lse_project.agreement_threshold, is_labeled=True) | Q(
+                is_labeled=False
             )
+            capacity_pred = Q(annotators__lt=F('overlap') + (lse_project.max_additional_annotators_assignable or 0))
+
+            if project.show_ground_truth_first:
+                gt_subq = Annotation.objects.filter(task=OuterRef('pk'), ground_truth=True)
+                qs = qs.annotate(has_ground_truths=Exists(gt_subq))
+                # Keep all GT tasks + apply low-agreement+capacity to the rest. For sure, we can do:
+                # - if user.solved_tasks_array.count < lse_project.annotator_evaluation_minimum_tasks
+                # - else, apply low-agreement+capacity to the rest (maybe performance will be better)
+                # but it's a question - what is better here. This version is simpler at least from the code perspective.
+                not_solved_tasks = qs.filter(Q(has_ground_truths=True) | (low_agreement_pred & capacity_pred))
+            else:
+                not_solved_tasks = qs.filter(low_agreement_pred & capacity_pred)
+
             prioritized_on_agreement, not_solved_tasks = _prioritize_low_agreement_tasks(not_solved_tasks, lse_project)
 
         # otherwise, filtering out completed tasks is sufficient
         else:
-            # ignore tasks that are already labeled for onboarding mode
-            if not (
-                flag_set('fflag_feat_all_leap_1825_annotator_evaluation_short', user='auto')
-                and project.show_ground_truth_first
-            ):
+            # ignore tasks that are already labeled when GT-first is NOT allowed
+            if not allow_gt_first:
                 not_solved_tasks = not_solved_tasks.filter(is_labeled=False)
 
     if not flag_set('fflag_fix_back_lsdv_4523_show_overlap_first_order_27022023_short'):
@@ -214,19 +244,20 @@ def get_next_task_without_dm_queue(
     not_solved_tasks: QuerySet,
     assigned_flag: Union[bool, None],
     prioritized_low_agreement: bool,
+    allow_gt_first: bool,
 ) -> Tuple[Union[Task, None], bool, str]:
     next_task = None
     use_task_lock = True
     queue_info = ''
 
-    # ordered by data manager
+    # Manually assigned tasks
     if assigned_flag:
         logger.debug(f'User={user} try to get task from assigned')
         next_task = not_solved_tasks.first()
         use_task_lock = False
         queue_info += (' & ' if queue_info else '') + 'Manually assigned queue'
 
-    # If current user has already lock one task - return it (without setting the lock again)
+    # Task lock: if current user already has a locked task, return it (without setting the lock again)
     if not next_task:
         next_task = Task.get_locked_by(user, tasks=not_solved_tasks)
         if next_task:
@@ -234,47 +265,68 @@ def get_next_task_without_dm_queue(
             use_task_lock = False
             queue_info += (' & ' if queue_info else '') + 'Task lock'
 
+    # Ground truth: use precomputed gating for GT-first
+    if not next_task and allow_gt_first:
+        logger.debug(f'User={user} tries ground truth from prepared tasks')
+        next_task = _try_ground_truth(not_solved_tasks, project, user)
+        if next_task:
+            queue_info += (' & ' if queue_info else '') + 'Ground truth queue'
+
+    # Low agreement strategy: reassign this annotator to low agreement tasks
     if not next_task and prioritized_low_agreement:
         logger.debug(f'User={user} tries low agreement from prepared tasks')
         next_task = _get_first_unlocked(not_solved_tasks, user)
-        queue_info += (' & ' if queue_info else '') + 'Low agreement queue'
+        if next_task:
+            queue_info += (' & ' if queue_info else '') + 'Low agreement queue'
 
-    if not next_task and project.show_ground_truth_first:
-        logger.debug(f'User={user} tries ground truth from prepared tasks')
-        next_task = _try_ground_truth(not_solved_tasks, project, user)
-        queue_info += (' & ' if queue_info else '') + 'Ground truth queue'
-
+    # Breadth first: label in-progress tasks first;
     if not next_task and project.maximum_annotations > 1:
-        # if there are any tasks in progress (with maximum number of annotations), randomly sampling from them
+        # if there are already labeled tasks, but task.overlap still < project.maximum_annotations, randomly sampling from them
         logger.debug(f'User={user} tries depth first from prepared tasks')
-        next_task = _try_breadth_first(not_solved_tasks, user)
+        next_task = _try_breadth_first(not_solved_tasks, user, project)
         if next_task:
             queue_info += (' & ' if queue_info else '') + 'Breadth first queue'
 
     return next_task, use_task_lock, queue_info
 
 
-def skipped_queue(next_task, prepared_tasks, project, user, queue_info):
+def skipped_queue(next_task, prepared_tasks, project, user, assigned_flag, queue_info):
     if not next_task and project.skip_queue == project.SkipQueue.REQUEUE_FOR_ME:
         q = Q(project=project, task__isnull=False, was_cancelled=True, task__is_labeled=False)
         skipped_tasks = user.annotations.filter(q).order_by('updated_at').values_list('task__pk', flat=True)
         if skipped_tasks.exists():
             preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(skipped_tasks)])
             skipped_tasks = prepared_tasks.filter(pk__in=skipped_tasks).order_by(preserved_order)
-            next_task = _get_first_unlocked(skipped_tasks, user)
+
+            # for assigned annotators locks don't make sense, moreover,
+            # _get_first_unlocked breaks label stream for manual mode because
+            # it evaluates locks based on auto-mode logic and returns None
+            # when there are no more tasks to label in auto-mode
+            if assigned_flag:
+                next_task = fast_first(skipped_tasks)
+            else:
+                next_task = _get_first_unlocked(skipped_tasks, user)
             queue_info = 'Skipped queue'
 
     return next_task, queue_info
 
 
-def postponed_queue(next_task, prepared_tasks, project, user, queue_info):
+def postponed_queue(next_task, prepared_tasks, project, user, assigned_flag, queue_info):
     if not next_task:
         q = Q(task__project=project, task__isnull=False, was_postponed=True, task__is_labeled=False)
         postponed_tasks = user.drafts.filter(q).order_by('updated_at').values_list('task__pk', flat=True)
         if postponed_tasks.exists():
             preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(postponed_tasks)])
             postponed_tasks = prepared_tasks.filter(pk__in=postponed_tasks).order_by(preserved_order)
-            next_task = _get_first_unlocked(postponed_tasks, user)
+
+            # for assigned annotators locks don't make sense, moreover,
+            # _get_first_unlocked breaks label stream for manual mode because
+            # it evaluates locks based on auto-mode logic and returns None
+            # when there are no more tasks to label in auto-mode
+            if assigned_flag:
+                next_task = fast_first(postponed_tasks)
+            else:
+                next_task = _get_first_unlocked(postponed_tasks, user)
             if next_task is not None:
                 next_task.allow_postpone = False
             queue_info = 'Postponed draft queue'
@@ -326,13 +378,16 @@ def get_next_task(
         use_task_lock = True
         queue_info = ''
 
+        # Ground truth: label GT first only during onboarding window for user (gated by min tasks and min score)
+        allow_gt_first = should_attempt_ground_truth_first(user, project)
+
         not_solved_tasks, user_solved_tasks_array, queue_info, prioritized_low_agreement = get_not_solved_tasks_qs(
-            user, project, prepared_tasks, assigned_flag, queue_info
+            user, project, prepared_tasks, assigned_flag, queue_info, allow_gt_first
         )
 
         if not dm_queue:
             next_task, use_task_lock, queue_info = get_next_task_without_dm_queue(
-                user, project, not_solved_tasks, assigned_flag, prioritized_low_agreement
+                user, project, not_solved_tasks, assigned_flag, prioritized_low_agreement, allow_gt_first
             )
 
         if flag_set('fflag_fix_back_lsdv_4523_show_overlap_first_order_27022023_short'):
@@ -341,7 +396,7 @@ def get_next_task(
                 # don't output anything - just filter tasks with overlap
                 logger.debug(f'User={user} tries overlap first from prepared tasks')
                 _, tasks_with_overlap = _try_tasks_with_overlap(not_solved_tasks)
-                queue_info += 'Show overlap first'
+                queue_info += (' & ' if queue_info else '') + 'Show overlap first'
                 next_task, queue_info = get_task_from_qs_with_sampling(
                     tasks_with_overlap, user_solved_tasks_array, prepared_tasks, user, project, queue_info
                 )
@@ -357,9 +412,9 @@ def get_next_task(
                     not_solved_tasks, user_solved_tasks_array, prepared_tasks, user, project, queue_info
                 )
 
-        next_task, queue_info = postponed_queue(next_task, prepared_tasks, project, user, queue_info)
+        next_task, queue_info = postponed_queue(next_task, prepared_tasks, project, user, assigned_flag, queue_info)
 
-        next_task, queue_info = skipped_queue(next_task, prepared_tasks, project, user, queue_info)
+        next_task, queue_info = skipped_queue(next_task, prepared_tasks, project, user, assigned_flag, queue_info)
 
         if next_task and use_task_lock:
             # set lock for the task with TTL 3x time more then current average lead time (or 1 hour by default)

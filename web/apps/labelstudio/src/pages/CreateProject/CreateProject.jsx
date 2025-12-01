@@ -138,6 +138,16 @@ export const CreateProject = ({ onClose }) => {
   );
 
   const onCreate = React.useCallback(async () => {
+    // First, persist project with label_config so import/reimport validates against it
+    const response = await api.callApi("updateProject", {
+      params: {
+        pk: project.id,
+      },
+      body: { ...projectBody, is_draft: false },
+    });
+
+    if (response === null) return;
+
     const imported = await finishUpload();
 
     if (!imported) return;
@@ -147,18 +157,10 @@ export const CreateProject = ({ onClose }) => {
     if (sample) await uploadSample(sample);
 
     __lsa("create_project.create", { sample: sample?.url });
-    const response = await api.callApi("updateProject", {
-      params: {
-        pk: project.id,
-      },
-      body: projectBody,
-    });
 
     setWaitingStatus(false);
 
-    if (response !== null) {
-      history.push(`/projects/${response.id}/data`);
-    }
+    history.push(`/projects/${response.id}/data`);
   }, [project, projectBody, finishUpload]);
 
   const onSaveName = async () => {
@@ -205,7 +207,6 @@ export const CreateProject = ({ onClose }) => {
             <Button
               variant="negative"
               look="outlined"
-              size="small"
               onClick={onDelete}
               waiting={waiting}
               aria-label="Cancel project creation"
@@ -214,9 +215,9 @@ export const CreateProject = ({ onClose }) => {
             </Button>
             <Button
               look="primary"
-              size="small"
               onClick={onCreate}
               waiting={waiting || uploading}
+              waitingClickable={false}
               disabled={!project || uploadDisabled || error}
             >
               Save

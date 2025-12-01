@@ -10,9 +10,9 @@ import { useCallback, useState } from "react";
 
 import { Button, ButtonGroup, type ButtonProps } from "@humansignal/ui";
 import { IconBan, IconChevronDown } from "@humansignal/icons";
-import { Dropdown } from "../../common/Dropdown/Dropdown";
+import { Dropdown } from "@humansignal/ui";
 import type { CustomButtonType } from "../../stores/CustomButton";
-import { Block, cn, Elem } from "../../utils/bem";
+import { cn } from "../../utils/bem";
 import { FF_REVIEWER_FLOW, isFF } from "../../utils/feature-flags";
 import { isDefined, toArray } from "../../utils/utilities";
 import {
@@ -146,7 +146,7 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
     }
 
     if (buttonsReplacement) {
-      return <Block name="controls">{buttons}</Block>;
+      return <div className={cn("controls").toClassName()}>{buttons}</div>;
     }
 
     if (isReview) {
@@ -179,9 +179,9 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
       buttons.push(<AcceptButton key="review-accept" disabled={disabled} history={history} store={store} />);
     } else if (annotation.skipped) {
       buttons.push(
-        <Elem name="skipped-info" key="skipped">
+        <div className={cn("controls").elem("skipped-info").toClassName()} key="skipped">
           <IconBan /> Was skipped
-        </Elem>,
+        </div>,
       );
       buttons.push(<UnskipButton key="unskip" disabled={disabled} store={store} />);
     } else {
@@ -197,7 +197,13 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
 
       const useExitOption = !isDisabled && isNotQuickView;
 
-      const SubmitOption = ({ isUpdate, onClickMethod }: { isUpdate: boolean; onClickMethod: () => any }) => {
+      const SubmitOption = ({
+        isUpdate,
+        onClickMethod,
+      }: {
+        isUpdate: boolean;
+        onClickMethod: () => any;
+      }) => {
         return (
           <div className="p-tighter rounded">
             <Button
@@ -236,7 +242,7 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
 
         buttons.push(
           <ButtonTooltip key="submit" title={title}>
-            <Elem name="tooltip-wrapper">
+            <div className={cn("controls").elem("tooltip-wrapper").toClassName()}>
               <ButtonGroup>
                 <Button
                   aria-label="Submit current annotation"
@@ -269,7 +275,7 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
                   </Dropdown.Trigger>
                 ) : null}
               </ButtonGroup>
-            </Elem>
+            </div>
           </ButtonTooltip>,
         );
       } else if ((userGenerate && sentUserGenerate) || (!userGenerate && store.hasInterface("update"))) {
@@ -314,6 +320,6 @@ export const Controls = controlsInjector<{ annotation: MSTAnnotation }>(
       }
     }
 
-    return <Block name="controls">{buttons}</Block>;
+    return <div className={cn("controls").toClassName()}>{buttons}</div>;
   }),
 );

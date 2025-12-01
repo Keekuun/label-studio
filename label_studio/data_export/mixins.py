@@ -202,7 +202,6 @@ class ExportMixin:
                 self._get_filtered_tasks(all_tasks, task_filter_options=task_filter_options)
                 .distinct()
                 .values_list('id', flat=True)
-                .iterator(chunk_size=1000)
             )
             base_export_serializer_option = self._get_export_serializer_option(serialization_options)
             i = 0

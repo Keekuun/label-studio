@@ -3,7 +3,16 @@ type: community
 group: Generative AI
 order: 5
 image: /static/templates/visual-ranker.png
-details: Here is a demo that showcases how to construct an interface enabling users to drag, arrange, and rank responses from different Large Language Models (LLMs) and chatbot systems based on their relevance to a specified prompt and their perceived bias, thus facilitating an intuitive and visual understanding of how well these AI systems align with the topic and the degree of subjective interpretation they exhibit.
+details: |
+  <h1>Rank and compare AI-generated visual content</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>AI image generation evaluation, creative AI assessment, generative art evaluation, marketing content creation, e-commerce product imagery, advertising creative, social media content, design iteration, brand asset generation, visual content optimization, creative workflow, art direction</dd>
+    <dt>Associated Models</dt>
+    <dd>DALL-E, Midjourney, Stable Diffusion, Firefly, generative adversarial networks</dd>
+    <dt>Domain Terminology</dt>
+    <dd>gen AI, visual quality ranking, image generation comparison, creative AI evaluation, aesthetic assessment, visual preference modeling</dd>
+  </dl>
 config: |
   <View>
         <Style>

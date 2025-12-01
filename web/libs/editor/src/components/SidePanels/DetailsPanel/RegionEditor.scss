@@ -33,6 +33,12 @@
     justify-self: stretch;
   }
 
+  &__property_text {
+    // text input should be a textarea and occupy 3 columns
+    grid-column: span 3;
+    height: auto;
+  }
+
   &__text {
     top: 0;
     left: 0;
@@ -76,6 +82,10 @@
         box-shadow: 0 0 0 1px var(--color-primary-border-subtle);
       }
     }
+  }
+
+  &__property_text &__input {
+    height: auto;
   }
 
   &__input[type="checkbox"] + &__text,

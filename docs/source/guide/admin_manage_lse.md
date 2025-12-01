@@ -41,18 +41,22 @@ If you invite users using the [invite link option](admin_user#Invite-users-to-La
 
 ## Programmatically assign roles
 
-To programmatically activate and assign roles to users, you can use the API. 
+To programmatically activate and assign roles to users, you can use the API:
 
-For a given user ID and a given organization ID, you can programmatically assign a role to a user by sending a POST request to the `/api/organizations/{id}/memberships` endpoint. See the [Organizations API documentation](/api/#tag/Organizations/operation/api_organizations_memberships_partial_update).
+https://api.labelstud.io/api-reference/api-reference/organizations/members/update
+
 
 #### Determine the organization ID or user ID
 
-If you're not sure what the organization ID is, you can do the following:
+You can find user ID and organization ID from the **Organization** page:
 
-- If you only have one organization in your Label Studio instance, use `0`.
-- If you have multiple organizations, make a GET request to the [`/api/organizations/`](/api#operation/api_organizations_read) endpoint.
+![Screenshot of the role drop-down menu](/images/admin/user-ids.png)
 
-To retrieve user IDs for the members of an organization, make a GET request to [`/api/organizations/{id}/memberships`](/api#operation/api_organizations_memberships_list).
+You can also use the API:
+
+* [List organizations](https://api.labelstud.io/api-reference/api-reference/organizations/list)
+* [List members](https://api.labelstud.io/api-reference/api-reference/organizations/members/list)
+
 
 ## Deactivate users
 

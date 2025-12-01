@@ -36,6 +36,7 @@ const Model = types.model({
     "rectanglelabels",
     "ellipselabels",
     "polygonlabels",
+    "vectorlabels",
     "keypointlabels",
     "brushlabels",
     "bitmasklabels",

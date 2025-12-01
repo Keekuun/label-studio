@@ -3,7 +3,7 @@ title: Automatic Speech Recognition using Segments
 type: templates
 category: Audio/Speech Processing
 cat: audio-speech-processing
-order: 303
+order: 310
 meta_title: Automatic Speech Recognition using Segments Data Labeling Template
 meta_description: Template for audio transcription for automatic speech recognition segmentation use cases with Label Studio for your machine learning and data science projects.
 ---

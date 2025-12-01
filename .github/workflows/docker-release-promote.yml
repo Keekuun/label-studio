@@ -17,22 +17,30 @@ env:
   DOCKER_IMAGE_TAG_CHECK_NAME: "Docker image tag"
   IMAGE_NAME: "${{ vars.DOCKERHUB_ORG }}/label-studio"
   RELEASE_DOCKERFILE: "Dockerfile.release"
-  PREFLIGHT_REPO: "quay.io/opdev/preflight:stable"
-  DOCKER_CONFIG_PATH: "/home/runner/.docker/config.json"
   LAUNCHDARKLY_DOWNLOAD_PATH: "feature_flags.json"
 
 jobs:
   docker_release_retag:
-    name: "Docker image"
+    name: "Docker image (${{ matrix.platform }})"
     timeout-minutes: 90
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     outputs:
       image_version: ${{ steps.get_info.outputs.image_version }}
+      ubuntu_tags: ${{ steps.generate-tags.outputs.ubuntu-tags }}
+      sha: ${{ steps.get_info.outputs.sha }}
     steps:
       - uses: hmarr/debug-action@v3.0.0
 
       - name: Get an artifact from check suite
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: get_info
         with:
           github-token: ${{ secrets.GIT_PAT }}
@@ -58,12 +66,12 @@ jobs:
             core.setOutput("sha", details.sha);
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.release_tag }}
 
       - name: Check if the latest tag needs to be updated
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: generate-tags
         with:
           github-token: ${{ secrets.GIT_PAT }}
@@ -125,9 +133,9 @@ jobs:
             core.setOutput("ubuntu-tags", ubuntuTags);
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Create version_.py
         run: |
@@ -138,10 +146,15 @@ jobs:
         uses: docker/setup-buildx-action@v3.11.1
 
       - name: Login to DockerHub
-        uses: docker/login-action@v3.4.0
+        uses: docker/login-action@v3.5.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
 
       - name: Prepare Release Dockerfile
         id: release_dockerfile
@@ -170,26 +183,81 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
-          labels: |
-            org.opencontainers.image.revision=${{ steps.get_info.outputs.sha }}
-          tags: |
-            ${{ steps.generate-tags.outputs.ubuntu-tags }}
 
-      - name: Build and Push Release Ubuntu Docker image
+      - name: Build and Push Release Ubuntu Docker image (${{ matrix.platform }})
         uses: docker/build-push-action@v6.18.0
         id: docker_build
         with:
           context: ${{ steps.release_dockerfile.outputs.release_dir }}
           file: ${{ steps.release_dockerfile.outputs.release_dir }}/${{ env.RELEASE_DOCKERFILE }}
-          push: true
           sbom: true
           provenance: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.IMAGE_NAME }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.docker_build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v5
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge_docker_manifest:
+    runs-on: ubuntu-latest
+    needs:
+      - docker_release_retag
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v6
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.revision=${{ needs.docker_release_retag.outputs.sha }}
+          tags: ${{ needs.docker_release_retag.outputs.ubuntu_tags }}
+
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.IMAGE_NAME }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+
+  copy_static_files:
+    name: "Copy compiled static from built Docker image"
+    runs-on: ubuntu-latest
+    needs: [docker_release_retag, merge_docker_manifest]
+    steps:
       - name: Copy compiled static from builded Docker image
         run: |
           # Usually it takes 10-20 sec so the image becomes available

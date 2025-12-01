@@ -28,7 +28,7 @@ class ViewBaseModel(models.Model):
     )
 
     class Meta:
-        ordering = ['order']
+        ordering = ['order', 'id']
         indexes = [models.Index(fields=['project', 'order'])]
         abstract = True
 
@@ -50,20 +50,14 @@ class ProjectViewMixin(models.Model):
 
 class View(ViewBaseModel, ProjectViewMixin):
     def get_prepare_tasks_params(self, add_selected_items=False):
+        # Import here to avoid circular imports
+        from data_manager.serializers import FilterGroupSerializer
+
         # convert filters to PrepareParams structure
         filters = None
         if self.filter_group:
-            items = []
-            for f in self.filter_group.filters.all():
-                items.append(
-                    dict(
-                        filter=f.column,
-                        operator=f.operator,
-                        type=f.type,
-                        value=f.value,
-                    )
-                )
-            filters = dict(conjunction=self.filter_group.conjunction, items=items)
+            serializer = FilterGroupSerializer()
+            filters = serializer.to_representation(self.filter_group)
 
         ordering = self.ordering
         if not ordering:
@@ -86,7 +80,24 @@ class FilterGroup(models.Model):
 
 
 class Filter(models.Model):
-    index = models.IntegerField(_('index'), default=0, help_text='To keep filter order')
+    # Optional reference to a parent filter. We only allow **one** level of nesting.
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        related_name='children',
+        null=True,
+        blank=True,
+        help_text='Optional parent filter to create one-level hierarchy (child filters are AND-merged with parent)',
+    )
+
+    # `index` is now only meaningful for **root** filters (parent is NULL)
+    index = models.IntegerField(
+        _('index'),
+        null=True,
+        blank=True,
+        default=None,
+        help_text='Display order among root filters only',
+    )
     column = models.CharField(_('column'), max_length=1024, help_text='Field name')
     type = models.CharField(_('type'), max_length=1024, help_text='Field type')
     operator = models.CharField(_('operator'), max_length=1024, help_text='Filter operator')

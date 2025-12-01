@@ -3,10 +3,7 @@
 import io
 import json
 import logging
-import mimetypes
 import os
-import posixpath
-from pathlib import Path
 from wsgiref.util import FileWrapper
 
 import pandas as pd
@@ -18,22 +15,11 @@ from core.utils.common import collect_versions
 from core.utils.io import find_file
 from django.conf import settings
 from django.contrib.auth import logout
-from django.db.models import CharField, F, Value
-from django.http import (
-    HttpResponse,
-    HttpResponseForbidden,
-    HttpResponseNotFound,
-    JsonResponse,
-)
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import redirect, render, reverse
-from django.utils._os import safe_join
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from drf_spectacular.utils import extend_schema
-from io_storages.localfiles.models import LocalFilesImportStorage
-from ranged_fileresponse import RangedFileResponse
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
@@ -53,7 +39,6 @@ def main(request):
 
         # business mode access
         if flag_set('fflag_all_feat_dia_1777_ls_homepage_short', user):
-            print('redirect to home page')
             return render(request, 'home/home.html')
         else:
             return redirect(reverse('projects:project-index'))
@@ -80,8 +65,7 @@ def version_page(request):
                 if not key.startswith('_') and not hasattr(getattr(settings, key), '__call__')
             }
 
-        result = json.dumps(result, indent=2)
-        result = result.replace('},', '},\n').replace('\\n', ' ').replace('\\r', '')
+        result = json.dumps(result, indent=2, ensure_ascii=False)
         return HttpResponse('<pre>' + result + '</pre>')
     else:
         return JsonResponse(result)
@@ -193,48 +177,9 @@ def heidi_tips(request):
     return HttpResponse(response.content, content_type='application/json')
 
 
-@extend_schema(exclude=True)
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def localfiles_data(request):
-    """Serving files for LocalFilesImportStorage"""
-    user = request.user
-    path = request.GET.get('d')
-    if settings.LOCAL_FILES_SERVING_ENABLED is False:
-        return HttpResponseForbidden(
-            "Serving local files can be dangerous, so it's disabled by default. "
-            'You can enable it with LOCAL_FILES_SERVING_ENABLED environment variable, '
-            'please check docs: https://labelstud.io/guide/storage.html#Local-storage'
-        )
-
-    local_serving_document_root = settings.LOCAL_FILES_DOCUMENT_ROOT
-    if path and request.user.is_authenticated:
-        path = posixpath.normpath(path).lstrip('/')
-        full_path = Path(safe_join(local_serving_document_root, path))
-        user_has_permissions = False
-
-        # Try to find Local File Storage connection based prefix:
-        # storage.path=/home/user, full_path=/home/user/a/b/c/1.jpg =>
-        # full_path.startswith(path) => True
-        localfiles_storage = LocalFilesImportStorage.objects.annotate(
-            _full_path=Value(os.path.dirname(full_path), output_field=CharField())
-        ).filter(_full_path__startswith=F('path'))
-        if localfiles_storage.exists():
-            user_has_permissions = any(storage.project.has_permission(user) for storage in localfiles_storage)
-
-        if user_has_permissions and os.path.exists(full_path):
-            content_type, encoding = mimetypes.guess_type(str(full_path))
-            content_type = content_type or 'application/octet-stream'
-            return RangedFileResponse(request, open(full_path, mode='rb'), content_type)
-        else:
-            return HttpResponseNotFound()
-
-    return HttpResponseForbidden()
-
-
 def static_file_with_host_resolver(path_on_disk, content_type):
     """Load any file, replace {{HOSTNAME}} => settings.HOSTNAME, send it as http response"""
-    path_on_disk = os.path.join(os.path.dirname(__file__), path_on_disk)
+    path_on_disk = os.path.join(settings.STATIC_ROOT, path_on_disk)
 
     def serve_file(request):
         with open(path_on_disk, 'r') as f:

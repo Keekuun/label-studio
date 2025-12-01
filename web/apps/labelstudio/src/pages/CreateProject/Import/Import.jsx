@@ -1,5 +1,5 @@
 import { SampleDatasetSelect } from "@humansignal/app-common/blocks/SampleDatasetSelect/SampleDatasetSelect";
-import { ff } from "@humansignal/core";
+import { ff, formatFileSize } from "@humansignal/core";
 import { IconCode, IconErrorAlt, IconFileUpload, IconInfoOutline, IconTrash, IconUpload } from "@humansignal/icons";
 import { Badge } from "@humansignal/shad/components/ui/badge";
 import { cn as scn } from "@humansignal/shad/utils";
@@ -11,12 +11,18 @@ import { cn } from "../../../utils/bem";
 import { unique } from "../../../utils/helpers";
 import { sampleDatasetAtom } from "../utils/atoms";
 import "./Import.scss";
-import { Button, CodeBlock, SimpleCard, Spinner, Tooltip } from "@humansignal/ui";
+import { Button, CodeBlock, SimpleCard, Spinner, Tooltip, Typography } from "@humansignal/ui";
+import truncate from "truncate-middle";
 import samples from "./samples.json";
 import { importFiles } from "./utils";
 
 const importClass = cn("upload_page");
 const dropzoneClass = cn("dropzone");
+
+// Constants for file display and animation
+const FLASH_ANIMATION_DURATION = 2000; // 2 seconds
+const FILENAME_TRUNCATE_START = 24;
+const FILENAME_TRUNCATE_END = 24;
 
 function flatten(nested) {
   return [].concat(...nested);
@@ -149,6 +155,8 @@ export const ImportPage = ({
   openLabelingConfig,
 }) => {
   const [error, setError] = useState();
+  const [newlyUploadedFiles, setNewlyUploadedFiles] = useState(new Set());
+  const prevUploadedRef = useRef(new Set());
   const api = useAPI();
   const projectConfigured = project?.label_config !== "<View></View>";
   const sampleConfig = useAtomValue(sampleDatasetAtom);
@@ -228,10 +236,47 @@ export const ImportPage = ({
       onWaiting?.(false);
       addColumns(data_columns);
 
-      return loadFilesList(file_upload_ids);
+      await loadFilesList(file_upload_ids);
+      return res;
     },
     [addColumns, loadFilesList],
   );
+
+  // Track newly uploaded files for flash animation
+  useEffect(() => {
+    const currentUploadedIds = new Set(files.uploaded.map((f) => f.id));
+    const previousUploadedIds = prevUploadedRef.current;
+
+    // Find files that were just uploaded (in current but not in previous)
+    const justUploaded = new Set([...currentUploadedIds].filter((id) => !previousUploadedIds.has(id)));
+
+    // Update the ref immediately after comparison to ensure it's available for next run
+    prevUploadedRef.current = new Set(currentUploadedIds);
+
+    // Clean up animation state for files that are no longer in the uploaded list
+    setNewlyUploadedFiles((prev) => {
+      const filtered = new Set([...prev].filter((id) => currentUploadedIds.has(id)));
+      return filtered;
+    });
+
+    // Animate newly uploaded files (including first upload)
+    if (justUploaded.size > 0) {
+      // Apply animation class immediately for better responsiveness
+      setNewlyUploadedFiles((prev) => new Set([...prev, ...justUploaded]));
+
+      // Remove animation class after animation completes (CSS handles the animation timing)
+      const timeoutId = setTimeout(() => {
+        setNewlyUploadedFiles((prev) => {
+          const updated = new Set(prev);
+          justUploaded.forEach((id) => updated.delete(id));
+          return updated;
+        });
+      }, FLASH_ANIMATION_DURATION);
+
+      // Cleanup timeout on unmount or dependency change
+      return () => clearTimeout(timeoutId);
+    }
+  }, [files.uploaded]);
 
   const importFilesImmediately = useCallback(
     async (files, body) => {
@@ -475,8 +520,12 @@ export const ImportPage = ({
 
             {showList && (
               <div className="w-full">
-                <SimpleCard title="Files" className="w-full h-full">
-                  <table>
+                <SimpleCard
+                  title="Files"
+                  className="w-full h-full"
+                  contentClassName="overflow-y-auto h-[calc(100%-48px)]"
+                >
+                  <table className="w-full">
                     <tbody>
                       {sample && (
                         <tr key={sample.url}>
@@ -496,23 +545,63 @@ export const ImportPage = ({
                           </td>
                         </tr>
                       )}
-                      {files.uploading.map((file, idx) => (
-                        <tr key={`${idx}-${file.name}`}>
-                          <td>{file.name}</td>
-                          <td colSpan={2}>
-                            <span className={importClass.elem("file-status").mod({ uploading: true })} />
-                          </td>
-                        </tr>
-                      ))}
-                      {files.uploaded.map((file) => (
-                        <tr key={file.file}>
-                          <td>{file.file}</td>
-                          <td>
-                            <span className={importClass.elem("file-status")} />
-                          </td>
-                          <td>{file.size}</td>
-                        </tr>
-                      ))}
+                      {files.uploaded.map((file) => {
+                        const truncatedFilename = truncate(
+                          file.file,
+                          FILENAME_TRUNCATE_START,
+                          FILENAME_TRUNCATE_END,
+                          "...",
+                        );
+                        return (
+                          <tr
+                            key={file.file}
+                            className={newlyUploadedFiles.has(file.id) ? importClass.elem("upload-flash") : ""}
+                          >
+                            <td className={importClass.elem("file-name")}>
+                              <Tooltip title={file.file}>
+                                <Typography variant="body" size="small" className="truncate">
+                                  {truncatedFilename}
+                                </Typography>
+                              </Tooltip>
+                            </td>
+                            <td>
+                              <span className={importClass.elem("file-status")} />
+                            </td>
+                            <td className={importClass.elem("file-size")}>
+                              <Typography
+                                variant="body"
+                                size="smaller"
+                                className="text-nowrap text-neutral-content-subtle text-right"
+                              >
+                                {file.size ? formatFileSize(file.size) : ""}
+                              </Typography>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {files.uploading.map((file, idx) => {
+                        const truncatedFilename = truncate(
+                          file.name,
+                          FILENAME_TRUNCATE_START,
+                          FILENAME_TRUNCATE_END,
+                          "...",
+                        );
+                        return (
+                          <tr key={`${idx}-${file.name}`}>
+                            <td className={importClass.elem("file-name")}>
+                              <Tooltip title={file.name}>
+                                <Typography variant="body" size="small" className="truncate">
+                                  {truncatedFilename}
+                                </Typography>
+                              </Tooltip>
+                            </td>
+                            <td>
+                              <span className={importClass.elem("file-status").mod({ uploading: true })} />
+                            </td>
+                            <td className={importClass.elem("file-size")}>&nbsp;</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </SimpleCard>

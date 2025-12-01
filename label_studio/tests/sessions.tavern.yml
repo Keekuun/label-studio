@@ -4,9 +4,7 @@ strict: false
 marks:
 - usefixtures:
   - django_live_url
-  - testing_session_timeouts
   - freeze_clock
-  - fflag_feat_utc_46_session_timeout_policy_off
 stages:
 - id: signup
   name: Sign up
@@ -30,6 +28,28 @@ stages:
   response:
     status_code: 302
 
+# Configure session timeout policy for the user's organization
+- id: get_session_policy
+  name: Get Session Policy
+  request:
+    url: "{django_live_url}/api/session-policy/"
+    method: GET
+  response:
+    status_code: 200
+
+- id: set_session_policy
+  name: Set Session Policy (short)
+  request:
+    url: "{django_live_url}/api/session-policy/"
+    method: PATCH
+    headers:
+      Content-Type: application/json
+    json:
+      max_session_age: 1                 # 1 minute total age
+      max_time_between_activity: 1       # 1 minute idle time
+  response:
+    status_code: 200
+
 # A request right after login should be sucessful
 - name: get_projects
   request:
@@ -44,9 +64,9 @@ stages:
     verify_response_with:
       - function: label_studio.tests.conftest:tick_clock
         extra_kwargs:
-          seconds: 2
+          seconds: 65
 
-# After MAX_TIME_BETWEEN_ACTIVITY has passed, the session will be over and requests will be denied
+# After max_time_between_activity has passed, the session will be over and requests will be denied
 - name: get_projects
   request:
     method: POST
@@ -71,7 +91,7 @@ stages:
     verify_response_with:
       function: label_studio.tests.conftest:tick_clock
 
-# make another request within MAX_TIME_BETWEEN_ACTIVITY
+# make another request within max_time_between_activity
 - name: get_projects_1
   request:
     method: POST
@@ -121,7 +141,7 @@ stages:
     verify_response_with:
       - function: label_studio.tests.conftest:tick_clock
         extra_kwargs:
-          seconds: 3
+          seconds: 65
 
 # and by now we reach MAX_SESSION_AGE and hte session end even if we were active
 - name: get_projects_5

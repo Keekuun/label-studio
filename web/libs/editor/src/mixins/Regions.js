@@ -34,6 +34,7 @@ const RegionsMixin = types
     perRegionFocusRequest: null,
     shapeRef: null,
     drawingTimeout: null,
+    hideable: true,
   }))
   .views((self) => ({
     get perRegionStates() {
@@ -189,39 +190,10 @@ const RegionsMixin = types
         console.error("Region class needs to implement serialize");
       },
 
+      /** @abstract */
       selectRegion() {},
 
-      /**
-       * @todo fix "keep selected" setting
-       * Common logic for unselection; specific actions should be in `afterUnselectRegion`
-       * @param {boolean} tryToKeepStates try to keep states selected if such settings enabled
-       */
-      unselectRegion(tryToKeepStates = false) {
-        console.log("UNSELECT REGION", "you should not be here");
-
-        // biome-ignore lint/correctness/noConstantCondition:
-        if (1) return;
-        const annotation = self.annotation;
-        const parent = self.parent;
-        const keepStates = tryToKeepStates && self.store.settings.continuousLabeling;
-
-        if (annotation.isLinkingMode) {
-          annotation.stopLinkingMode();
-        }
-        if (parent.setSelected) {
-          parent.setSelected(undefined);
-        }
-
-        self.selected = false;
-        annotation.setHighlightedNode(null);
-
-        self.afterUnselectRegion();
-
-        if (!keepStates) {
-          annotation.unloadRegionState(self);
-        }
-      },
-
+      /** @abstract */
       afterUnselectRegion() {},
 
       onClickRegion(ev) {

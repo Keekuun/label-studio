@@ -21,7 +21,7 @@ export const formStateAtom = atom<FormState>({
     provider: "s3",
     title: "",
     use_blob_urls: false,
-    recursive_scan: true,
+    recursive_scan: false,
     regex_filter: "",
   },
   isComplete: false,

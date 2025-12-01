@@ -1,4 +1,4 @@
-import { types } from "mobx-state-tree";
+import { tryReference, types } from "mobx-state-tree";
 import Types from "../../core/Types";
 import { SharedStoreModel } from "./model";
 
@@ -30,7 +30,7 @@ const Store = types.optional(types.maybeNull(types.late(() => types.reference(Sh
  *
  * It was specifically designed to be used with Repeater tag where the memory issues are the most sound.
  *
- * This mixin provedes a `sharedStore` property to the model which is a reference to the shared store.
+ * This mixin provides a `sharedStore` property to the model which is a reference to the shared store.
  *
  * The concept behind it is that whenever a model is parsing a snapshot, children are subtracted from the
  * initial snapshot, and put into the newly created SharedStore.
@@ -73,10 +73,15 @@ export const SharedStoreMixin = types
   }))
   .actions((self) => ({
     afterCreate() {
-      if (!self.store) {
+      const currentStore = tryReference(() => self.store);
+
+      if (!currentStore) {
         const store = Stores.get(self.storeId);
         const annotationStore = Types.getParentOfTypeString(self, "AnnotationStore");
 
+        // It means that an element is not connected to the store tree,
+        // most probably as it is a temporal clone of the model
+        if (!annotationStore) return;
         annotationStore.addSharedStore(store);
         StoreIds.add(self.storeId);
         self.store = self.storeId;

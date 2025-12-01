@@ -20,11 +20,14 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, { componentStack }) {
     console.error(error);
+
     // Capture the error in Sentry, so we can fix it directly
     // Don't make the users copy and paste the stacktrace, it's not actionable
+    // Check if error has sentry_skip property (e.g., from ConfigurationError)
     captureException(error, {
       extra: {
         component_stacktrace: componentStack,
+        sentry_skip: error.sentry_skip || false,
       },
     });
     this.setState({

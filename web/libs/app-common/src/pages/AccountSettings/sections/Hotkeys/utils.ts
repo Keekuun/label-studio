@@ -48,6 +48,7 @@ export interface SaveResult {
   ok: boolean;
   error?: string;
   data?: unknown;
+  runtimeReloadSuccess?: boolean;
 }
 
 export interface ApiResponse {

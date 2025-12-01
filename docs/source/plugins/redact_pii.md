@@ -79,7 +79,7 @@ async function hidePII() {
   try {
     const userInfo = await fetchUserInfo();
     user = userInfo.username || 'Unknown';
-    role = userInfo.org_membership[0].role || 'Unknown';
+    role = userInfo.organization_membership.role || 'Unknown';
   } catch (error) {
     Htx.showModal(`Error fetching user information: ${error.message}`);
   }

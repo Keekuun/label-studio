@@ -47,7 +47,7 @@ def get_unique_ids_list(tasks_queryset):
 
     elif isinstance(tasks_queryset, QuerySet):
         # It's a Django QuerySet
-        return list(tasks_queryset.values_list('id', flat=True).iterator(chunk_size=1000))
+        return list(tasks_queryset.values_list('id', flat=True))
 
     else:
         raise ValueError(f'Unsupported type for tasks_queryset: {type(tasks_queryset)}')

@@ -41,7 +41,7 @@ export type ExtractValue<T, A extends SelectOption<T>[]> = A[number] extends { v
 export type SelectProps<T, A extends SelectOption<T>[]> = {
   label?: string;
   description?: string;
-  options: A[];
+  options: A;
   value?: ExtractOption<A[number]> | null;
   defaultValue?: ExtractOption<A[number]> | null;
   validate?: any;
@@ -83,6 +83,8 @@ export type SelectProps<T, A extends SelectOption<T>[]> = {
   pageSize?: number;
   page?: number;
   itemCount?: number;
+  onClose?: () => void;
+  onOpen?: () => void;
 } & SelectVirtualizedProps &
   Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "value" | "placeholder">;
 

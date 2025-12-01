@@ -1,18 +1,18 @@
 import { AudioView, Labels, LabelStudio, Relations } from "@humansignal/frontend-test/helpers/LSF";
 import { audioOneRegionResult, audioWithLabelsConfig, audioWithLabelsData } from "../../data/audio/audio_regions";
-import { TWO_FRAMES_TIMEOUT } from "../utils/constants";
 
-// This test suite has exhibited flakiness in the past, so we are going to run it with retries
-// while we investigate the root cause.
+// Audio regions test suite with improved stability through canvas synchronization
+// Reduced retries from 3 to 1 due to improved timing and pixel sampling reliability
 const suiteConfig = {
   retries: {
-    runMode: 3,
+    runMode: 1,
     openMode: 0,
   },
 };
 
 describe("Audio regions", suiteConfig, () => {
   it("Should have indication of selected state", () => {
+    cy.log("=== Testing audio region selected state indication ===");
     LabelStudio.params()
       .config(audioWithLabelsConfig)
       .data(audioWithLabelsData)
@@ -22,23 +22,31 @@ describe("Audio regions", suiteConfig, () => {
     LabelStudio.waitForObjectsReady();
     AudioView.isReady();
 
-    const baseRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    // Wait for initial canvas rendering to stabilize
+    AudioView.waitForCanvasStable();
+    const baseRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
+    // Click to select region and wait for state transition
     AudioView.clickAtRelative(0.38, 0.5);
-    const selectedRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const selectedRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
     selectedRegionColor.then((color) => {
       baseRegionColor.should("not.deep.equal", color);
     });
-    // unselecting
+
+    // Unselecting with ESC key
     cy.get("body").type("{esc}");
-    const unselectedRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const unselectedRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
+
     unselectedRegionColor.then((color) => {
       baseRegionColor.should("deep.equal", color);
     });
   });
 
   it("Should have indication of active state", () => {
+    cy.log("=== Testing audio region active state indication ===");
     LabelStudio.params()
       .config(audioWithLabelsConfig)
       .data(audioWithLabelsData)
@@ -49,24 +57,24 @@ describe("Audio regions", suiteConfig, () => {
     AudioView.isReady();
 
     // Wait for audio visualization to stabilize before capturing baseline
-    cy.wait(TWO_FRAMES_TIMEOUT);
-    const baseRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const baseRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
-    // moving the cursor
+    // Moving the cursor to activate region
     AudioView.seekCurrentTimebox(38);
     // Allow time for active state rendering to complete
-    cy.wait(TWO_FRAMES_TIMEOUT);
-    const activeRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const activeRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
     activeRegionColor.then((color) => {
       baseRegionColor.should("not.deep.equal", color);
     });
 
-    // deactivating
+    // Deactivating by moving cursor away
     AudioView.seekCurrentTimebox(0);
     // Wait for inactive state to be fully rendered
-    cy.wait(TWO_FRAMES_TIMEOUT);
-    const inactiveRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const inactiveRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
     inactiveRegionColor.then((color) => {
       baseRegionColor.should("deep.equal", color);
@@ -74,6 +82,7 @@ describe("Audio regions", suiteConfig, () => {
   });
 
   it("Should have indication of highlighted state", () => {
+    cy.log("=== Testing audio region highlighted state indication ===");
     LabelStudio.params()
       .config(audioWithLabelsConfig)
       .data(audioWithLabelsData)
@@ -83,26 +92,29 @@ describe("Audio regions", suiteConfig, () => {
     LabelStudio.waitForObjectsReady();
     AudioView.isReady();
 
-    const baseRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    // Wait for initial rendering to stabilize
+    AudioView.waitForCanvasStable();
+    const baseRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
-    // highlighting in relations mode
+    // Set up highlighting in relations mode
     Labels.select("Music");
     AudioView.drawRectRelative(0.1, 0.5, 0.1, 0, { force: true });
     AudioView.clickAtRelative(0.15, 0.5);
     Relations.toggleCreation();
 
+    // Hover to highlight region
     AudioView.hoverAtRelative(0.4, 0.5);
-
-    const highlightedRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const highlightedRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
     highlightedRegionColor.then((color) => {
       baseRegionColor.should("not.deep.equal", color);
     });
 
-    // unhighlighting
+    // Unhighlighting by mouse leave
     AudioView.container.trigger("mouseleave");
-
-    const unhighlightedRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const unhighlightedRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
     unhighlightedRegionColor.then((color) => {
       baseRegionColor.should("deep.equal", color);
@@ -110,6 +122,7 @@ describe("Audio regions", suiteConfig, () => {
   });
 
   it("Should avoid intersection of active and highlighted states", () => {
+    cy.log("=== Testing audio region state intersection avoidance ===");
     LabelStudio.params()
       .config(audioWithLabelsConfig)
       .data(audioWithLabelsData)
@@ -119,45 +132,50 @@ describe("Audio regions", suiteConfig, () => {
     LabelStudio.waitForObjectsReady();
     AudioView.isReady();
 
-    const baseRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    // Wait for initial rendering to stabilize
+    AudioView.waitForCanvasStable();
+    const baseRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
-    // highlighting in relations mode
+    // Set up highlighting in relations mode
     Labels.select("Music");
     AudioView.drawRectRelative(0.1, 0.5, 0.1, 0, { force: true });
     AudioView.clickAtRelative(0.15, 0.5);
     Relations.toggleCreation();
 
+    // Hover to highlight region
     AudioView.hoverAtRelative(0.4, 0.5);
-
-    const highlightedRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const highlightedRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
     highlightedRegionColor.then((color) => {
       baseRegionColor.should("not.deep.equal", color);
     });
 
-    // moving the cursor
+    // Moving the cursor to activate region (while still highlighted)
     AudioView.seekCurrentTimebox(38);
-    const activeRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const activeRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
     activeRegionColor.then((color) => {
       baseRegionColor.should("not.deep.equal", color);
       highlightedRegionColor.should("deep.equal", color);
     });
 
-    // deactivating
+    // Deactivating cursor (should still be highlighted)
     AudioView.seekCurrentTimebox(0);
-    const inactiveRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const inactiveRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
-    // should still be highlighted
+    // Should still be highlighted
     inactiveRegionColor.then((color) => {
       baseRegionColor.should("not.deep.equal", color);
       highlightedRegionColor.should("deep.equal", color);
     });
 
-    // unhighlighting
+    // Unhighlighting by mouse leave
     AudioView.container.trigger("mouseleave");
-
-    const unhighlightedRegionColor = AudioView.getPixelColorRelative(0.36, 0.9);
+    AudioView.waitForCanvasStable();
+    const unhighlightedRegionColor = AudioView.getStablePixelColorRelative(0.36, 0.9);
 
     unhighlightedRegionColor.then((color) => {
       baseRegionColor.should("deep.equal", color);

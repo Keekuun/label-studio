@@ -87,7 +87,7 @@ You can also see a high-level summary of your contributions.
 ## Personal access token
 
 !!! note
-    Whether this option appears depends on [settings at your organization level](access_tokens#Access-token-settings-for-orgs). 
+    Whether this option appears depends on [settings at your organization level](access_tokens#Enable-API-keys-for-an-organization). 
 
 Click **Create** to generate an access token. When creating a token, ensure you save it somewhere secure, as it will only be visible one time. 
 
@@ -102,7 +102,7 @@ You organization administrators may optionally set an expiration date for all pe
 ## Legacy token
 
 !!! note
-    Whether this option appears depends on [settings at your organization level](access_tokens#Access-token-settings-for-orgs). 
+    Whether this option appears depends on [settings at your organization level](access_tokens#Enable-API-keys-for-an-organization). 
 
 This token is pre-generated for you to use. Legacy tokens are easier to use for some API tasks, but are generally less secure. For more information, see [Access tokens](access_tokens).  
 

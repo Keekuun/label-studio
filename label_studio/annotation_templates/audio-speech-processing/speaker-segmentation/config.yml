@@ -2,7 +2,16 @@ title: Speaker Segmentation
 type: community
 group: Audio/Speech Processing
 image: /static/templates/speaker-segmentation.png
-details: <h1>Perform speaker segmentation / diarization task</h1>
+details: |
+  <h1>Perform speaker segmentation / diarization task</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>meeting transcription, podcast production, call center analytics, courtroom transcription, broadcast news, conference calls, interview processing, lecture recordings, multi-speaker recordings, radio show analysis, parliamentary proceedings, teleconferencing</dd>
+    <dt>Associated Models</dt>
+    <dd>x-vectors, PLDA, VBx, pyannote.audio, speaker embedding</dd>
+    <dt>Domain Terminology</dt>
+    <dd>speaker diarization, voice activity detection, speaker identification, speaker change detection</dd>
+  </dl>
 config: |
   <View>
     <Labels name="label" toName="audio" zoom="true" hotkey="ctrl+enter">

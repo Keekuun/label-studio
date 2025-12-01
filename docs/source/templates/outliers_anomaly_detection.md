@@ -3,7 +3,7 @@ title: Outliers and Anomaly Detection
 type: templates
 category: Time Series Analysis
 cat: time-series-analysis
-order: 705
+order: 635
 meta_title: Outlier and Anomaly Detection Data Labeling Template
 meta_description: Template for detecting outliers and anomallies in time series data with Label Studio for your machine learning and data science projects.
 ---

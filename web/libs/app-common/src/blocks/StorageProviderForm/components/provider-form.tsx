@@ -1,6 +1,8 @@
 import type React from "react";
 import { FieldRenderer } from "./field-renderer";
 import { type ProviderConfig, getFieldsForRow } from "../types/provider";
+import type { FieldDefinition, MessageDefinition } from "../types/common";
+import type { FC } from "react";
 
 interface ProviderFormProps {
   provider: ProviderConfig;
@@ -9,6 +11,7 @@ interface ProviderFormProps {
   onChange: (name: string, value: any) => void;
   onBlur?: (name: string, value: any) => void;
   isEditMode?: boolean;
+  target?: "import" | "export";
 }
 
 export const ProviderForm: React.FC<ProviderFormProps> = ({
@@ -18,40 +21,80 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
   onChange,
   onBlur,
   isEditMode = false,
+  target,
 }) => {
+  const getHiddenFields = (field: FieldDefinition | MessageDefinition) =>
+    field.type === "hidden" && (!target || !field.target || field.target === target);
+
   return (
     <div className="space-y-6">
-      {provider.layout.map((row, rowIndex) => (
-        <div
-          key={rowIndex}
-          className="grid gap-6"
-          style={{
-            gridTemplateColumns: `repeat(${row.fields.length}, 1fr)`,
-          }}
-        >
-          {getFieldsForRow(provider.fields, row.fields).map((field) => (
+      {/* Render hidden fields first, outside of layout */}
+      {provider.fields.filter(getHiddenFields).map((field) => (
+        <FieldRenderer
+          key={field.name}
+          field={field as FieldDefinition}
+          value={formData[field.name]}
+          onChange={onChange}
+          onBlur={onBlur}
+          error={errors[field.name]}
+          isEditMode={isEditMode}
+          formData={formData}
+        />
+      ))}
+
+      {/* Render visible fields in layout */}
+      {provider.layout.map((row, rowIndex) => {
+        const fields = getFieldsForRow(provider.fields, row.fields, target);
+        return (
+          fields.length > 0 && (
             <div
-              key={field.name}
+              key={rowIndex}
+              className="grid gap-6"
               style={{
-                gridColumn: field.gridCols ?? "initial",
+                gridTemplateColumns: `repeat(${row.fields.length}, 1fr)`,
               }}
             >
-              {field.type === "message" ? (
-                <div>{field.content}</div>
-              ) : (
-                <FieldRenderer
-                  field={field}
-                  value={formData[field.name]}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  error={errors[field.name]}
-                  isEditMode={isEditMode}
-                />
-              )}
+              {fields.map((field) => {
+                // Skip hidden fields from layout - they'll be rendered separately
+                if (field.type === "hidden") {
+                  return null;
+                }
+                const Message =
+                  field.type === "message"
+                    ? field.content instanceof Function
+                      ? field.content
+                      : ((() => field.content) as FC)
+                    : null;
+
+                return (
+                  <div
+                    key={field.name}
+                    style={{
+                      gridColumn: field.gridCols ?? "initial",
+                    }}
+                  >
+                    {Message ? (
+                      <div>
+                        <Message />
+                      </div>
+                    ) : (
+                      <FieldRenderer
+                        field={field as FieldDefinition}
+                        value={formData[field.name]}
+                        onChange={onChange}
+                        onBlur={onBlur}
+                        error={errors[field.name]}
+                        isEditMode={isEditMode}
+                        formData={formData}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      ))}
+          )
+        );
+      })}
     </div>
   );
 };

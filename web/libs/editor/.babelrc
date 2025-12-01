@@ -21,7 +21,8 @@
     [
       "babel-plugin-import",
       {
-        "libraryName": "antd"
+        "libraryName": "antd",
+        "style": false
       }
     ],
     "@babel/plugin-proposal-class-properties",

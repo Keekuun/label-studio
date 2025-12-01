@@ -54,6 +54,8 @@ def test_views_filters_with_undefined(business_client, project_id):
     14. Filter by "image" with "photo" should return task 1 and task 2
     """
     project = Project.objects.get(pk=project_id)
+    project.label_config = '<View></View>'
+    project.save()
 
     # Step 1: Import task 1: {"$undefined$": "photo1.jpg"}
     task_data_field_name = settings.DATA_UNDEFINED_NAME  # "$undefined$"

@@ -1,4 +1,4 @@
-import { useCopyText } from "@humansignal/core/lib/hooks/useCopyText";
+import { useCopyText } from "@humansignal/core";
 import { IconEllipsis, IconLink } from "@humansignal/icons";
 import { Button, ToastType, useToast } from "@humansignal/ui";
 import { observer } from "mobx-react";
@@ -18,7 +18,7 @@ export const RegionContextMenu: FC<{ item: any }> = observer(({ item }: { item: 
     }
     return url.toString();
   }, [item]);
-  const [copyLink] = useCopyText(regionLink);
+  const [copyLink] = useCopyText({ defaultText: regionLink });
   const toast = useToast();
 
   const onCopyLink = useCallback<MenuActionOnClick>(

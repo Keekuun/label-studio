@@ -1,6 +1,7 @@
 import { getParent, getType, isRoot, types } from "mobx-state-tree";
 
 import Registry from "./Registry";
+import { ConfigurationError } from "../utils/errors";
 
 function _mixedArray(fn) {
   return (arr) => types.maybeNull(types.array(fn(arr)));
@@ -13,7 +14,7 @@ function _oneOf(lookup, err) {
         if (arr.find((val) => sn.type === val)) {
           return lookup(sn.type);
         }
-        throw Error(err + sn.type);
+        throw new ConfigurationError(err + sn.type);
       },
     });
 }
@@ -48,7 +49,7 @@ function allModelsTypes() {
         if (Registry.tags.includes(sn.type)) {
           return Registry.getModelByTag(sn.type);
         }
-        throw Error(`Not expecting tag: ${sn.type}`);
+        throw new ConfigurationError(`Not expecting tag: ${sn.type}`);
       },
     },
     Registry.modelsArr(),
@@ -68,6 +69,8 @@ function isType(node, types) {
 }
 
 function getParentOfTypeString(node, str) {
+  if (isRoot(node)) return null;
+
   // same as getParentOfType but checks models .name instead of type
   let parent = getParent(node);
 

@@ -1,9 +1,10 @@
-"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
-"""
+"""This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license."""
+
 import logging
 import os
 import pathlib
 
+from core.feature_flags import flag_set
 from core.filters import ListFilter
 from core.label_config import config_essential_data_has_changed
 from core.mixins import GetParentObjectMixin
@@ -11,7 +12,9 @@ from core.permissions import ViewClassPermission, all_permissions
 from core.redis import start_job_async_or_sync
 from core.utils.common import paginator, paginator_help, temporary_disconnect_all_signals
 from core.utils.exceptions import LabelStudioDatabaseException, ProjectExistException
+from core.utils.filterset_to_openapi_params import filterset_to_openapi_params
 from core.utils.io import find_dir, find_file, read_yaml
+from core.utils.serializer_to_openapi_params import serializer_to_openapi_params
 from data_manager.functions import filters_ordering_selected_items_exist, get_prepared_queryset
 from django.conf import settings
 from django.db import IntegrityError
@@ -34,6 +37,7 @@ from projects.serializers import (
     ProjectImportSerializer,
     ProjectLabelConfigSerializer,
     ProjectModelVersionExtendedSerializer,
+    ProjectModelVersionParamsSerializer,
     ProjectReimportSerializer,
     ProjectSerializer,
     ProjectSummarySerializer,
@@ -47,13 +51,15 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import exception_handler
-from tasks.models import Task
+from tasks.models import Annotation, Task
 from tasks.serializers import (
     NextTaskSerializer,
     TaskSerializer,
     TaskSimpleSerializer,
     TaskWithAnnotationsAndPredictionsAndDraftsSerializer,
 )
+from users.models import User
+from users.serializers import UserSimpleSerializer
 from webhooks.models import WebhookAction
 from webhooks.utils import api_webhook, api_webhook_for_delete, emit_webhooks_for_instance
 
@@ -91,78 +97,6 @@ _task_data_schema = {
     'example': {'id': 1, 'my_image_url': '/static/samples/kittens.jpg'},
 }
 
-_project_schema = {
-    'title': 'Project',
-    'description': 'Project',
-    'type': 'object',
-    'properties': {
-        'title': {
-            'type': 'string',
-            'description': 'Project title',
-            'example': 'My project',
-        },
-        'description': {
-            'type': 'string',
-            'description': 'Project description',
-            'example': 'My first project',
-        },
-        'label_config': {
-            'type': 'string',
-            'description': 'Label config in XML format',
-            'example': '<View>[...]</View>',
-        },
-        'expert_instruction': {
-            'type': 'string',
-            'description': 'Labeling instructions to show to the user',
-            'example': 'Label all cats',
-        },
-        'show_instruction': {
-            'type': 'boolean',
-            'description': 'Show labeling instructions',
-        },
-        'show_skip_button': {
-            'type': 'boolean',
-            'description': 'Show skip button',
-        },
-        'enable_empty_annotation': {
-            'type': 'boolean',
-            'description': 'Allow empty annotations',
-        },
-        'show_annotation_history': {
-            'type': 'boolean',
-            'description': 'Show annotation history',
-        },
-        'reveal_preannotations_interactively': {
-            'type': 'boolean',
-            'description': 'Reveal preannotations interactively. If set to True, predictions will be shown to the user only after selecting the area of interest',
-        },
-        'show_collab_predictions': {
-            'type': 'boolean',
-            'description': 'Show predictions to annotators',
-        },
-        'maximum_annotations': {
-            'type': 'integer',
-            'description': 'Maximum annotations per task',
-        },
-        'color': {
-            'type': 'string',
-            'description': 'Project color in HEX format',
-            'default': '#FFFFFF',
-        },
-        'control_weights': {
-            'type': 'object',
-            'description': 'Dict of weights for each control tag in metric calculation. Each control tag (e.g. label or choice) will '
-            'have its own key in control weight dict with weight for each label and overall weight. '
-            'For example, if a bounding box annotation with a control tag named my_bbox should be included with 0.33 weight in agreement calculation, '
-            'and the first label Car should be twice as important as Airplane, then you need to specify: '
-            "{'my_bbox': {'type': 'RectangleLabels', 'labels': {'Car': 1.0, 'Airplane': 0.5}, 'overall': 0.33}",
-            'example': {
-                'my_bbox': {'type': 'RectangleLabels', 'labels': {'Car': 1.0, 'Airplaine': 0.5}, 'overall': 0.33}
-            },
-        },
-    },
-}
-
 
 class ProjectListPagination(PageNumberPagination):
     page_size = 30
@@ -192,6 +126,10 @@ class ProjectFilterSet(FilterSet):
     """.format(
             settings.HOSTNAME or 'https://localhost:8080'
         ),
+        parameters=[
+            *serializer_to_openapi_params(GetFieldsSerializer),
+            *filterset_to_openapi_params(ProjectFilterSet),
+        ],
         extensions={
             'x-fern-sdk-group-name': 'projects',
             'x-fern-sdk-method-name': 'counts',
@@ -218,9 +156,7 @@ class ProjectFilterSet(FilterSet):
     """.format(
             settings.HOSTNAME or 'https://localhost:8080'
         ),
-        request={
-            'application/json': _project_schema,
-        },
+        request=ProjectSerializer,
         extensions={
             'x-fern-sdk-group-name': 'projects',
             'x-fern-sdk-method-name': 'create',
@@ -249,7 +185,15 @@ class ProjectListAPI(generics.ListCreateAPIView):
         )
         if filter in ['pinned_only', 'exclude_pinned']:
             projects = projects.filter(pinned_at__isnull=filter == 'exclude_pinned')
-        return ProjectManager.with_counts_annotate(projects, fields=fields).prefetch_related('members', 'created_by')
+        projects = ProjectManager.with_counts_annotate(projects, fields=fields)
+
+        # Only annotate FSM state for UI/API consumption when both feature flags are enabled
+        if flag_set('fflag_feat_fit_568_finite_state_management', user=self.request.user) and flag_set(
+            'fflag_feat_fit_710_fsm_state_fields', user=self.request.user
+        ):
+            projects = projects.with_state()
+
+        return projects.prefetch_related('members', 'created_by')
 
     def get_serializer_context(self):
         context = super(ProjectListAPI, self).get_serializer_context()
@@ -278,7 +222,11 @@ class ProjectListAPI(generics.ListCreateAPIView):
     name='get',
     decorator=extend_schema(
         tags=['Projects'],
-        summary="List project's counts",
+        summary="List projects' counts",
+        parameters=[
+            *serializer_to_openapi_params(GetFieldsSerializer),
+            *filterset_to_openapi_params(ProjectFilterSet),
+        ],
         description='Returns a list of projects with their counts. For example, task_number which is the total task number in project',
         extensions={
             'x-fern-sdk-group-name': 'projects',
@@ -299,7 +247,17 @@ class ProjectCountsListAPI(generics.ListAPIView):
         serializer = GetFieldsSerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
-        return Project.objects.with_counts(fields=fields).filter(organization=self.request.user.active_organization)
+        projects = Project.objects.with_counts(fields=fields).filter(
+            organization=self.request.user.active_organization
+        )
+
+        # Only annotate FSM state for UI/API consumption when both feature flags are enabled
+        if flag_set('fflag_feat_fit_568_finite_state_management', user=self.request.user) and flag_set(
+            'fflag_feat_fit_710_fsm_state_fields', user=self.request.user
+        ):
+            projects = projects.with_state()
+
+        return projects
 
 
 @method_decorator(
@@ -396,9 +354,7 @@ class ProjectCountsListAPI(generics.ListAPIView):
         tags=['Projects'],
         summary='Update project',
         description='Update the project settings for a specific project.',
-        request={
-            'application/json': _project_schema,
-        },
+        request=ProjectSerializer,
         extensions={
             'x-fern-sdk-group-name': 'projects',
             'x-fern-sdk-method-name': 'update',
@@ -425,7 +381,17 @@ class ProjectAPI(generics.RetrieveUpdateDestroyAPIView):
         serializer = GetFieldsSerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
-        return Project.objects.with_counts(fields=fields).filter(organization=self.request.user.active_organization)
+        projects = Project.objects.with_counts(fields=fields).filter(
+            organization=self.request.user.active_organization
+        )
+
+        # Only annotate FSM state for UI/API consumption when both feature flags are enabled
+        if flag_set('fflag_feat_fit_568_finite_state_management', user=self.request.user) and flag_set(
+            'fflag_feat_fit_710_fsm_state_fields', user=self.request.user
+        ):
+            projects = projects.with_state()
+
+        return projects
 
     def get(self, request, *args, **kwargs):
         return super(ProjectAPI, self).get(request, *args, **kwargs)
@@ -488,10 +454,7 @@ class ProjectNextTaskAPI(generics.RetrieveAPIView):
         next_task, queue_info = get_next_task(request.user, prepared_tasks, project, dm_queue)
 
         if next_task is None:
-            raise NotFound(
-                f'There are still some tasks to complete for the user={request.user}, '
-                f'but they seem to be locked by another user.'
-            )
+            raise NotFound(f'There are no tasks for {request.user}')
 
         # serialize task
         context = {'request': request, 'project': project, 'resolve_uri': True, 'annotations': False}
@@ -521,7 +484,10 @@ class LabelStreamHistoryAPI(generics.RetrieveAPIView):
         tags=['Projects'],
         summary='Validate label config',
         description='Validate an arbitrary labeling configuration.',
-        responses={204: 'Validation success'},
+        responses={
+            204: OpenApiResponse(description='Validation success'),
+            400: OpenApiResponse(description='Validation failed'),
+        },
         request=ProjectLabelConfigSerializer,
         extensions={
             'x-fern-audiences': ['internal'],
@@ -555,9 +521,7 @@ class LabelConfigValidateAPI(generics.CreateAPIView):
         tags=['Projects'],
         operation_id='api_projects_validate_label_config',
         summary='Validate project label config',
-        description="""
-        Determine whether the label configuration for a specific project is valid.
-        """,
+        description='Determine whether the label configuration for a specific project is valid.',
         parameters=[
             OpenApiParameter(
                 name='id',
@@ -567,6 +531,11 @@ class LabelConfigValidateAPI(generics.CreateAPIView):
             ),
         ],
         request=ProjectLabelConfigSerializer,
+        extensions={
+            'x-fern-sdk-group-name': 'projects',
+            'x-fern-sdk-method-name': 'validate_label_config',
+            'x-fern-audiences': ['public'],
+        },
     ),
 )
 class ProjectLabelConfigValidateAPI(generics.RetrieveAPIView):
@@ -614,7 +583,7 @@ class ProjectSummaryResetAPI(GetParentObjectMixin, generics.CreateAPIView):
     parser_classes = (JSONParser,)
     parent_queryset = Project.objects.all()
     permission_required = ViewClassPermission(
-        POST=all_permissions.projects_change,
+        POST=all_permissions.projects_reset_cache,
     )
 
     @extend_schema(exclude=True)
@@ -702,9 +671,8 @@ class ProjectReimportAPI(generics.RetrieveAPIView):
                 description='A unique integer value identifying this project.',
             ),
         ],
-        responses={204: 'Tasks deleted'},
         extensions={
-            'x-fern-sdk-group-name': 'projects',
+            'x-fern-sdk-group-name': 'tasks',
             'x-fern-sdk-method-name': 'delete_all_tasks',
             'x-fern-audiences': ['public'],
         },
@@ -801,9 +769,11 @@ def read_templates_and_groups():
     configs = []
     for config_file in pathlib.Path(annotation_templates_dir).glob('**/*.yml'):
         config = read_yaml(config_file)
-        if settings.VERSION_EDITION == 'Community':
-            if settings.VERSION_EDITION.lower() != config.get('type', 'community'):
+
+        if settings.VERSION_EDITION != 'Community':
+            if config.get('group', '').lower() == 'community contributions':
                 continue
+
         if config.get('image', '').startswith('/static') and settings.HOSTNAME:
             # if hostname set manually, create full image urls
             config['image'] = settings.HOSTNAME + config['image']
@@ -811,6 +781,10 @@ def read_templates_and_groups():
     template_groups_file = find_file(os.path.join('annotation_templates', 'groups.txt'))
     with open(template_groups_file, encoding='utf-8') as f:
         groups = f.read().splitlines()
+
+    if settings.VERSION_EDITION != 'Community':
+        groups = [group for group in groups if group.lower() != 'community contributions']
+
     logger.debug(f'{len(configs)} templates found.')
     return {'templates': configs, 'groups': groups}
 
@@ -866,15 +840,18 @@ class ProjectSampleTask(generics.RetrieveAPIView):
 class ProjectModelVersions(generics.RetrieveAPIView):
     parser_classes = (JSONParser,)
     permission_required = all_permissions.projects_view
-    queryset = Project.objects.all()
+
+    def get_queryset(self):
+        return Project.objects.filter(organization=self.request.user.active_organization)
 
     def get(self, request, *args, **kwargs):
-        # TODO make sure "extended" is the right word and is
-        # consistent with other APIs we've got
-        extended = self.request.query_params.get('extended', False)
-        include_live_models = self.request.query_params.get('include_live_models', False)
         project = self.get_object()
-        data = project.get_model_versions(with_counters=True, extended=extended)
+        serializer = ProjectModelVersionParamsSerializer(data=self.request.query_params)
+        serializer.is_valid(raise_exception=True)
+        extended = serializer.validated_data.get('extended', False)
+        include_live_models = serializer.validated_data.get('include_live_models', False)
+        limit = serializer.validated_data.get('limit', None)
+        data = project.get_model_versions(with_counters=True, extended=extended, limit=limit)
 
         if extended:
             serializer_models = None
@@ -884,7 +861,6 @@ class ProjectModelVersions(generics.RetrieveAPIView):
                 ml_models = project.get_ml_backends()
                 serializer_models = MLBackendSerializer(ml_models, many=True)
 
-            # serializer.is_valid(raise_exception=True)
             return Response({'static': serializer.data, 'live': serializer_models and serializer_models.data})
         else:
             return Response(data=data)
@@ -899,3 +875,38 @@ class ProjectModelVersions(generics.RetrieveAPIView):
         count = project.delete_predictions(model_version=model_version)
 
         return Response(data=count)
+
+
+@method_decorator(
+    name='get',
+    decorator=extend_schema(
+        tags=['Projects'],
+        summary='List unique annotators for project',
+        description='Return unique users who have submitted annotations in the specified project.',
+        responses={
+            200: OpenApiResponse(
+                description='List of annotator users',
+                response=UserSimpleSerializer(many=True),
+            )
+        },
+        extensions={
+            'x-fern-sdk-group-name': 'projects',
+            'x-fern-sdk-method-name': 'list_unique_annotators',
+            'x-fern-audiences': ['public'],
+        },
+    ),
+)
+class ProjectAnnotatorsAPI(generics.RetrieveAPIView):
+    permission_required = all_permissions.projects_view
+    queryset = Project.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        project = self.get_object()
+        annotator_ids = list(
+            Annotation.objects.filter(project=project, completed_by_id__isnull=False)
+            .values_list('completed_by_id', flat=True)
+            .distinct()
+        )
+        users = User.objects.filter(id__in=annotator_ids).prefetch_related('om_through').order_by('id')
+        data = UserSimpleSerializer(users, many=True, context={'request': request}).data
+        return Response(data)

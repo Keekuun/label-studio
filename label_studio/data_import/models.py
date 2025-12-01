@@ -5,6 +5,7 @@ import os
 import uuid
 from collections import Counter
 
+import ijson
 import pandas as pd
 
 try:
@@ -73,14 +74,71 @@ class FileUpload(models.Model):
             setattr(self, '_file_body', body)
         return body
 
-    def read_tasks_list_from_csv(self, sep=','):
+    def _detect_csv_separator(self):
+        """
+        Detect the CSV separator by analyzing the first line of the file.
+
+        This method implements a reliable heuristic:
+        1. If semicolons are more frequent than commas in the first line, use semicolon
+        2. Otherwise, default to comma
+
+        Returns:
+            str: The detected separator (',' or ';')
+        """
+        try:
+            # Read the first line to analyze separators
+            with self.file.open() as f:
+                first_line = f.readline()
+                if isinstance(first_line, bytes):
+                    first_line = first_line.decode('utf-8')
+
+                # Count potential separators
+                comma_count = first_line.count(',')
+                semicolon_count = first_line.count(';')
+
+                # Use semicolon if it's clearly indicated by higher frequency
+                if semicolon_count > comma_count:
+                    logger.debug(
+                        f'Detected semicolon separator (found {semicolon_count} semicolons vs {comma_count} commas)'
+                    )
+                    return ';'
+                else:
+                    logger.debug(
+                        f'Using default comma separator (found {comma_count} commas vs {semicolon_count} semicolons)'
+                    )
+                    return ','
+        except Exception as e:
+            logger.warning(f'Failed to detect CSV separator, defaulting to comma: {e}')
+            return ','
+
+    def read_tasks_list_from_csv(self):
+        """
+        Read tasks from a CSV file with automatic separator detection.
+
+        The separator is automatically detected by analyzing the first line:
+        - If semicolons are clearly indicated (more frequent than commas), use semicolon
+        - Otherwise, use the default comma separator
+
+        Returns:
+            list: List of tasks in the format [{'data': {...}}, ...]
+        """
         logger.debug('Read tasks list from CSV file {}'.format(self.filepath))
-        tasks = pd.read_csv(self.file.open(), sep=sep).fillna('').to_dict('records')
+        separator = self._detect_csv_separator()
+        tasks = pd.read_csv(self.file.open(), sep=separator).fillna('').to_dict('records')
         tasks = [{'data': task} for task in tasks]
         return tasks
 
     def read_tasks_list_from_tsv(self):
-        return self.read_tasks_list_from_csv('\t')
+        """
+        Read tasks from a TSV (tab-separated values) file.
+
+        Returns:
+            list: List of tasks in the format [{'data': {...}}, ...]
+        """
+        logger.debug('Read tasks list from TSV file {}'.format(self.filepath))
+        tasks = pd.read_csv(self.file.open(), sep='\t').fillna('').to_dict('records')
+        tasks = [{'data': task} for task in tasks]
+        return tasks
 
     def read_tasks_list_from_txt(self):
         logger.debug('Read tasks list from text file {}'.format(self.filepath))
@@ -107,6 +165,70 @@ class FileUpload(models.Model):
                 raise ValidationError('Task item should be dict')
             tasks_formatted.append(task)
         return tasks_formatted
+
+    def read_tasks_list_from_json_streaming(self, batch_size=100):
+        logger.debug('Read tasks list from JSON file streaming {}'.format(self.filepath))
+
+        try:
+            with self.file.open('rb') as file_handle:
+                # Peek a small prefix to detect top-level container ('[' array or '{' object)
+                sniff = file_handle.read(4096) or b''
+                # Find first non-whitespace byte
+                first_byte = None
+                for b in sniff:
+                    if b not in (0x20, 0x09, 0x0A, 0x0D):  # space, tab, lf, cr
+                        first_byte = b
+                        break
+
+                # Rewind after sniffing
+                file_handle.seek(0)
+
+                batch = []
+
+                if first_byte == ord('['):
+                    # Stream array items one-by-one
+                    # use_float=True prevents Decimal objects which cause JSON serialization issues downstream
+                    for task in ijson.items(file_handle, 'item', use_float=True):
+                        formatted_task = self._format_task_for_json_streaming(task)
+                        batch.append(formatted_task)
+                        if len(batch) >= batch_size:
+                            yield batch
+                            batch = []
+
+                elif first_byte == ord('{'):
+                    # Single JSON object: parse once and yield a single-item batch
+                    raw_data = file_handle.read()
+                    try:
+                        task_data = json.loads(raw_data)
+                    except TypeError:
+                        task_data = json.loads(raw_data.decode('utf8'))
+                    formatted_task = self._format_task_for_json_streaming(task_data)
+                    batch.append(formatted_task)
+
+                else:
+                    # Unknown/invalid JSON structure
+                    raise ValidationError('Unsupported or invalid JSON structure')
+
+                # Yield remaining tasks if any
+                if batch:
+                    yield batch
+
+        except Exception as exc:
+            raise ValidationError(f'Failed to parse JSON file {self.file_name}: {str(exc)}')
+
+    def _format_task_for_json_streaming(self, task):
+        """Format task data for JSON streaming consistency with read_tasks_list_from_json"""
+        # Handle different task types as in the original read_tasks_list_from_json method
+        if isinstance(task, dict):
+            if not task.get('data'):
+                task = {'data': task}
+        else:
+            # If task is not a dict (e.g., list), wrap it in {'data': task}
+            task = {'data': task}
+
+        if not isinstance(task['data'], dict):
+            raise ValidationError('Task item should be dict')
+        return task
 
     def read_task_from_hypertext_body(self):
         logger.debug('Read 1 task from hypertext file {}'.format(self.filepath))
@@ -156,6 +278,43 @@ class FileUpload(models.Model):
             raise ValidationError('Failed to parse input file ' + self.file_name + ': ' + str(exc))
         return tasks
 
+    def read_tasks_streaming(self, file_as_tasks_list=True, batch_size=100):
+        """Streaming version of read_tasks that yields tasks in batches for memory efficiency"""
+        file_format = self.format
+
+        try:
+            # For JSON files, use streaming JSON parser
+            if file_format == '.json':
+                for batch in self.read_tasks_list_from_json_streaming(batch_size):
+                    yield batch
+
+            # For other file types, use existing methods but yield in batches
+            else:
+                # Use existing non-streaming methods for non-JSON files
+                if file_format == '.csv' and file_as_tasks_list:
+                    tasks = self.read_tasks_list_from_csv()
+                elif file_format == '.tsv' and file_as_tasks_list:
+                    tasks = self.read_tasks_list_from_tsv()
+                elif file_format == '.txt' and file_as_tasks_list:
+                    tasks = self.read_tasks_list_from_txt()
+                elif not self.project.one_object_in_label_config:
+                    raise ValidationError(
+                        'Your label config has more than one data key and direct file upload supports only '
+                        'one data key. To import data with multiple data keys, use a JSON or CSV file.'
+                    )
+                elif file_format in ('.html', '.htm', '.xml'):
+                    tasks = self.read_task_from_hypertext_body()
+                else:
+                    tasks = self.read_task_from_uploaded_file()
+
+                # Yield tasks in batches
+                for i in range(0, len(tasks), batch_size):
+                    batch = tasks[i : i + batch_size]
+                    yield batch
+
+        except Exception as exc:
+            raise ValidationError('Failed to parse input file ' + self.file_name + ': ' + str(exc))
+
     @classmethod
     def load_tasks_from_uploaded_files(
         cls, project, file_upload_ids=None, formats=None, files_as_tasks_list=True, trim_size=None
@@ -196,6 +355,68 @@ class FileUpload(models.Model):
                     break
 
         return tasks, dict(Counter(fileformats)), common_data_fields
+
+    @classmethod
+    def load_tasks_from_uploaded_files_streaming(
+        cls, project, file_upload_ids=None, formats=None, files_as_tasks_list=True, batch_size=5000
+    ):
+        """Stream tasks from uploaded files in batches to reduce memory usage using true streaming for JSON files"""
+        fileformats = []
+        common_data_fields = set()
+        accumulated_batch = []
+        total_yielded = 0
+
+        # scan all files
+        file_uploads = FileUpload.objects.filter(project=project)
+        if file_upload_ids:
+            file_uploads = file_uploads.filter(id__in=file_upload_ids)
+
+        for file_upload in file_uploads:
+            file_format = file_upload.format
+            if formats and file_format not in formats:
+                continue
+
+            fileformats.append(file_format)
+
+            # Use streaming method for reading tasks
+            for task_batch in file_upload.read_tasks_streaming(files_as_tasks_list, batch_size):
+                # Add file_upload_id to each task in the batch
+                for task in task_batch:
+                    task['file_upload_id'] = file_upload.id
+
+                # Validate data fields consistency for first batch from each file
+                if task_batch:
+                    new_data_fields = set(task_batch[0]['data'].keys())
+                    if not common_data_fields:
+                        common_data_fields = new_data_fields
+                    elif not common_data_fields.intersection(new_data_fields):
+                        raise ValidationError(
+                            _old_vs_new_data_keys_inconsistency_message(
+                                new_data_fields, common_data_fields, file_upload.file.name
+                            )
+                        )
+                    else:
+                        common_data_fields &= new_data_fields
+
+                # Add tasks to accumulated batch
+                accumulated_batch.extend(task_batch)
+
+                # Yield accumulated batch when it reaches the target size
+                while len(accumulated_batch) >= batch_size:
+                    batch_to_yield = accumulated_batch[:batch_size]
+                    accumulated_batch = accumulated_batch[batch_size:]
+
+                    yield batch_to_yield, dict(Counter(fileformats)), common_data_fields
+                    total_yielded += len(batch_to_yield)
+
+        # Yield remaining tasks if any
+        if accumulated_batch:
+            yield accumulated_batch, dict(Counter(fileformats)), common_data_fields
+            total_yielded += len(accumulated_batch)
+
+        # If no tasks were yielded, return empty batch with metadata
+        if total_yielded == 0:
+            yield [], dict(Counter(fileformats)), common_data_fields
 
 
 def _old_vs_new_data_keys_inconsistency_message(new_data_keys, old_data_keys, current_file):

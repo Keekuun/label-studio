@@ -46,8 +46,8 @@
 }
 
 .region-actions {
-  padding: 8px;
-  height: 52px;
+  padding: var(--spacing-tighter) var(--spacing-tight);
+  background: var(--color-neutral-background);
   display: flex;
   align-items: stretch;
   justify-content: space-between;

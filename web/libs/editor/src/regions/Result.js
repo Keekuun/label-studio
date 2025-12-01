@@ -1,10 +1,73 @@
 import { getParent, getRoot, getSnapshot, types } from "mobx-state-tree";
+import { ff } from "@humansignal/core";
 import { guidGenerator } from "../core/Helpers";
 import Registry from "../core/Registry";
 import Tree from "../core/Tree";
 import { AnnotationMixin } from "../mixins/AnnotationMixin";
 import { isDefined } from "../utils/utilities";
 import { FF_LSDV_4583, isFF } from "../utils/feature-flags";
+
+const resultTypes = [
+  "labels",
+  "hypertextlabels",
+  "paragraphlabels",
+  "rectangle",
+  "keypoint",
+  "polygon",
+  "brush",
+  "bitmask",
+  "ellipse",
+  "magicwand",
+  "rectanglelabels",
+  "keypointlabels",
+  "polygonlabels",
+  "vector",
+  "vectorlabels",
+  "brushlabels",
+  "bitmasklabels",
+  "ellipselabels",
+  "timeserieslabels",
+  "timelinelabels",
+  "choices",
+  "datetime",
+  "number",
+  "taxonomy",
+  "textarea",
+  "rating",
+  "pairwise",
+  "videorectangle",
+  "ranker",
+  "custominterface",
+];
+
+const resultValues = {
+  ranker: types.union(types.array(types.string), types.frozen(), types.null),
+  datetime: types.maybe(types.string),
+  number: types.maybe(types.number),
+  rating: types.maybe(types.number),
+  item_index: types.maybeNull(types.number),
+  text: types.maybe(types.union(types.string, types.array(types.string))),
+  choices: types.maybe(types.array(types.union(types.string, types.array(types.string)))),
+  // pairwise
+  selected: types.maybe(types.enumeration(["left", "right"])),
+  // @todo all other *labels
+  labels: types.maybe(types.array(types.string)),
+  htmllabels: types.maybe(types.array(types.string)),
+  hypertextlabels: types.maybe(types.array(types.string)),
+  paragraphlabels: types.maybe(types.array(types.string)),
+  rectanglelabels: types.maybe(types.array(types.string)),
+  keypointlabels: types.maybe(types.array(types.string)),
+  polygonlabels: types.maybe(types.array(types.string)),
+  vectorlabels: types.maybe(types.array(types.string)),
+  ellipselabels: types.maybe(types.array(types.string)),
+  brushlabels: types.maybe(types.array(types.string)),
+  timeserieslabels: types.maybe(types.array(types.string)),
+  timelinelabels: types.maybe(types.array(types.string)), // new one
+  bitmasklabels: types.maybe(types.array(types.string)),
+  taxonomy: types.frozen(), // array of arrays of strings
+  sequence: types.frozen(),
+  custom: types.maybe(types.frozen()), // for CustomInterface regions
+};
 
 const Result = types
   .model("Result", {
@@ -25,69 +88,34 @@ const Result = types
     // @todo pid?
     // parentID: types.optional(types.string, ""),
 
-    // ImageRegion, TextRegion, HyperTextRegion, AudioRegion)),
+    // KonvaRegion, TextRegion, HyperTextRegion, AudioRegion)),
     // optional for classifications
     // labeling/control tag
     from_name: types.late(() => types.reference(types.union(...Registry.modelsArr()))),
     // object tag
     to_name: types.late(() => types.reference(types.union(...Registry.objectTypes()))),
     // @todo some general type, maybe just a `string`
-    type: types.enumeration([
-      "labels",
-      "hypertextlabels",
-      "paragraphlabels",
-      "rectangle",
-      "keypoint",
-      "polygon",
-      "brush",
-      "bitmask",
-      "ellipse",
-      "magicwand",
-      "rectanglelabels",
-      "keypointlabels",
-      "polygonlabels",
-      "brushlabels",
-      "bitmasklabels",
-      "ellipselabels",
-      "timeserieslabels",
-      "timelinelabels",
-      "choices",
-      "datetime",
-      "number",
-      "taxonomy",
-      "textarea",
-      "rating",
-      "pairwise",
-      "videorectangle",
-      "ranker",
-    ]),
+    type: ff.isActive(ff.FF_CUSTOM_TAGS)
+      ? types.late(() =>
+          types.enumeration([
+            ...resultTypes,
+            ...Registry.customTags.filter((t) => t.resultName).map((t) => t.resultName),
+          ]),
+        )
+      : types.enumeration([...resultTypes]),
     // @todo much better to have just a value, not a hash with empty fields
-    value: types.model({
-      ranker: types.union(types.array(types.string), types.frozen(), types.null),
-      datetime: types.maybe(types.string),
-      number: types.maybe(types.number),
-      rating: types.maybe(types.number),
-      item_index: types.maybeNull(types.number),
-      text: types.maybe(types.union(types.string, types.array(types.string))),
-      choices: types.maybe(types.array(types.union(types.string, types.array(types.string)))),
-      // pairwise
-      selected: types.maybe(types.enumeration(["left", "right"])),
-      // @todo all other *labels
-      labels: types.maybe(types.array(types.string)),
-      htmllabels: types.maybe(types.array(types.string)),
-      hypertextlabels: types.maybe(types.array(types.string)),
-      paragraphlabels: types.maybe(types.array(types.string)),
-      rectanglelabels: types.maybe(types.array(types.string)),
-      keypointlabels: types.maybe(types.array(types.string)),
-      polygonlabels: types.maybe(types.array(types.string)),
-      ellipselabels: types.maybe(types.array(types.string)),
-      brushlabels: types.maybe(types.array(types.string)),
-      timeserieslabels: types.maybe(types.array(types.string)),
-      timelinelabels: types.maybe(types.array(types.string)), // new one
-      bitmasklabels: types.maybe(types.array(types.string)),
-      taxonomy: types.frozen(), // array of arrays of strings
-      sequence: types.frozen(),
-    }),
+    value: ff.isActive(ff.FF_CUSTOM_TAGS)
+      ? types.late(() =>
+          types.model({
+            ...resultValues,
+            ...Object.fromEntries(
+              Registry.customTags.filter((t) => t.resultName).map((t) => [t.resultName, types.maybe(t.result)]),
+            ),
+          }),
+        )
+      : types.model({
+          ...resultValues,
+        }),
     // info about object and region
     meta: types.frozen(),
   })
@@ -373,25 +401,6 @@ const Result = types
       }
 
       return data;
-    },
-
-    /**
-     * Remove region
-     */
-    deleteRegion() {
-      if (self.annotation.isReadOnly()) return;
-
-      self.unselectRegion();
-
-      self.annotation.relationStore.deleteNodeRelation(self);
-
-      if (self.type === "polygonregion") {
-        self.destroyRegion();
-      }
-
-      self.annotation.regionStore.deleteRegion(self);
-
-      self.annotation.deleteRegion(self);
     },
 
     setHighlight(val) {

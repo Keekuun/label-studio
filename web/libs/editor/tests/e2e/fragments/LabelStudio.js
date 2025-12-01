@@ -7,6 +7,13 @@ module.exports = {
     for (const [eventName, callback] of Object.entries(events)) {
       this.on(eventName, callback);
     }
+
+    const defaultCpuThrottling = process.env.DEFAULT_CPU_THROTTLING;
+
+    if (defaultCpuThrottling) {
+      I.wait(1); // gives some time to page to load
+      I.throttleCPU(+defaultCpuThrottling);
+    }
   },
   on(eventName, callback) {
     I.executeScript(Helpers.createAddEventListenerScript(eventName, callback));

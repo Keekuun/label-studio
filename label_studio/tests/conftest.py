@@ -25,8 +25,6 @@ from projects.models import Project
 from tasks.models import Task
 from users.models import User
 
-from label_studio.core.utils.params import get_env
-
 # if we haven't this package, pytest.ini::env doesn't work
 try:
     import pytest_env.plugin  # noqa: F401
@@ -316,6 +314,9 @@ def mock_s3_resource_kms(mocker):
 
 @pytest.fixture(autouse=True)
 def gcs_client():
+    # be careful, this is a global fixture and will affect all tests
+    # because it will be applied to all tests that use gcs_client
+    # and it may lead to flaky tests if the sample blob names are not deterministic
     with gcs_client_mock():
         yield
 
@@ -344,7 +345,7 @@ def ml_backend_for_test_predict(ml_backend):
                     'model_version': 'ModelSingle',
                     'score': 0.1,
                     'result': [
-                        {'from_name': 'label', 'to_name': 'text', 'type': 'choices', 'value': {'choices': ['Single']}}
+                        {'from_name': 'label', 'to_name': 'text', 'type': 'choices', 'value': {'choices': ['label_A']}}
                     ],
                 },
             ]
@@ -414,6 +415,17 @@ def pytest_configure():
     for q in settings.RQ_QUEUES.values():
         q['ASYNC'] = False
 
+    # Reload django-rq module to pick up the ASYNC=False changes in django-rq 3.x
+    try:
+        import importlib
+
+        import django_rq.queues as dq
+
+        importlib.reload(dq)
+    except ImportError:
+        # django_rq might not be installed or imported yet
+        pass
+
 
 class URLS:
     """This class keeps urls with api"""
@@ -445,7 +457,7 @@ def project_dialog():
       <TextEditor>
         <Text name="dialog" value="$dialog"></Text>
         <Header value="Your answer is:"></Header>
-        <TextArea name="answer"></TextArea>
+        <TextArea name="answer" toName="dialog"></TextArea>
       </TextEditor>
     </View>"""
 
@@ -694,6 +706,7 @@ def set_feature_flag_envvar():
     Automatically set the environment variable for all tests, including Tavern tests.
     """
     os.environ['fflag_optic_all_optic_1938_storage_proxy'] = 'true'
+    os.environ['fflag_feat_utc_210_prediction_validation_15082025'] = 'true'
 
 
 @pytest.fixture(name='fflag_feat_back_lsdv_3958_server_side_encryption_for_target_storage_short_on')
@@ -735,32 +748,6 @@ def ff_back_dev_4664_remove_storage_file_on_export_delete_29032023_short_on():
         yield
 
 
-@pytest.fixture(name='fflag_feat_utc_46_session_timeout_policy_off')
-def fflag_feat_utc_46_session_timeout_policy_off():
-    from core.feature_flags import flag_set
-
-    def fake_flag_set(*args, **kwargs):
-        if args[0] == 'fflag_feat_utc_46_session_timeout_policy':
-            return False
-        return flag_set(*args, **kwargs)
-
-    with mock.patch('core.middleware.flag_set', wraps=fake_flag_set):
-        yield
-
-
-@pytest.fixture(name='fflag_feat_utc_46_session_timeout_policy_on')
-def fflag_feat_utc_46_session_timeout_policy_on():
-    from core.feature_flags import flag_set
-
-    def fake_flag_set(*args, **kwargs):
-        if args[0] == 'fflag_feat_utc_46_session_timeout_policy':
-            return True
-        return flag_set(*args, **kwargs)
-
-    with mock.patch('core.middleware.flag_set', wraps=fake_flag_set):
-        yield
-
-
 @pytest.fixture(name='local_files_storage')
 def local_files_storage(settings):
     settings.LOCAL_FILES_SERVING_ENABLED = True
@@ -782,14 +769,6 @@ def local_files_document_root_tempdir(settings):
 def local_files_document_root_subdir(settings):
     tempdir = Path(tempfile.gettempdir()) / Path('files')
     settings.LOCAL_FILES_DOCUMENT_ROOT = str(tempdir)
-
-
-@pytest.fixture(name='testing_session_timeouts')
-def set_testing_session_timeouts(settings):
-    settings.MAX_SESSION_AGE = int(get_env('MAX_SESSION_AGE', timedelta(seconds=6).total_seconds()))
-    settings.MAX_TIME_BETWEEN_ACTIVITY = int(
-        get_env('MAX_TIME_BETWEEN_ACTIVITY', timedelta(seconds=2).total_seconds())
-    )
 
 
 @pytest.fixture

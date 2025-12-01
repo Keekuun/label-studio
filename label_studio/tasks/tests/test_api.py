@@ -93,3 +93,33 @@ class TestTaskAPI(APITestCase):
             'last_comment_updated_at': None,
             'unresolved_comment_count': 0,
         }
+
+    def test_create_task_without_project_id_fails(self):
+        """Test that creating a task without project ID fails with appropriate error message"""
+        payload = {
+            'data': {'text': 'test task'},
+            'meta': {},
+        }
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post('/api/tasks/', data=payload, format='json')
+
+        assert response.status_code == 400
+        response_data = response.json()
+        assert response_data['validation_errors']['project'] == ['This field is required.']
+
+    def test_create_task_with_project_id_succeeds(self):
+        """Test that creating a task with valid project ID succeeds"""
+        payload = {
+            'project': self.project.id,
+            'data': {'text': 'test task'},
+            'meta': {},
+        }
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post('/api/tasks/', data=payload, format='json')
+
+        assert response.status_code == 201
+        response_data = response.json()
+        assert response_data['project'] == self.project.id
+        assert response_data['data'] == {'text': 'test task'}

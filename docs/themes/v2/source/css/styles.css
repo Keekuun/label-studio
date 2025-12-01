@@ -576,7 +576,7 @@ main {
   color: var(--color-gray-900);
 }
 
-.page-sidebar .page-sidebar-list li:has(.page-sidebar-children-link[aria-current="page"]) > .page-sidebar-toggle-children-list svg {
+.page-sidebar .page-sidebar-list li:has(.page-sidebar-children-link[aria-current="page"])>.page-sidebar-toggle-children-list svg {
   transform: rotate(180deg);
 }
 
@@ -592,6 +592,7 @@ main {
 
 dt {
   font-weight: bold;
+  font-size: 125%
 }
 
 dd .admonition:first-child {
@@ -1162,27 +1163,6 @@ ul {
   display: flex;
 }
 
-.notion-grid {
-  --toc-size: 0px;
-  max-width: 97ch;
-  margin: 0 auto;
-}
-
-.notion-grid .content-markdown {
-  width: calc(100vw - var(--sidebar-size) - var(--toc-size) - calc(2 * var(--page-padding)) - 0px)
-}
-
-@media (max-width: 800px) {
-  .notion-grid .content-markdown {
-    max-width: 100%;
-    width: 100%;
-  }
-
-  .notion-grid .content-markdown * {
-    word-break: break-all;
-  }
-}
-
 .make-intense-zoom {
   cursor: url("/images/design/plus_cursor.svg") 25 25, auto;
 }
@@ -1201,18 +1181,6 @@ ul {
   margin-top: 0;
 }
 
-.notion-toc {
-  background-color: var(--color-gray-100);
-  padding: 2em;
-  margin-top: 2em;
-  font-size: 1.25em;
-}
-
-.notion-toc h3 {
-  color: var(--color-gray-600);
-  margin-top: 0;
-}
-
 .toc-list {
   list-style: none;
   margin: 0;
@@ -1221,7 +1189,6 @@ ul {
 }
 
 .toc .toc-list a,
-.notion-toc .toc-list a,
 .toc-ent-trial a {
   color: var(--color-gray-900);
   text-decoration: none;
@@ -1762,6 +1729,9 @@ details+details {
   height: auto;
   margin: calc(-1 * var(--padding)) calc(-1 * var(--padding)) 0.75em calc(-1 * var(--padding));
   transition: border-radius 200ms;
+  aspect-ratio: 8 / 5;
+  object-fit: cover;
+  border-bottom: 1px solid var(--color-gray-300);
 }
 
 .templates-card p {
@@ -2791,4 +2761,185 @@ code.hljs {
 
 .page-tier-enterprise .Alert:hover svg {
   transform: translateX(2px);
+}
+
+/* Community template styles */
+.community-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background-color: var(--color-gray-100);
+  border-radius: 3px;
+  font-size: 0.75rem;
+  line-height: 1;
+  border-left: 2px solid var(--color-blue-400);
+}
+
+.community-badge {
+  color: var(--color-blue-400);
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding-right: 0.5rem;
+  margin-right: 0.5rem;
+  border-right: 1px solid var(--color-gray-300);
+}
+
+.template-author {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.community-people {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-right: auto;
+}
+
+.person {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  text-decoration: none;
+  color: var(--color-blue-600);
+}
+
+.person:hover {
+  text-decoration: underline;
+}
+
+.author {
+  font-weight: 500;
+}
+
+.person-avatar,
+.avatar-letter {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 0.2rem;
+  flex-shrink: 0;
+}
+
+.person-avatar {
+  object-fit: cover;
+  border: 1px solid var(--color-gray-300);
+}
+
+.avatar-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-blue-400);
+  color: var(--color-white);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.person-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.people-divider {
+  font-size: 0.7rem;
+  color: var(--color-gray-600);
+  padding: 0 0.15rem;
+}
+
+.person-more {
+  font-size: 0.7rem;
+  color: var(--color-gray-600);
+}
+
+.repo-links {
+  display: flex;
+  margin-left: auto;
+  gap: 0.5rem;
+}
+
+.repo-links a {
+  color: #586069;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.repo-links a:hover {
+  color: #0366d6;
+}
+
+.issue-icon,
+.github-icon {
+  color: var(--color-gray-600);
+  transition: color 0.2s;
+}
+
+.issue-icon:hover,
+.github-icon:hover {
+  color: var(--color-blue-600);
+}
+
+.community-footer {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding: 0.8rem 1rem;
+  background-color: var(--color-gray-100);
+  border-radius: 3px;
+  border-left: 2px solid var(--color-blue-400);
+  font-size: 0.9rem;
+}
+
+.community-footer-content {
+  display: flex;
+  align-items: flex-start;
+}
+
+.community-footer-text {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  flex: 1;
+  color: var(--color-gray-900);
+}
+
+.community-footer-icon {
+  margin-right: 0.6rem;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.community-footer a {
+  color: var(--color-blue-600);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.community-footer a:hover {
+  text-decoration: underline;
+}
+
+/* works with DT*/
+
+.badge::after {
+  content: url("/images/badge.svg");
+  display: inline-block;
+  width: 20px;    
+  height: auto; 
+  margin-left: 6px;
+  vertical-align: middle; 
+}
+
+p .badge::after {
+  content: url("/images/badge.svg");
+  display: inline-block;
+  width: 20px;    
+  height: auto; 
+  margin-left: 6px;
+  vertical-align: middle; 
+  padding-top: 5px;
 }

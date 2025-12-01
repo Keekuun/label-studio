@@ -2,7 +2,16 @@ title: Speech Transcription
 type: community
 group: Audio/Speech Processing
 image: /static/templates/thumbnail-audio-sentiment.png
-details: <h1>Transcribe audio recordings with chunks</h1>
+details: |
+  <h1>Transcribe audio recordings with chunks</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>medical dictation, legal transcription, podcast transcription, interview transcription, meeting minutes, lecture notes, courtroom reporting, journalism, accessibility services, broadcast media, customer service calls, research interviews</dd>
+    <dt>Associated Models</dt>
+    <dd>Whisper, Wav2Vec2, DeepSpeech, Google Speech-to-Text, Azure Speech Services</dd>
+    <dt>Domain Terminology</dt>
+    <dd>speech-to-text, audio transcription, voice recognition, dictation, transcription with sentiment</dd>
+  </dl>
 config: |
   <View>
       <Audio name="audio" value="$audio" />

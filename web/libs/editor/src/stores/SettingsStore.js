@@ -2,7 +2,6 @@ import { getEnv, getRoot, onSnapshot, types } from "mobx-state-tree";
 
 import { Hotkey } from "../core/Hotkey";
 import EditorSettings from "../core/settings/editorsettings";
-import Utils from "../utils";
 
 const SIDEPANEL_MODE_REGIONS = "SIDEPANEL_MODE_REGIONS";
 const SIDEPANEL_MODE_LABELS = "SIDEPANEL_MODE_LABELS";
@@ -141,13 +140,11 @@ const SettingsModel = types
     toggleShowLabels() {
       self.showLabels = !self.showLabels;
 
-      Utils.HTML.toggleLabelsAndScores(self.showLabels);
-
-      // const c = getRoot(self).annotationStore.selected;
-      // c.regionStore.regions.forEach(r => {
-      //   // TODO there is no showLables in the regions right now
-      //   return typeof r.showLabels === "boolean" && r.setShowLables(self.showLabels);
-      // });
+      // Update appearance of all regions to reflect the new setting
+      const annotation = getRoot(self).annotationStore.selected;
+      if (annotation) {
+        annotation.updateAppearenceFromState();
+      }
     },
 
     toggleShowLineNumbers() {

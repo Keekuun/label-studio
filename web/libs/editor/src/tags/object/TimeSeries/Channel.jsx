@@ -8,7 +8,7 @@ import * as d3 from "d3";
 import TimeSeriesVisualizer from "../../../components/TimeSeries/TimeSeriesVisualizer";
 import Registry from "../../../core/Registry";
 import Types from "../../../core/Types";
-import { cloneNode, guidGenerator } from "../../../core/Helpers";
+import { guidGenerator } from "../../../core/Helpers";
 import { checkD3EventLoop, getOptimalWidth, getRegionColor, sparseValues } from "./helpers";
 import { markerSymbol } from "./symbols";
 import { errorBuilder } from "../../../core/DataValidator/ConfigValidator";
@@ -215,7 +215,7 @@ class ChannelD3 extends React.Component {
       if (newRegion && Math.abs(newRegion.x - x) < 4) {
         clearTimeout(this.newRegionTimer);
         if (!readonly) {
-          parent?.regionChanged(newRegion.range, ranges.length, newRegion.states);
+          parent?.regionChanged(newRegion.range, ranges.length);
         }
         this.newRegion = null;
         this.newRegionTimer = null;
@@ -223,7 +223,6 @@ class ChannelD3 extends React.Component {
         // 1st click - store the data
         this.newRegion = {
           range: this.getRegion([x, x]),
-          states: activeStates.map((s) => cloneNode(s)),
           x,
         };
         // clear it in 300ms if there no 2nd click

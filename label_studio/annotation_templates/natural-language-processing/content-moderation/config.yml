@@ -2,7 +2,14 @@ title: Content Moderation
 type: community
 group: Natural Language Processing
 image: /static/templates/content-moderation.png
-details: <h1>Content moderation</h1>
+details: |
+  <h1>Content moderation</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>social media platforms, online communities, forum moderation, chat moderation, user-generated content, comment filtering, gaming chat, livestream chat, trust and safety, content policy, community guidelines, child safety, hate speech detection, harassment detection, cyberbullying, disinformation, automated moderation, human-in-the-loop</dd>
+    <dt>Domain Terminology</dt>
+    <dd>NLP, toxic content detection, profanity filtering</dd>
+  </dl>
 config: |
   <View>
     <Text name="text" value="$text"/>

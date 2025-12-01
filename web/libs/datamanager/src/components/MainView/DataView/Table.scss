@@ -13,17 +13,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  position: relative;
 
-  &__description {
-    h3 {
-      color: var(--color-neutral-content);
-    }
-
-    font-size: 16px;
-    text-align: center;
-    color: var(--color-neutral-content-subtler);
-    margin-bottom: 8px;
-  }
 }
 
 .syncInProgress {

@@ -4,11 +4,12 @@ short: SCIM2
 tier: enterprise
 type: guide
 order: 0
-order_enterprise: 387
+order_enterprise: 389
 meta_title: System for Cross-domain Identity Management (SCIM) for Label Studio Enterprise
 meta_description: Label Studio Enterprise documentation for setting up SCIM2
 section: "Manage Your Organization"
-
+parent: "admin_auth"
+parent_enterprise: "admin_auth"
 ---
 
 System for Cross-domain Identity Management (SCIM) is a popular protocol to manage access for services and applications across an organization. This guide helps to set up SCIM integration to manage access to Label Studio Enterprise in your organization. 
@@ -112,7 +113,7 @@ The most convenient way to manage access to the application is via groups. You c
 2. Select **SCIM** in the upper right. 
 3. Update roles and workspaces mapping. Ensure the group name you enter is the same as the group name being sent by your SCIM provider. 
 
-    * **Organization Roles to Groups Mapping**---Map groups to roles at the organization level. The role set at the organization level is the default role of the user and is automatically assigned to workspaces and projects. For more information on roles, see [Roles in Label Studio Enterprise](manage_users#Roles-in-Label-Studio-Enterprise). 
+    * **Organization Roles to Groups Mapping**---Map groups to roles at the organization level. The role set at the organization level is the default role of the user and is automatically assigned to workspaces and projects. For more information on roles, see [Roles in Label Studio Enterprise](admin_roles). 
 
         You can map multiple groups to the same role. Note that users who are **Not Activated** or **Deactivated** do not count towards the seat limit for your account. 
     * **Workspaces to Groups Mapping**---Add groups as members to workspaces. Users with Manager, Reviewer, or Annotator roles can only see workspaces after they've been added as a member to that workspace.
@@ -120,7 +121,7 @@ The most convenient way to manage access to the application is via groups. You c
         Select an existing workspace or create a new one. You can map multiple groups to the same workspace.  
     * **Projects to Groups Mapping**---Map groups to roles at the project level. Project-level roles can be **Annotator**, **Reviewer**, or **Inherit**. 
     
-        You can map a group to different roles across multiple projects. You can also map multiple groups to the same roles and the same projects. For more information on roles, see [Roles in Label Studio Enterprise](manage_users#Roles-in-Label-Studio-Enterprise). 
+        You can map a group to different roles across multiple projects. You can also map multiple groups to the same roles and the same projects. For more information on roles, see [Roles in Label Studio Enterprise](admin_roles). 
     
         If you select **Inherit**, the group will inherit the role set above under **Organization Roles to Groups Mapping.** If the group is inheriting the Not Activated role, the users are mapped to the project, but they are not actually assigned to the project until the group is synced (meaning that the user authenticates first). 
 

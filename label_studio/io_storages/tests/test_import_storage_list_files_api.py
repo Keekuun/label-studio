@@ -183,7 +183,7 @@ class TestImportStorageListFilesAPI(unittest.TestCase):
             self.api.create(request)
 
         # Verify exception details
-        assert str(exc_info.value.detail[0]) == 'Storage connection failed'
+        assert str(exc_info.value.detail[0]) == 'Failed to list storage files'
 
     @patch('io_storages.functions.validate_storage_instance')
     def test_get_unified_metadata_exception_raises_validation_error(self, mock_validate):
@@ -207,7 +207,7 @@ class TestImportStorageListFilesAPI(unittest.TestCase):
             self.api.create(request)
 
         # Verify exception details
-        assert str(exc_info.value.detail[0]) == 'Metadata extraction failed'
+        assert str(exc_info.value.detail[0]) == 'Failed to list storage files'
 
     @patch('io_storages.functions.validate_storage_instance')
     def test_validate_storage_instance_exception_propagates(self, mock_validate):

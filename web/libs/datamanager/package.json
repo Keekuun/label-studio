@@ -21,8 +21,7 @@
     "react-hotkeys-hook": "^2.4.0",
     "react-virtualized-auto-sizer": "^1.0.20",
     "react-window": "^1.8.9",
-    "react-window-infinite-loader": "^1.0.5",
-    "strman": "^2.0.1"
+    "react-window-infinite-loader": "^1.0.5"
   },
   "main": "src/index.js"
 }

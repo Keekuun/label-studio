@@ -64,11 +64,11 @@ def test_create_predictions_with_import(django_live_url, business_client):
     ls.projects.import_tasks(
         id=p.id,
         request=[
-            {'my_text': 'Hello world', 'my_label': 'Positive'},
-            {'my_text': 'Goodbye Label Studio', 'my_label': 'Negative'},
-            {'my_text': 'What a beautiful day', 'my_label': 'Positive'},
+            {'my_text': 'Hello world', 'sentiment_class': 'Positive'},
+            {'my_text': 'Goodbye Label Studio', 'sentiment_class': 'Negative'},
+            {'my_text': 'What a beautiful day', 'sentiment_class': 'Positive'},
         ],
-        preannotated_from_fields=['my_label'],
+        preannotated_from_fields=['sentiment_class'],
     )
 
     # check predictions for each class
@@ -128,3 +128,57 @@ def test_create_predictions_with_import(django_live_url, business_client):
         ls.projects.update(id=p.id, model_version='3.4.6')
     assert e.value.status_code == 400
     assert e.value.body['validation_errors']['model_version'][0].startswith("Model version doesn't exist")
+
+
+def test_projects_import_predictions(django_live_url, business_client):
+    """Import multiple predictions via projects.import_predictions
+
+    Purpose:
+    - Verify that the bulk predictions import endpoint creates predictions for a project
+
+    Setup:
+    - Create a project with a simple text classification config
+    - Create one task in the project
+
+    Actions:
+    - Call ls.projects.import_predictions with three predictions for the same task
+
+    Validations:
+    - API returns created == 3
+    - Listing predictions for the task returns exactly three items with expected model versions
+    """
+
+    ls = LabelStudio(base_url=django_live_url, api_key=business_client.api_key)
+    li = LabelInterface(LABEL_CONFIG_AND_TASKS['label_config'])
+    project = ls.projects.create(title='Predictions Import Project', label_config=li.config)
+
+    task = ls.tasks.create(project=project.id, data={'my_text': 'Classify this sentence'})
+
+    model_versions = ['humor__gpt-5-mini', 'humor__gpt-4.1-mini', 'humor__gpt-4o-mini']
+    choices = [['Positive'], ['Neutral'], ['Negative']]
+
+    predictions_payload = []
+    for mv, ch in zip(model_versions, choices):
+        predictions_payload.append(
+            {
+                'result': [
+                    {
+                        'from_name': 'sentiment_class',
+                        'to_name': 'message',
+                        'type': 'choices',
+                        'value': {'choices': ch},
+                    }
+                ],
+                'model_version': mv,
+                'score': 1,
+                'task': task.id,
+            }
+        )
+
+    response = ls.projects.import_predictions(id=project.id, request=predictions_payload)
+    assert response.created == 3
+
+    preds = ls.predictions.list(task=task.id)
+    assert len(preds) == 3
+    returned_versions = sorted([p.model_version for p in preds])
+    assert returned_versions == sorted(model_versions)

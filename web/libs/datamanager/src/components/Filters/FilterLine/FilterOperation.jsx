@@ -1,7 +1,7 @@
 import { observer } from "mobx-react";
 import { getRoot } from "mobx-state-tree";
 import { useCallback, useMemo } from "react";
-import { Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import { debounce } from "../../../utils/debounce";
 import { FilterDropdown } from "../FilterDropdown";
 import * as FilterInputs from "../types";
@@ -66,15 +66,21 @@ export const FilterOperation = observer(({ filter, field, operator, value, disab
   }
   const operators = operatorList.map(({ key, label }) => {
     if (filter.filter.field.isAnnotationResultsFilterColumn) {
-      if (key === "contains") label = "includes all";
-      if (key === "not_contains") label = "does not include all";
+      if (filter.schema?.multiple ?? false) {
+        if (key === "contains") label = "includes all";
+        if (key === "not_contains") label = "does not include all";
+      } else {
+        if (key === "contains") label = "is";
+        if (key === "not_contains") label = "is not";
+      }
     }
     return { value: key, label };
   });
+  const columnClass = cn("filterLine").elem("column");
 
   return Input ? (
     <>
-      <Elem block="filter-line" name="column" mix="operation">
+      <div className={columnClass.mix("operation").toString()}>
         <FilterDropdown
           placeholder="Condition"
           value={filter.operator}
@@ -82,19 +88,20 @@ export const FilterOperation = observer(({ filter, field, operator, value, disab
           items={availableOperators ? operators.filter((op) => availableOperators.includes(op.value)) : operators}
           onChange={onOperatorSelected}
         />
-      </Elem>
-      <Elem block="filter-line" name="column" mix="value">
+      </div>
+      <div className={columnClass.mix("value").toString()}>
         <Input
           {...field}
           key={`${filter.filter.id}-${filter.filter.currentType}`}
           schema={filter.schema}
           filter={filter}
+          multiple={filter.schema?.multiple ?? false}
           value={value}
           onChange={onChange}
           size="small"
           disabled={disabled}
         />
-      </Elem>
+      </div>
     </>
   ) : null;
 });

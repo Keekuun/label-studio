@@ -4,10 +4,12 @@ short: LDAP
 tier: enterprise
 type: guide
 order: 0
-order_enterprise: 383
+order_enterprise: 385
 meta_title: LDAP authentication for Label Studio Enterprise
 meta_description: Label Studio Enterprise documentation for setting up LDAP authentication for your data labeling, machine learning, and data science projects.
 section: "Manage Your Organization"
+parent: "admin_auth"
+parent_enterprise: "admin_auth"
 date: 2024-05-24 09:08:58
 ---
 

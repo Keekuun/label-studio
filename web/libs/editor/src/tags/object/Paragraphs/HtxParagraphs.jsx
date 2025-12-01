@@ -1,22 +1,94 @@
-import React, { Component } from "react";
+import React, { Component, useCallback } from "react";
 import { inject, observer } from "mobx-react";
 
 import ObjectTag from "../../../components/Tags/Object";
-import { FF_DEV_2669, FF_DEV_2918, FF_LSDV_4711, FF_LSDV_E_278, isFF } from "../../../utils/feature-flags";
+import { FF_DEV_2669, FF_DEV_2918, FF_LSDV_E_278, FF_NER_SELECT_ALL, isFF } from "../../../utils/feature-flags";
 import { findNodeAt, matchesSelector, splitBoundaries } from "../../../utils/html";
+import { patchPlayPauseMethods } from "../../../utils/patchPlayPauseMethods";
 import { isSelectionContainsSpan } from "../../../utils/selection-tools";
+import { useUpdateBuffering } from "../../../hooks/useUpdateBuffering";
 import styles from "./Paragraphs.module.scss";
 import { AuthorFilter } from "./AuthorFilter";
 import { Phrases } from "./Phrases";
 import { IconHelp } from "@humansignal/icons";
 import { Toggle, Tooltip } from "@humansignal/ui";
 import { cn } from "../../../utils/bem";
+import { cnm } from "@humansignal/shad/utils";
+import { ff } from "@humansignal/core";
+import { useHotkey } from "../../../hooks/useHotkey";
 
-const audioDefaultProps = {};
+const audioDefaultProps = { crossOrigin: "anonymous" };
+const isSyncedBuffering = ff.isActive(ff.FF_SYNCED_BUFFERING);
 
-if (isFF(FF_LSDV_4711)) audioDefaultProps.crossOrigin = "anonymous";
+// Separate functional component to handle hotkeys
+const ParagraphHotkeys = ({ item }) => {
+  if (!isFF(FF_NER_SELECT_ALL)) return null;
+
+  useHotkey("phrases:next-phrase", () => {
+    item._viewRef?.handleNextPhrase();
+  });
+  useHotkey("phrases:previous-phrase", () => {
+    item._viewRef?.handlePreviousPhrase();
+  });
+  useHotkey("phrases:select_all_annotate", () => {
+    item.selectAllAndAnnotateCurrentPhrase();
+  });
+  useHotkey("phrases:next-region", () => {
+    item._viewRef?.handleNextRegion();
+  });
+  useHotkey("phrases:previous-region", () => {
+    item._viewRef?.handlePreviousRegion();
+  });
+
+  return null; // This component renders nothing
+};
+
+const ParagraphAudio = observer(({ item }) => {
+  const isBuffering = isSyncedBuffering && item.isBuffering;
+
+  const updateBuffering = useUpdateBuffering(item.audioRef, item.handleBuffering);
+
+  const attachRef = useCallback(
+    (audio) => {
+      if (audio) {
+        audio = patchPlayPauseMethods(audio);
+      }
+      if (item.audioRef instanceof Function) {
+        item.audioRef(audio);
+      } else if (item.audioRef) {
+        item.audioRef.current = audio;
+      }
+    },
+    [item],
+  );
+
+  return (
+    <>
+      {isBuffering && <div className="lsf-timeline-controls__buffering" aria-label="Buffering Media Source" />}
+      <audio
+        {...audioDefaultProps}
+        controls={item.showplayer && !item.syncedAudio}
+        className={styles.audio}
+        src={item.audio}
+        ref={attachRef}
+        onLoadedMetadata={item.handleAudioLoaded}
+        onEnded={item.reset}
+        onError={item.handleError}
+        {...(isSyncedBuffering
+          ? {
+              onCanPlay: updateBuffering,
+              onWaiting: updateBuffering,
+            }
+          : {})}
+      />
+    </>
+  );
+});
 
 class HtxParagraphsView extends Component {
+  // Constants for scroll behavior
+  static SCROLL_FLAG_TIMEOUT = 100;
+
   _regionSpanSelector = ".htx-highlight";
   mainContentSelector = `.${cn("main-content").toClassName()}`;
   mainViewAnnotationSelector = `.${cn("main-view").elem("annotation").toClassName()}`;
@@ -28,10 +100,88 @@ class HtxParagraphsView extends Component {
     this.lastPlayingId = -1;
     this.scrollTimeout = [];
     this.isPlaying = false;
+    this.isProgrammaticScroll = false;
     this.state = {
       canScroll: true,
-      inViewport: true,
+      inViewPort: true,
     };
+  }
+
+  // Helper method to safely perform programmatic scrolling
+  performProgrammaticScroll(top) {
+    this.isProgrammaticScroll = true;
+    this.myRef.current.scrollTo({
+      top: Math.max(0, top),
+      behavior: "smooth",
+    });
+    setTimeout(() => {
+      this.isProgrammaticScroll = false;
+    }, HtxParagraphsView.SCROLL_FLAG_TIMEOUT);
+  }
+
+  // Helper method to check if scrolling should happen
+  shouldScroll() {
+    return (
+      isFF(FF_LSDV_E_278) &&
+      this.props.item.contextscroll &&
+      this.props.item.playingId >= 0 &&
+      this.lastPlayingId !== this.props.item.playingId &&
+      this.state.canScroll &&
+      this.state.inViewPort
+    );
+  }
+
+  // Helper method to get container padding
+  getContainerPadding() {
+    return Number.parseInt(window.getComputedStyle(this.myRef.current)?.getPropertyValue("padding-top")) || 0;
+  }
+
+  // Helper method to calculate precise phrase position
+  calculatePhraseScrollPosition(playingId) {
+    const root = this.myRef.current;
+    const phraseElement = root.querySelector(`[data-testid="phrase:${playingId}"]`);
+
+    if (!phraseElement) return 0;
+
+    const phraseRect = phraseElement.getBoundingClientRect();
+    const containerRect = root.getBoundingClientRect();
+
+    return phraseRect.top - containerRect.top + root.scrollTop;
+  }
+
+  // Helper method to handle tall phrases that need multiple scroll steps
+  handleTallPhraseScroll(phraseHeight, duration) {
+    const padding = this.getContainerPadding();
+    const wrapperOffsetTop = this.activeRef.current?.offsetTop - padding;
+    const splitSteps = Math.ceil(this.activeRef.current?.offsetHeight / this.myRef.current?.offsetHeight) + 1;
+
+    for (let i = 0; i < splitSteps; i++) {
+      this.scrollTimeout.push(
+        setTimeout(
+          () => {
+            const scrollPosition = wrapperOffsetTop + phraseHeight * (i * (1 / splitSteps));
+            if (this.state.inViewPort && this.state.canScroll) {
+              this.performProgrammaticScroll(scrollPosition);
+            }
+          },
+          (duration / splitSteps) * i * 1000,
+        ),
+      );
+    }
+  }
+
+  // Helper method to handle normal-sized phrases
+  handleNormalPhraseScroll() {
+    if (!this.state.inViewPort) return;
+
+    if (this.props.item.playingId <= 0) {
+      // Special case: scroll to top with padding for beginning
+      this.performProgrammaticScroll(this.getContainerPadding());
+    } else {
+      // Use precise positioning to ensure phrase is at the top
+      const targetScrollTop = this.calculatePhraseScrollPosition(this.props.item.playingId);
+      this.performProgrammaticScroll(targetScrollTop);
+    }
   }
 
   getSelectionText(sel) {
@@ -254,6 +404,8 @@ class HtxParagraphsView extends Component {
     return ranges;
   }
 
+  // Removed unused expandSelectionForTripleClickSync and expandSelectionForTripleClickDebounced methods
+
   _selectRegions = (additionalMode) => {
     const { item } = this.props;
     const root = this.myRef.current;
@@ -296,6 +448,155 @@ class HtxParagraphsView extends Component {
     }
   }
 
+  // Removed unused processAnnotation method
+
+  // Removed unused expandSelectionForTripleClick method
+
+  /**
+   * Capture document selection from a specific range
+   */
+  captureDocumentSelectionFromRange(range) {
+    // Create a temporary selection with our expanded range
+    const tempSelection = window.getSelection();
+    tempSelection.removeAllRanges();
+    tempSelection.addRange(range);
+    // Use existing capture logic
+    const result = this.captureDocumentSelection();
+    return result;
+  }
+
+  /**
+   * Check if creating a region would result in a duplicate
+   * Only checks when FF_NER_SELECT_ALL is enabled
+   * Prevents exact same position + exact same labels + exact same offsets
+   */
+  isDuplicateRegion(range, selectedLabels, control) {
+    if (!isFF(FF_NER_SELECT_ALL)) {
+      return false; // No duplicate detection when feature flag is off
+    }
+
+    const phraseStart = Number.parseInt(range.start, 10);
+    const phraseEnd = Number.parseInt(range.end, 10);
+    const startOffset = range.startOffset || 0;
+    const endOffset = range.endOffset || 0;
+
+    const item = this.props.item;
+    const existingRegions = item.regs.filter((region) => {
+      const regionStart = Number.parseInt(region.start, 10);
+      const regionEnd = Number.parseInt(region.end, 10);
+      const regionStartOffset = region.startOffset || 0;
+      const regionEndOffset = region.endOffset || 0;
+
+      // Only check for IDENTICAL boundaries AND offsets - allow any differences
+      if (
+        regionStart !== phraseStart ||
+        regionEnd !== phraseEnd ||
+        regionStartOffset !== startOffset ||
+        regionEndOffset !== endOffset
+      ) {
+        return false; // Different boundaries or offsets = not a duplicate, allow it
+      }
+
+      // Boundaries and offsets are identical, now check if labels match exactly
+      const labelingResult = region.results?.find((r) => r.from_name?.isLabeling);
+      const regionLabels = labelingResult?.mainValue || [];
+
+      // Check if labels match exactly
+      if (selectedLabels.length !== regionLabels.length) {
+        return false; // Different number of labels = not a duplicate
+      }
+
+      // Same boundaries + same offsets + same labels = true duplicate
+      return selectedLabels.every((label) => regionLabels.includes(label));
+    });
+
+    return existingRegions.length > 0;
+  }
+
+  /**
+   * Create annotation from selected ranges. If the enhanced feature is enabled,
+   * the newly created region will be automatically selected.
+   * @param {Array} selectedRanges - The ranges to create annotations from
+   */
+  createAnnotationFromRanges(selectedRanges) {
+    const item = this.props.item;
+
+    // Check for duplicates using centralized logic
+    if (selectedRanges && selectedRanges.length > 0) {
+      // Get currently selected labels - use same logic as addRegions (states[0])
+      const states = item.activeStates && item.activeStates();
+      if (states && states.length > 0) {
+        const control = states[0]; // Match addRegions logic - use first control
+        const selectedLabels = control.selectedValues() || [];
+
+        // Check ALL ranges for duplicates, not just the first one
+        for (const range of selectedRanges) {
+          if (this.isDuplicateRegion(range, selectedLabels, control)) {
+            return; // Block the entire operation if ANY range would be a duplicate
+          }
+        }
+      }
+    }
+
+    item._currentSpan = null;
+    let createdRegion = null;
+    // Check if a label is selected
+    const states = item.activeStates && item.activeStates();
+    if (!states || states.length === 0) {
+      console.warn("No label selected. Annotation will not be created.");
+    }
+    if (isFF(FF_DEV_2918)) {
+      const htxRanges = item.addRegions(selectedRanges);
+      if (htxRanges && htxRanges.length > 0) {
+        createdRegion = htxRanges[0]; // Get the first created region
+        for (const htxRange of htxRanges) {
+          const spans = htxRange.createSpans();
+          htxRange.addEventsToSpans(spans);
+        }
+      }
+    } else {
+      createdRegion = item.addRegion(selectedRanges[0]);
+      if (createdRegion) {
+        const spans = createdRegion.createSpans();
+        createdRegion.addEventsToSpans(spans);
+      }
+    }
+  }
+
+  createAnnotationForPhrase = (phraseIndex) => {
+    const item = this.props.item;
+    const phrases = item._value;
+    if (!phrases || phraseIndex < 0 || phraseIndex >= phrases.length) return;
+    const cls = item.layoutClasses;
+    const phraseElements = this.myRef.current?.getElementsByClassName(cls.text);
+    if (!phraseElements) return;
+    const phraseElement = phraseElements[phraseIndex];
+    if (!phraseElement) return;
+
+    // Find the first and last text nodes in the phrase
+    const walker = document.createTreeWalker(phraseElement, NodeFilter.SHOW_TEXT, null, false);
+    const firstTextNode = walker.nextNode();
+    if (!firstTextNode) return;
+    let lastTextNode = firstTextNode;
+    let currentNode;
+    while ((currentNode = walker.nextNode())) {
+      lastTextNode = currentNode;
+    }
+    // Create a range that covers the entire phrase
+    const range = document.createRange();
+    range.setStart(firstTextNode, 0);
+    range.setEnd(lastTextNode, lastTextNode.textContent.length);
+    // Set the selection in the DOM for visual feedback
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    // Use the same logic as manual selection to create the annotation
+    const selectedRanges = this.captureDocumentSelectionFromRange(range);
+    if (selectedRanges.length > 0) {
+      this.createAnnotationFromRanges(selectedRanges);
+    }
+  };
+
   onMouseUp(ev) {
     const item = this.props.item;
     const states = item.activeStates();
@@ -308,28 +609,27 @@ class HtxParagraphsView extends Component {
     }
 
     const selectedRanges = this.captureDocumentSelection();
-
     if (selectedRanges.length === 0) {
       return;
     }
-
     item._currentSpan = null;
+
+    let createdRegion = null;
 
     if (isFF(FF_DEV_2918)) {
       const htxRanges = item.addRegions(selectedRanges);
-
+      if (htxRanges && htxRanges.length > 0) {
+        createdRegion = htxRanges[0];
+      }
       for (const htxRange of htxRanges) {
         const spans = htxRange.createSpans();
-
         htxRange.addEventsToSpans(spans);
       }
     } else {
-      const htxRange = item.addRegion(selectedRanges[0]);
-
-      if (htxRange) {
-        const spans = htxRange.createSpans();
-
-        htxRange.addEventsToSpans(spans);
+      createdRegion = item.addRegion(selectedRanges[0]);
+      if (createdRegion) {
+        const spans = createdRegion.createSpans();
+        createdRegion.addEventsToSpans(spans);
       }
     }
   }
@@ -426,65 +726,23 @@ class HtxParagraphsView extends Component {
       });
     });
 
-    if (
-      isFF(FF_LSDV_E_278) &&
-      this.props.item.contextscroll &&
-      item.playingId >= 0 &&
-      this.lastPlayingId !== item.playingId &&
-      this.state.canScroll
-    ) {
-      const _padding =
-        Number.parseInt(window.getComputedStyle(this.myRef.current)?.getPropertyValue("padding-top")) || 0;
-      const _playingItem = this.props.item._value[item.playingId];
-      const _start = _playingItem.start;
-      const _end = _playingItem.end;
-      const _phaseHeight = this.activeRef.current?.offsetHeight || 0;
-      const _duration = this.props.item._value[item.playingId].duration || _end - _start;
-      const _wrapperHeight = root.offsetHeight;
-      const _wrapperOffsetTop = this.activeRef.current?.offsetTop - _padding;
-      const _splittedText = Math.ceil(this.activeRef.current?.offsetHeight / this.myRef.current?.offsetHeight) + 1; // +1 to make sure the last line is scrolled to the top
+    if (this.shouldScroll()) {
+      const playingItem = this.props.item._value[this.props.item.playingId];
+      const phraseHeight = this.activeRef.current?.offsetHeight || 0;
+      const duration = playingItem.duration || playingItem.end - playingItem.start;
+      const wrapperHeight = root.offsetHeight;
 
       this._disposeTimeout();
 
-      if (_phaseHeight > _wrapperHeight) {
-        for (let i = 0; i < _splittedText; i++) {
-          this.scrollTimeout.push(
-            setTimeout(
-              () => {
-                const _pos = _wrapperOffsetTop + _phaseHeight * (i * (1 / _splittedText));
-
-                if (this.state.inViewPort && this.state.canScroll) {
-                  root.scrollTo({
-                    top: _pos,
-                    behavior: "smooth",
-                  });
-                }
-              },
-              (_duration / _splittedText) * i * 1000,
-            ),
-          );
-        }
+      if (phraseHeight > wrapperHeight) {
+        // Handle tall phrases that need multiple scroll steps
+        this.handleTallPhraseScroll(phraseHeight, duration);
       } else {
-        if (this.state.inViewPort) {
-          root.scrollTo({
-            top: _wrapperOffsetTop,
-            behavior: "smooth",
-          });
-        }
+        // Handle normal-sized phrases
+        this.handleNormalPhraseScroll();
       }
-
-      this.lastPlayingId = item.playingId;
+      this.lastPlayingId = this.props.item.playingId;
     }
-  }
-
-  _handleScrollToPhrase() {
-    const _padding = Number.parseInt(window.getComputedStyle(this.myRef.current)?.getPropertyValue("padding-top")) || 0;
-    const _wrapperOffsetTop = this.activeRef.current?.offsetTop - _padding;
-
-    this.myRef.current.scrollTo({
-      top: _wrapperOffsetTop,
-      behavior: "smooth",
-    });
   }
 
   _handleScrollContainerHeight = () => {
@@ -518,6 +776,16 @@ class HtxParagraphsView extends Component {
     if (isFF(FF_LSDV_E_278) && this.props.item.contextscroll)
       this._resizeObserver.observe(document.querySelector(this.mainContentSelector));
     this._handleUpdate();
+
+    // Set default selection to first phrase when there's no audio
+    const { item } = this.props;
+    if (!item.audio && item._value && item._value.length > 0 && item.playingId === -1) {
+      item.seekToPhrase(0);
+    }
+
+    if (isFF(FF_NER_SELECT_ALL)) {
+      item.setViewRef(this);
+    }
   }
 
   componentWillUnmount() {
@@ -525,11 +793,164 @@ class HtxParagraphsView extends Component {
 
     if (target) this._resizeObserver?.unobserve(target);
     this._resizeObserver?.disconnect();
+    if (isFF(FF_NER_SELECT_ALL)) {
+      this.props.item.setViewRef(null);
+    }
   }
+
+  // Check if any labels are selected for the current annotation (reactive to MobX changes)
+  get hasSelectedLabels() {
+    if (!isFF(FF_NER_SELECT_ALL)) return false;
+
+    try {
+      const { item } = this.props;
+      const states = item.activeStates && item.activeStates();
+
+      return !!(states && states.length > 0);
+    } catch (error) {
+      console.warn("Error checking selected labels:", error);
+      return false;
+    }
+  }
+
+  selectText = (phraseIndex) => {
+    const item = this.props.item;
+    const phrases = item._value;
+    const cls = item.layoutClasses;
+    const phraseElements = this.myRef.current?.getElementsByClassName(cls.text);
+
+    if (!phrases || phraseIndex < 0 || phraseIndex >= phrases.length || !phraseElements) return;
+
+    const phraseElement = phraseElements[phraseIndex];
+    if (!phraseElement) return;
+
+    const range = document.createRange();
+    range.selectNodeContents(phraseElement);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
 
   setIsInViewPort(isInViewPort) {
     this.setState({ inViewPort: isInViewPort });
   }
+
+  // Handle manual scrolling to disable auto-scroll
+  onScroll = () => {
+    // Only disable auto-scroll for user-initiated scrolling, not programmatic scrolling
+    if (this.state.inViewPort && !this.isProgrammaticScroll) {
+      this.setState({ inViewPort: false });
+    }
+  };
+
+  // Helper to select all regions for a phrase index
+  selectRegionsForPhrase = (phraseIdx) => {
+    if (!isFF(FF_NER_SELECT_ALL)) return;
+
+    const item = this.props.item;
+    if (!item || !item.annotation || !item.annotation.results) return;
+
+    // Only deselect regions, not labels
+    item.annotation.unselectAreas();
+
+    // Get all regions for this phrase
+    const phraseRegions = this.getRegionsForPhrase(phraseIdx);
+
+    // If there are regions, automatically select the first one
+    if (phraseRegions.length > 0) {
+      this.selectRegion(phraseRegions[0]);
+    }
+  };
+
+  // Move to the next phrase
+  handleNextPhrase = () => {
+    const item = this.props.item;
+    if (!item) return;
+    item.goToNextPhrase();
+    this.selectRegionsForPhrase(item.playingId);
+  };
+
+  // Move to the previous phrase
+  handlePreviousPhrase = () => {
+    const item = this.props.item;
+    if (!item) return;
+    item.goToPreviousPhrase();
+    this.selectRegionsForPhrase(item.playingId);
+  };
+
+  // Select all text in the current phrase and annotate
+  handleSelectAllAndAnnotate = () => {
+    const item = this.props.item;
+    if (!item) return;
+    item.selectAllAndAnnotateCurrentPhrase();
+  };
+
+  // Get all regions for the current phrase
+  getRegionsForPhrase = (phraseIdx) => {
+    if (!isFF(FF_NER_SELECT_ALL)) return [];
+
+    const item = this.props.item;
+    if (!item || !item.annotation) return [];
+
+    const regions = item.annotation.regionStore?.regions || item.annotation.regions;
+    return regions.filter((region) => {
+      const start = Number.parseInt(region.start, 10);
+      const end = Number.parseInt(region.end, 10);
+      return !isNaN(start) && !isNaN(end) && start <= phraseIdx && end >= phraseIdx;
+    });
+  };
+
+  // Helper to select a region using the proper MobX-State-Tree action
+  selectRegion = (region) => {
+    if (!isFF(FF_NER_SELECT_ALL)) return false;
+
+    const item = this.props.item;
+
+    item.annotation.selectArea(region);
+    return true;
+  };
+
+  // Cycle through regions in the current phrase (Ctrl+Right)
+  handleNextRegion = () => {
+    if (!isFF(FF_NER_SELECT_ALL)) return;
+
+    const item = this.props.item;
+    if (!item || typeof item.playingId !== "number" || item.playingId < 0) return;
+
+    const phraseRegions = this.getRegionsForPhrase(item.playingId);
+    if (phraseRegions.length === 0) return;
+
+    const selectedRegions = item.annotation.selectedRegions || [];
+    let currentIndex = -1;
+    if (selectedRegions.length > 0) {
+      currentIndex = phraseRegions.findIndex((region) => selectedRegions.includes(region));
+    }
+
+    const nextIndex = (currentIndex + 1) % phraseRegions.length;
+    item.annotation.unselectAll();
+    this.selectRegion(phraseRegions[nextIndex]);
+  };
+
+  // Cycle through regions in the current phrase (Ctrl+Left)
+  handlePreviousRegion = () => {
+    if (!isFF(FF_NER_SELECT_ALL)) return;
+
+    const item = this.props.item;
+    if (!item || typeof item.playingId !== "number" || item.playingId < 0) return;
+
+    const phraseRegions = this.getRegionsForPhrase(item.playingId);
+    if (phraseRegions.length === 0) return;
+
+    const selectedRegions = item.annotation.selectedRegions || [];
+    let currentIndex = -1;
+    if (selectedRegions.length > 0) {
+      currentIndex = phraseRegions.findIndex((region) => selectedRegions.includes(region));
+    }
+
+    const prevIndex = currentIndex <= 0 ? phraseRegions.length - 1 : currentIndex - 1;
+    item.annotation.unselectAll();
+    this.selectRegion(phraseRegions[prevIndex]);
+  };
 
   renderWrapperHeader() {
     const { item } = this.props;
@@ -540,13 +961,9 @@ class HtxParagraphsView extends Component {
           <AuthorFilter
             item={item}
             onChange={() => {
-              if (!this.activeRef.current) return;
-              const _timeoutDelay =
-                Number.parseFloat(window.getComputedStyle(this.activeRef.current).transitionDuration) * 1000;
-
-              setTimeout(() => {
-                this._handleScrollToPhrase();
-              }, _timeoutDelay);
+              this.setState({
+                canScroll: !this.state.canScroll,
+              });
             }}
           />
         )}
@@ -556,8 +973,6 @@ class HtxParagraphsView extends Component {
               data-testid={"auto-scroll-toggle"}
               checked={this.state.canScroll}
               onChange={() => {
-                if (!this.state.canScroll) this._handleScrollToPhrase();
-
                 this.setState({
                   canScroll: !this.state.canScroll,
                 });
@@ -584,36 +999,29 @@ class HtxParagraphsView extends Component {
     if (isFF(FF_DEV_2669) && !item._value) return null;
 
     return (
-      <ObjectTag item={item} className={cn("paragraphs").toClassName()}>
-        {withAudio && (
-          <audio
-            {...audioDefaultProps}
-            controls={item.showplayer && !item.syncedAudio}
-            className={styles.audio}
-            src={item.audio}
-            ref={item.audioRef}
-            onLoadedMetadata={item.handleAudioLoaded}
-            onEnded={item.reset}
-            onError={item.handleError}
-            onCanPlay={item.handleCanPlay}
-          />
-        )}
-        {isFF(FF_LSDV_E_278) ? this.renderWrapperHeader() : isFF(FF_DEV_2669) && <AuthorFilter item={item} />}
-        <div
-          ref={this.myRef}
-          data-testid="phrases-wrapper"
-          data-update={item._update}
-          className={contextScroll ? styles.scroll_container : styles.container}
-          onMouseUp={this.onMouseUp.bind(this)}
-        >
-          <Phrases
-            setIsInViewport={this.setIsInViewPort.bind(this)}
-            item={item}
-            playingId={item.playingId}
-            {...(isFF(FF_LSDV_E_278) ? { activeRef: this.activeRef } : {})}
-          />
-        </div>
-      </ObjectTag>
+      <>
+        <ParagraphHotkeys item={item} />
+        <ObjectTag item={item} className={cnm(cn("paragraphs").toClassName(), styles.paragraphs)}>
+          {withAudio && <ParagraphAudio item={item} />}
+          {isFF(FF_LSDV_E_278) ? this.renderWrapperHeader() : isFF(FF_DEV_2669) && <AuthorFilter item={item} />}
+          <div
+            ref={this.myRef}
+            data-testid="phrases-wrapper"
+            data-update={item._update}
+            className={contextScroll ? styles.scroll_container : styles.container}
+            onMouseUp={this.onMouseUp.bind(this)}
+            onScroll={this.onScroll.bind(this)}
+          >
+            <Phrases
+              setIsInViewPort={this.setIsInViewPort.bind(this)}
+              item={item}
+              playingId={item.playingId}
+              hasSelectedLabels={this.hasSelectedLabels}
+              {...(isFF(FF_LSDV_E_278) ? { activeRef: this.activeRef } : {})}
+            />
+          </div>
+        </ObjectTag>
+      </>
     );
   }
 }

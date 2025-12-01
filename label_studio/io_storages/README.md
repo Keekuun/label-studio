@@ -1,21 +1,21 @@
 # Cloud Storages
 
-There are 3 basic types of cloud storages:
+Cloud storage is used for importing tasks and exporting annotations in Label Studio. There are 2 basic types of cloud storages:
 
 1. Import Storages (aka Source Cloud Storages)
 2. Export Storages (aka Target Cloud Storages)
-3. Dataset Storages (available in enterprise)
 
 Also Label Studio has Persistent storages where LS storage export files, user avatars and UI uploads. Do not confuse `Cloud Storages` and `Persistent Storage`, they have completely different codebase and tasks. Cloud Storages are implemented in `io_storages`, Persistent Storage uses django-storages and it is installed in Django settings environment variables (see `base.py`). 
 
+Note: Dataset Storages were implemented in the enterprise codebase only. They are **deprecated and not used**.
 
+## Basic hierarchy
 
+This section uses GCS storage as an example, and the same logic can be applied to other storages.
 
-## Basic hierarchy 
-
-### Import and Dataset Storages 
+### Import Storages
  
-This diagram is based on Google Cloud Storage (GCS) and other storages are implemented the same way.
+This storage type is designed for importing tasks FROM cloud storage to Label Studio. This diagram is based on Google Cloud Storage (GCS), and other storages are implemented in the same way:
   
 ```mermaid
     graph TD;
@@ -28,7 +28,7 @@ This diagram is based on Google Cloud Storage (GCS) and other storages are imple
     GCSImportStorageBase-->GCSImportStorage; 
     GCSImportStorageBase-->GCSDatasetStorage;
 
-    DatasetStorageMixin-->GCSDatasetStorage;
+    GCSImportStorageLink-->ImportStorageLink
 
     subgraph Google Cloud Storage
         GCSImportStorage;
@@ -37,7 +37,52 @@ This diagram is based on Google Cloud Storage (GCS) and other storages are imple
     end
 ```
 
+- **Storage** (`label_studio/io_storages/base_models.py`): Abstract base for all storages. Inherits status/progress from `StorageInfo`. Defines `validate_connection()` contract and common metadata fields.
 
+- **ImportStorage** (`label_studio/io_storages/base_models.py`): Abstract base for source storages. Defines core contracts used by sync and proxy:
+  - `iter_objects()`, `iter_keys()` to enumerate objects
+  - `get_unified_metadata(obj)` to normalize provider metadata
+  - `get_data(key)` to produce `StorageObject`(s) for task creation
+  - `generate_http_url(url)` to resolve provider URL -> HTTP URL (presigned or direct)
+  - `resolve_uri(...)` and `can_resolve_url(...)` used by the Storage Proxy
+  - `scan_and_create_links()` to create `ImportStorageLink`s for tasks
+
+- **ImportStorageLink** (`label_studio/io_storages/base_models.py`): Link model created per-task for imported objects. Fields: `task` (1:1), `key` (external key), `row_group`/`row_index` (parquet/JSONL indices), `object_exists`, timestamps. Helpers: `n_tasks_linked(key, storage)` and `create(task, key, storage, row_index=None, row_group=None)`.
+
+- **ProjectStorageMixin** (`label_studio/io_storages/base_models.py`): Adds `project` FK and permission checks. Used by project-scoped storages (e.g., `GCSImportStorage`).
+
+- **GCSImportStorageBase** (`label_studio/io_storages/gcs/models.py`): GCS-specific import base. Sets `url_scheme='gs'`, implements listing (`iter_objects/iter_keys`), data loading (`get_data`), URL generation (`generate_http_url`), URL resolution checks, and metadata helpers. Reused by both project imports and enterprise datasets.
+
+- **GCSImportStorage** (`label_studio/io_storages/gcs/models.py`): Concrete project-scoped GCS import storage combining `ProjectStorageMixin` + `GCSImportStorageBase`.
+
+- **GCSImportStorageLink** (`label_studio/io_storages/gcs/models.py`): Provider-specific `ImportStorageLink` with `storage` FK to `GCSImportStorage`. Created during sync to associate a task with the original GCS object key.
+
+### Export Storages
+
+This storage type is designed for exporting tasks or annotations FROM Label Studio to cloud storage. 
+
+```mermaid
+    graph TD;
+
+    Storage-->ExportStorage;
+
+    ProjectStorageMixin-->ExportStorage;
+    ExportStorage-->GCSExportStorage;
+    GCSStorageMixin-->GCSExportStorage;
+
+    ExportStorageLink-->GCSExportStorageLink;
+```
+
+- **ExportStorage** (`label_studio/io_storages/base_models.py`): Abstract base for target storages. Project-scoped; orchestrates export jobs and progress. Key methods:
+  - `save_annotation(annotation)` provider-specific write
+  - `save_annotations(queryset)`, `save_all_annotations()`, `save_only_new_annotations()` helpers
+  - `sync(save_only_new_annotations=False)` background export via RQ
+
+- **GCSExportStorage** (`label_studio/io_storages/gcs/models.py`): Concrete target storage for GCS. Serializes data via `_get_serialized_data(...)`, computes key via `GCSExportStorageLink.get_key(...)`, uploads to GCS; can auto-export on annotation save when configured.
+
+- **ExportStorageLink** (`label_studio/io_storages/base_models.py`): Base link model connecting exported objects to `Annotation`s. Provides `get_key(annotation)` logic (task-based or annotation-based via FF) and `create(...)` helper.
+
+- **GCSExportStorageLink** (`label_studio/io_storages/gcs/models.py`): Provider-specific link model holding FK to `GCSExportStorage`.
 
 ## How validate_connection() works
 
@@ -50,32 +95,43 @@ Run this command with try/except:
 Target storages use the same validate_connection() function, but without any prefix.
 
 
-## Google Cloud Storage (GCS)
+## Key Storage Insights
 
-### Credentials 
+### 1. **Primary Methods**
+- **Import storages**: `iter_objects()`, `get_data()`
+- **Export storages**: `save_annotation()`, `save_annotations()`
 
-There are two methods for setting GCS credentials:
-1. Through the Project => Cloud Storage settings in the Label Studio user interface.
-2. Through Google Application Default Credentials (ADC). This involves the following steps:
+### 2. **Automatic vs Manual Operation**
+- **Import storages**: Require manual sync via API calls or UI
+- **Export storages**: Manual sync via API/UI | Manual sync via API/UI and automatic via Django signals when annotations are submitted or updated
 
-   2.1. Leave the Google Application Credentials field in the Label Studio UI blank.
-   
-   2.2. Set an environment variable which will apply to all Cloud Storages. This can be done using the following command:
-   ```bash
-   export GOOGLE_APPLICATION_CREDENTIALS=google_credentials.json
-   ```
-   2.3. Alternatively, use the following command:
-   ```bash
-   gcloud auth application-default login
-   ```
-   2.4. Another option is to use credentials provided by the Google App Engine or Google Compute Engine metadata server, if the code is running on either GAE or GCE.
+### 3. **Connection Validation Differences**
+- **Import storages**: Must validate that prefix contains files during `validate_connection()`
+- **Export storages**: Only validate bucket access, NOT prefix (prefixes are created automatically)
 
-Note: If Cloud Storage credentials are set in the Label Studio UI, these will take precedence over other methods.
+### 4. **Data Serialization**
+Export storages use `_get_serialized_data()` which returns different formats based on feature flags:
+- **Default**: Only annotation data (backward compatibility)
+- **With `fflag_feat_optic_650_target_storage_task_format_long` or `FUTURE_SAVE_TASK_TO_STORAGE`**: Full task + annotations data instead of annotation per file output. 
 
-     
+### 5. **Built-in Threading**
+- Export storages inherit `save_annotations()` with built-in parallel processing
+- Uses ThreadPoolExecutor with configurable `max_workers` (default: min(8, cpu_count * 4))
+- Includes progress tracking and automatic batch processing
+
+### 6. **Storage Links & Key Generation**
+- **Import links**: Track task imports with custom keys
+- **Export links**: Track annotation exports with keys based on feature flags:
+  - Default: `annotation.id`
+  - With feature flag: `task.id` + optional `.json` extension
+
+### 7. **Optional Deletion Support**
+- Export storages can implement `delete_annotation()` 
+- Controlled by `can_delete_objects` field
+- Automatically called when annotations are deleted from Label Studio
 
 
-## Storage statuses and how they are processed
+## StorageInfo statuses and how they are processed
 
 Storage (Import and Export) have different statuses of synchronization (see `class StorageInfo.Status`):
 
@@ -94,7 +150,7 @@ Storage (Import and Export) have different statuses of synchronization (see `cla
     InProgress-->Completed; 
 ```
 
-Additionally, StorageInfo contains counters and debug information that will be displayed in storages:
+Additionally, class **StorageInfo** contains counters and debug information that will be displayed in storages:
 
 * last_sync - time of the last successful sync
 * last_sync_count - number of objects that were successfully synced

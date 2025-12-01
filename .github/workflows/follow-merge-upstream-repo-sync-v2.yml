@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  POETRY_VERSION: 2.1.3
+  POETRY_VERSION: 2.1.4
 
 jobs:
   sync:
@@ -31,7 +31,7 @@ jobs:
 
       - name: Add Workflow link to chat ops command comment
         if: github.event.client_payload.github.payload.comment.id && github.event.client_payload.github.payload.repository.full_name
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           token: ${{ secrets.GIT_PAT }}
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
@@ -40,7 +40,7 @@ jobs:
             > [Workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       - name: Checkout Actions Hub
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           repository: HumanSignal/actions-hub
@@ -79,14 +79,14 @@ jobs:
           branch_name: "${{ steps.upstream-prs.outputs.branch_name }}"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           ref: ${{ steps.get-branch.outputs.branch_name }}
           fetch-depth: 0
 
       - name: Checkout Actions Hub
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GIT_PAT }}
           repository: HumanSignal/actions-hub
@@ -97,9 +97,9 @@ jobs:
 
       - name: "Set up Python"
         id: setup_python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.13'
           cache: 'poetry'
 
       - name: Commit submodule
@@ -248,7 +248,7 @@ jobs:
 
       - name: Add reaction to chat ops command comment
         if: always() && github.event.client_payload.github.payload.comment.id && github.event.client_payload.github.payload.repository.full_name
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           token: ${{ secrets.GIT_PAT }}
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}

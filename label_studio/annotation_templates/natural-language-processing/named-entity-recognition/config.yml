@@ -3,7 +3,16 @@ type: community
 group: Natural Language Processing
 order: 3
 image: /static/templates/named-entity-recognition.png
-details: <h1>Extract named entities from text</h1>
+details: |
+  <h1>Extract named entities from text</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>legal documents, contracts, medical records, clinical notes, news articles, journalism, financial documents, compliance, regulatory, due diligence, document processing, text mining, knowledge extraction, structured data extraction</dd>
+    <dt>Associated Models</dt>
+    <dd>BERT, spaCy, Stanford NER, Flair, transformer models</dd>
+    <dt>Domain Terminology</dt>
+    <dd>NLP, NER, information extraction, entity extraction, entity linking</dd>
+  </dl>
 config: |
   <View>
     <Labels name="label" toName="text">

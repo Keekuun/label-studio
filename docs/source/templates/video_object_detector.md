@@ -3,7 +3,7 @@ title: Video Object Detection and Tracking
 type: templates
 category: Videos
 cat: videos
-order: 803
+order: 715
 is_new: t
 meta_title: Video Object Detection Data Labeling Template
 meta_description: Template for detecting objects in videos with Label Studio for your machine learning and data science projects.

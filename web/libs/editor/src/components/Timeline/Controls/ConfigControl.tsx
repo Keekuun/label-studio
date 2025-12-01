@@ -2,7 +2,7 @@ import type React from "react";
 import { type FC, type MouseEvent, useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Toggle } from "@humansignal/ui";
-import { Block, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 
 import { IconConfig } from "@humansignal/icons";
 import { TimelineContext } from "../Context";
@@ -157,33 +157,32 @@ export const ConfigControl: FC<ConfigControlProps> = ({
 
   const renderLayerToggles = () => {
     return (
-      <Elem name={"buttons"}>
-        <Elem name="menu-button" onClick={handleSetTimeline}>
+      <div className={cn("audio-config").elem("buttons").toClassName()}>
+        <div className={cn("audio-config").elem("menu-button").toClassName()} onClick={handleSetTimeline}>
           {isTimeline ? i18n.t('hide') : i18n.t('show')} {i18n.t('timeline')}
-        </Elem>
-        <Elem name="menu-button" onClick={handleSetAudioWave}>
+        </div>
+        <div className={cn("audio-config").elem("menu-button").toClassName()} onClick={handleSetAudioWave}>
           {isAudioWave ? i18n.t('hide') : i18n.t('show')} {i18n.t('audio_wave')}
-        </Elem>
+        </div>
         {isFF(FF_AUDIO_SPECTROGRAMS) && (
-          <Elem name="menu-button" onClick={handleSetSpectrogram}>
+          <div className={cn("audio-config").elem("menu-button").toClassName()} onClick={handleSetSpectrogram}>
             {isSpectrogram ? i18n.t('hide') : i18n.t('show')} {i18n.t('spectrogram')}
-          </Elem>
+          </div>
         )}
-      </Elem>
+      </div>
     );
   };
 
   const renderModal = () => {
     const modalJSX = (
-      <Elem
-        block="audio-config"
-        name="modal"
+      <div
+        className={cn("audio-config").elem("modal").toClassName()}
         ref={modalRef}
         onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
         style={{ opacity: 0, position: "fixed" }}
       >
-        <Elem name="scroll-content">
-          <Elem name="section-header">Playback Settings</Elem>
+        <div className={cn("audio-config").elem("scroll-content").toClassName()}>
+          <div className={cn("audio-config").elem("section-header").toClassName()}>Playback Settings</div>
           <Slider
             min={MIN_SPEED}
             max={MAX_SPEED}
@@ -202,43 +201,47 @@ export const ConfigControl: FC<ConfigControlProps> = ({
             info={i18n.t('audio_zoom_info')}
             onChange={handleChangeAmp}
           />
-          <Elem name="toggle">
+          <div className={cn("audio-config").elem("toggle").toClassName()}>
             <Toggle
               checked={settings?.loopRegion}
               onChange={(e) => changeSetting?.("loopRegion", e.target.checked)}
               label={i18n.t('loop_region')}
               labelProps={{ size: "small" }}
             />
-          </Elem>
-          <Elem name="toggle">
+          </div>
+          <div className={cn("audio-config").elem("toggle").toClassName()}>
             <Toggle
               checked={settings?.autoPlayNewSegments}
               onChange={(e) => changeSetting?.("autoPlayNewSegments", e.target.checked)}
               label={i18n.t('auto_play_region')}
               labelProps={{ size: "small" }}
             />
-          </Elem>
+          </div>
 
           {isFF(FF_AUDIO_SPECTROGRAMS) && (
             <>
-              <Elem name="section-header">Spectrogram Settings</Elem>
+              <div className={cn("audio-config").elem("section-header").toClassName()}>Spectrogram Settings</div>
               <SpectrogramControl waveform={waveform} />
             </>
           )}
-        </Elem>
+        </div>
         {renderLayerToggles()}
-      </Elem>
+      </div>
     );
 
     return typeof document !== "undefined" ? createPortal(modalJSX, document.body) : null;
   };
 
   return (
-    <Block name="audio-config" ref={buttonRef} onClick={(e: MouseEvent<HTMLButtonElement>) => e.stopPropagation()}>
+    <div
+      className={cn("audio-config").toClassName()}
+      ref={buttonRef as any}
+      onClick={(e: MouseEvent<HTMLButtonElement>) => e.stopPropagation()}
+    >
       <ControlButton look={configModal ? "filled" : undefined} onClick={onSetModal} aria-label="Audio settings">
         {<IconConfig />}
       </ControlButton>
       {configModal && renderModal()}
-    </Block>
+    </div>
   );
 };

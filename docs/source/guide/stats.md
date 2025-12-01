@@ -18,7 +18,8 @@ Annotation statistics help you determine the quality of your dataset, its readin
 ## Task agreement
 
 Task agreement, also known as "labeling consensus" or "annotation consensus," shows the consensus between multiple annotators when labeling the same task. There are several types of task agreement in Label Studio Enterprise:
-- a per-task agreement score, visible on the Data Manager page for a project. This displays how well the annotations on a particular task match across annotators. 
+- a per-task agreement score, visible on the Data Manager page for a project. This displays how well the annotations on a particular task match across annotators. [Agreement Column](manage_data#Agreement)
+- a per-task selectable agreement score, visible on the Data Manager page for a project. This allows you to select annotators, models, and ground truth to include in the calculation. [Agreement (Selected) Column](manage_data#Agreement-Selected)
 - an inter-annotator agreement matrix, visible on the Members page for a project. This displays how well the annotations from specific annotators agree with each other in general, or for specific tasks. 
 
 You can also see how the annotations from a specific annotator compare to the prediction scores for a task, or how they compare to the ground truth labels for a task.

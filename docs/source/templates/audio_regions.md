@@ -3,7 +3,7 @@ title: Audio Classification with Segments
 type: templates
 category: Audio/Speech Processing
 cat: audio-speech-processing
-order: 308
+order: 335
 meta_title: Audio Classification with Segments Data Labeling Template
 meta_description: Template for classifying audio regions for segmentation tasks with Label Studio for your machine learning and data science projects.
 ---

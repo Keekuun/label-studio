@@ -9,9 +9,9 @@
 | [showFullPath] | <code>boolean</code> | <code>false</code> | Whether to show the full path of selected items |
 | [pathSeparator] | <code>string</code> | <code>&quot;/&quot;</code> | Separator to show in the full path (default is " / "). To avoid errors, ensure that your data does not include this separator |
 | [maxUsages] | <code>number</code> |  | Maximum number of times a choice can be selected per task or per region |
-| [maxWidth] | <code>number</code> |  | Maximum width for dropdown |
-| [minWidth] | <code>number</code> |  | Minimum width for dropdown |
-| [required] | <code>boolean</code> | <code>false</code> | Whether taxonomy validation is required |
+| [maxWidth] | <code>number</code> |  | Maximum width for dropdown with units (eg: "500px") |
+| [minWidth] | <code>number</code> |  | Minimum width for dropdown with units (eg: "300px") |
+| [required] | <code>boolean</code> | <code>false</code> | Whether it is required to have selected at least one option |
 | [requiredMessage] | <code>string</code> |  | Message to show if validation fails |
 | [placeholder=] | <code>string</code> |  | What to display as prompt on the input |
 | [perRegion] | <code>boolean</code> |  | Use this tag to classify specific regions instead of the whole object |

@@ -101,7 +101,7 @@ def test_export_tasks(django_live_url, business_client):
     single_task = ls.tasks.get(id=task_id)
     assert single_task.data['my_text'] == 'Test task 7'
     assert single_task.total_annotations == 1
-    assert single_task.updated_by == [{'user_id': business_client.user.id}]
+    assert single_task.updated_by[0]['user_id'] == business_client.user.id
 
     exported_tasks = [task for task in ls.tasks.list(project=p.id, fields='all') if task.annotations]
     assert len(exported_tasks) == 1

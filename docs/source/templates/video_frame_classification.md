@@ -3,7 +3,7 @@ title: Video Frame Classification
 type: templates
 category: Videos
 cat: videos
-order: 804
+order: 705
 is_new: t
 meta_title: Video Frame Classification
 meta_description: Template for classifying frames within a video.

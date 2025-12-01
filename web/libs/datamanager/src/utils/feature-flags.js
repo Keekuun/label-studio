@@ -29,11 +29,6 @@ export const FF_LOPS_E_3 = "fflag_feat_all_lops_e_3_datasets_short";
 export const FF_LSDV_4620_3_ML = "fflag_fix_front_lsdv_4620_memory_leaks_100723_short";
 
 /**
- * Fixes how presigned urls are generated and accessed to remove possibility of CORS errors.
- */
-export const FF_LSDV_4711 = "fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short";
-
-/**
  * Self Serve
  * @link https://app.launchdarkly.com/default/test/features/fflag_feat_front_leap_482_self_serve_short/
  */
@@ -59,6 +54,19 @@ export const FF_AVERAGE_AGREEMENT_SCORE_POPOVER = "fflag_feat_all_leap_2042_aver
  * @link https://app.launchdarkly.com/projects/default/flags/fflag_root_13_annotation_results_filtering
  */
 export const FF_ANNOTATION_RESULTS_FILTERING = "fflag_root_13_annotation_results_filtering";
+
+/**
+ * Allow to filter tasks in Data Manager by annotation results and user annotated on the same annotation
+ * @link https://app.launchdarkly.com/projects/default/flags/fflag_root_45_better_user_filter
+ */
+export const FF_BETTER_USER_FILTER = "fflag_root_45_better_user_filter";
+
+/**
+ * Disable global user fetching for large-scale deployments
+ * @link https://app.launchdarkly.com/projects/default/flags/fflag_all_feat_utc_204_users_performance_improvements_in_dm_for_large_orgs
+ */
+export const FF_DISABLE_GLOBAL_USER_FETCHING =
+  "fflag_all_feat_utc_204_users_performance_improvements_in_dm_for_large_orgs";
 
 // Customize flags
 const flags = {};

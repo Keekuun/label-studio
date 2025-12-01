@@ -147,13 +147,26 @@ def load_tasks_json_lso(blob: bytes, key: str) -> list[StorageObject]:
         key (str): The key of the blob. Used for error messages.
 
     Returns:
-        list[StorageLinkParams]: link params for each task.
+        list[StorageObject]: link params for each task.
+    """
+    # Check feature flag to decide between generator and list
+    if flag_set('fflag_fix_back_plt_870_import_from_storage_batch_28082025_short'):
+        # Return generator version
+        return _load_tasks_json_lso_generator(blob, key)
+    else:
+        # Return list version (current implementation)
+        return _load_tasks_json_lso_list(blob, key)
+
+
+def _load_tasks_json_lso_list(blob: bytes, key: str) -> list[StorageObject]:
+    """
+    Current implementation - returns list of StorageObjects.
     """
 
     def _error_wrapper(exc: Optional[Exception] = None):
         raise ValueError(
             (
-                f'Can’t import JSON-formatted tasks from {key}. If you’re trying to import binary objects, '
+                f"Can't import JSON-formatted tasks from {key}. If you're trying to import binary objects, "
                 f'perhaps you forgot to enable "Tasks" import method?'
             )
         ) from exc
@@ -179,6 +192,48 @@ def load_tasks_json_lso(blob: bytes, key: str) -> list[StorageObject]:
         return StorageObject.bulk_create(value, key, range(len(value)))
 
     _error_wrapper()
+
+
+def _load_tasks_json_lso_generator(blob: bytes, key: str):
+    """
+    Generator version - yields StorageObjects one by one to save memory.
+    """
+
+    def _error_wrapper(exc: Optional[Exception] = None):
+        raise ValueError(
+            (
+                f"Can't import JSON-formatted tasks from {key}. If you're trying to import binary objects, "
+                f'perhaps you forgot to enable "Tasks" import method?'
+            )
+        ) from exc
+
+    try:
+        value = json.loads(blob)
+    except json.decoder.JSONDecodeError as e:
+        if flag_set('fflag_feat_root_11_support_jsonl_cloud_storage'):
+            try:
+                # For JSONL: yield one object per line as we parse
+                row_index = 0
+                with io.BytesIO(blob) as f:
+                    for line in f:
+                        task_data = json.loads(line)
+                        yield StorageObject(key=key, task_data=task_data, row_index=row_index)
+                        row_index += 1
+                return
+            except Exception as e:
+                _error_wrapper(e)
+        else:
+            _error_wrapper(e)
+
+    if isinstance(value, dict):
+        # Single dict - yield one object
+        yield StorageObject(key=key, task_data=value)
+    elif isinstance(value, list):
+        # JSON array - yield one object at a time
+        for row_index, task_data in enumerate(value):
+            yield StorageObject(key=key, task_data=task_data, row_index=row_index)
+    else:
+        _error_wrapper()
 
 
 def load_tasks_json(blob: str, key: str) -> list[StorageObject]:

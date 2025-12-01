@@ -1,7 +1,7 @@
 import { Button } from "@humansignal/ui";
 import { IconCopy, IconInfo, IconViewAll, IconTrash, IconSettings } from "@humansignal/icons";
 import { Tooltip } from "@humansignal/ui";
-import { Elem } from "../../utils/bem";
+import { cn } from "../../utils/bem";
 import { isSelfServe } from "../../utils/billing";
 import { FF_BULK_ANNOTATION, isFF } from "../../utils/feature-flags";
 import { GroundTruth } from "../CurrentEntity/GroundTruth";
@@ -23,7 +23,7 @@ export const Actions = ({ store }) => {
   }, [annotationStore]);
 
   return (
-    <Elem name="section">
+    <div className={cn("topbar").elem("section").toClassName()}>
       {store.hasInterface("annotations:view-all") && !isBulkMode && (
         <Tooltip title={i18n.t('compare_all_anno')}>
           <Button
@@ -126,6 +126,6 @@ export const Actions = ({ store }) => {
           }}
         />
       )}
-    </Elem>
+    </div>
   );
 };

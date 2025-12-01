@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { IconZoomIn } from "@humansignal/icons";
 import { Button } from "@humansignal/ui";
-import { Dropdown } from "../../../common/Dropdown/Dropdown";
+import { Dropdown } from "@humansignal/ui";
 import { Menu } from "../../../common/Menu/Menu";
 import { ErrorMessage } from "../../../components/ErrorMessage/ErrorMessage";
 import ObjectTag from "../../../components/Tags/Object";
@@ -19,11 +19,14 @@ import {
 import { defaultStyle } from "../../../core/Constants";
 import { useFullscreen } from "../../../hooks/useFullscreen";
 import { useToggle } from "../../../hooks/useToggle";
-import { Block, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import ResizeObserver from "../../../utils/resize-observer";
 import { clamp, isDefined } from "../../../utils/utilities";
 import "./Video.scss";
 import { VideoRegions } from "./VideoRegions";
+import { ff } from "@humansignal/core";
+
+const isSyncedBuffering = ff.isActive(ff.FF_SYNCED_BUFFERING);
 
 function useZoom(videoDimensions, canvasDimentions, shouldClampPan) {
   const [zoomState, setZoomState] = useState({ zoom: 1, pan: { x: 0, y: 0 } });
@@ -122,6 +125,7 @@ const VideoConfig = observer(({ item }) => {
       onSpeedChange={item.handleSpeed}
       loopTimelineRegion={item.loopTimelineRegion}
       onLoopTimelineRegionChange={item.setLoopTimelineRegion}
+      minSpeed={item.minplaybackspeed}
     />
   );
 });
@@ -140,7 +144,11 @@ const HtxVideoView = ({ item, store }) => {
   const [position, _setPosition] = useState(1);
 
   const [videoSize, setVideoSize] = useState(null);
-  const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0, ratio: 1 });
+  const [videoDimensions, setVideoDimensions] = useState({
+    width: 0,
+    height: 0,
+    ratio: 1,
+  });
   const [{ zoom, pan }, { setZoomAndPan, setZoom, setPan }] = useZoom(
     videoDimensions,
     item.ref.current
@@ -386,6 +394,22 @@ const HtxVideoView = ({ item, store }) => {
     });
   }, []);
 
+  const handlePlayClick = useCallback(() => {
+    if (isSyncedBuffering && item.isBuffering) {
+      item.triggerSyncPlay(true);
+    } else {
+      handlePlay();
+    }
+  }, []);
+
+  const handlePauseClick = useCallback(() => {
+    if (isSyncedBuffering && item.isBuffering) {
+      item.triggerSyncPause(true);
+    } else {
+      handlePause();
+    }
+  });
+
   const handleSelectRegion = useCallback(
     (_, id, select) => {
       const region = item.findRegion(id);
@@ -477,14 +501,14 @@ const HtxVideoView = ({ item, store }) => {
 
   return (
     <ObjectTag item={item}>
-      <Block name="video-segmentation" ref={mainContentRef} mod={{ fullscreen: isFullScreen }}>
+      <div className={cn("video-segmentation").mod({ fullscreen: isFullScreen }).toClassName()} ref={mainContentRef}>
         {item.errors?.map((error, i) => (
           <ErrorMessage key={`err-${i}`} error={error} />
         ))}
 
-        <Block name="video" mod={{ fullscreen: isFullScreen }} ref={videoBlockRef}>
-          <Elem
-            name="main"
+        <div className={cn("video").mod({ fullscreen: isFullScreen }).toClassName()} ref={videoBlockRef}>
+          <div
+            className={cn("video").elem("main").toClassName()}
             ref={videoContainerRef}
             style={{ height: Number(item.height) }}
             onMouseDown={handlePan}
@@ -516,6 +540,7 @@ const HtxVideoView = ({ item, store }) => {
                   pan={pan}
                   speed={item.speed}
                   framerate={item.framerate}
+                  buffering={item.isBuffering}
                   allowInteractions={false}
                   allowPanOffscreen={!limitCanvasDrawingBoundaries}
                   onFrameChange={handleFrameChange}
@@ -526,19 +551,20 @@ const HtxVideoView = ({ item, store }) => {
                   onPlay={handlePlay}
                   onPause={handlePause}
                   onSeeked={item.handleSeek}
+                  onBuffering={item.handleBuffering}
                   loopFrameRange={item.loopTimelineRegion}
                   selectedFrameRange={item.selectedFrameRange}
                 />
               </>
             )}
-          </Elem>
-        </Block>
+          </div>
+        </div>
 
         {loaded && (
-          <Elem
-            name="timeline"
-            tag={Timeline}
-            playing={playing}
+          <Timeline
+            className={cn("video-segmentation").elem("timeline").toClassName()}
+            playing={isSyncedBuffering && item.isBuffering ? item.wasPlayingBeforeBuffering : playing}
+            buffering={isSyncedBuffering ? item.isBuffering : false}
             length={videoLength}
             position={position}
             regions={regions}
@@ -580,8 +606,8 @@ const HtxVideoView = ({ item, store }) => {
               },
             ]}
             onPositionChange={handleTimelinePositionChange}
-            onPlay={handlePlay}
-            onPause={handlePause}
+            onPlay={handlePlayClick}
+            onPause={handlePauseClick}
             onFullscreenToggle={handleFullscreenToggle}
             onSelectRegion={handleSelectRegion}
             onStartDrawing={item.startDrawing}
@@ -589,7 +615,7 @@ const HtxVideoView = ({ item, store }) => {
             onAction={handleAction}
           />
         )}
-      </Block>
+      </div>
     </ObjectTag>
   );
 };

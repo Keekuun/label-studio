@@ -2,7 +2,7 @@ import React from "react";
 import * as d3 from "d3";
 import { inject, observer } from "mobx-react";
 import { getEnv, getRoot, getType, types, isAlive } from "mobx-state-tree";
-import throttle from "lodash.throttle";
+import throttle from "lodash/throttle";
 import { Spin } from "antd";
 
 import ObjectBase from "./Base";
@@ -315,7 +315,7 @@ const Model = types
             // Pad fractional seconds to exactly 3 digits for consistent parsing
             if (typeof value === "string" && value.includes(".")) {
               // Match timestamp with decimal point and capture fractional part
-              value = value.replace(/\.(\d{0,3})\b/, (match, fractional) => {
+              value = value.replace(/\.(\d{0,3})\b/, (_match, fractional) => {
                 // Pad fractional seconds to exactly 3 digits
                 return `.${fractional.padEnd(3, "0")}`;
               });
@@ -626,21 +626,22 @@ const Model = types
       const states = self.getAvailableStates();
 
       if (states.length === 0) return;
-      const control = states[0];
+      const [control, ...rest] = states;
       const labels = { [control.valueType]: control.selectedValues() };
 
-      // const r = self.createRegion(start, end, clonedStates);
-      const r = self.annotation.createResult({ start, end, instant: start === end }, labels, control, self);
+      const r = ff.isActive(ff.FF_MULTIPLE_LABELS_REGIONS)
+        ? self.annotation.createResult({ start, end, instant: start === end }, labels, control, self, false, rest)
+        : self.annotation.createResult({ start, end, instant: start === end }, labels, control, self, false);
 
       return r;
     },
 
-    regionChanged(timerange, i, activeStates) {
+    regionChanged(timerange, i) {
       const r = self.regs[i];
       let needUpdate = false;
 
       if (!r) {
-        const newRegion = self.addRegion(timerange.start, timerange.end, activeStates);
+        const newRegion = self.addRegion(timerange.start, timerange.end);
 
         needUpdate = true;
         newRegion.notifyDrawingFinished();

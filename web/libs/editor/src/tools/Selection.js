@@ -50,14 +50,22 @@ const _Tool = types
         return false;
       },
 
+      notifyRegions(type, x, y) {
+        for (const reg of self.obj.regs) {
+          reg?.onSelection?.(type, x, y);
+        }
+      },
+
       mousedownEv(ev, [x, y]) {
         isSelecting = true;
         self.obj.setSelectionStart({ x, y });
+        self.notifyRegions("start", x, y);
       },
 
       mousemoveEv(ev, [x, y]) {
         if (!isSelecting) return;
         self.obj.setSelectionEnd({ x, y });
+        self.notifyRegions("move", x, y);
       },
 
       mouseupEv(ev, [x, y]) {
@@ -65,6 +73,7 @@ const _Tool = types
         self.obj.setSelectionEnd({ x, y });
         const { regionsInSelectionArea } = self.obj;
 
+        self.notifyRegions("end", x, y);
         self.obj.resetSelection();
         if (ev.ctrlKey || ev.metaKey) {
           self.annotation.extendSelectionWith(regionsInSelectionArea);
@@ -79,6 +88,7 @@ const _Tool = types
           self.obj.resetSelection();
           if (!ev.ctrlKey && !ev.metaKey) {
             self.annotation.unselectAreas();
+            self.notifyRegions("reset");
           }
         }
       },

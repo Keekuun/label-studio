@@ -4,19 +4,93 @@ import type { FieldDefinition, MessageDefinition, ProviderConfig } from "./commo
 // Re-export ProviderConfig for convenience
 export type { ProviderConfig };
 
+// Shared function to determine if a field is actually required
+export function isFieldRequired(field: FieldDefinition, isEditMode = false): boolean {
+  // Access key fields are never required in edit mode (they can be provided via env vars)
+  if (field.accessKey && isEditMode) {
+    return false;
+  }
+
+  // Check if the field is explicitly marked as required
+  if (field.required === true) {
+    return true;
+  }
+
+  // Check if the schema indicates the field is required
+  // A schema is considered required if it doesn't have .optional() or .default()
+  const schemaAny = field.schema as any;
+
+  // Check if the schema has .optional() modifier
+  if (schemaAny._def?.typeName === "ZodOptional") {
+    return false;
+  }
+
+  // Check if the schema has .default() modifier
+  if (schemaAny._def?.typeName === "ZodDefault") {
+    return false;
+  }
+
+  // Check if the inner type of a default schema is optional
+  if (schemaAny._def?.innerType?._def?.typeName === "ZodOptional") {
+    return false;
+  }
+
+  // For string fields, check if they have min(1) validation (indicating required)
+  if (field.schema instanceof z.ZodString) {
+    const stringSchema = field.schema as z.ZodString;
+    // Check if the schema has min(1) validation
+    if (stringSchema._def?.checks?.some((check: any) => check.kind === "min" && check.value === 1)) {
+      return true;
+    }
+  }
+
+  // Default to not required
+  return false;
+}
+
 // Helper function to assemble the complete schema from field definitions
 export function assembleSchema(fields: FieldDefinition[], isEditMode = false): z.ZodObject<any> {
   const schemaObject: Record<string, z.ZodTypeAny> = {};
 
   fields.forEach((field) => {
     let fieldSchema = field.schema;
+    const isRequired = isFieldRequired(field, isEditMode);
 
     // For access keys in edit mode, make them optional and skip validation
     if (field.accessKey && isEditMode) {
       fieldSchema = fieldSchema.optional();
-    } else if (field.required && fieldSchema instanceof z.ZodString) {
-      // Make field required if specified (only in create mode or for non-access-key fields)
-      fieldSchema = fieldSchema.min(1, `${field.label} is required`);
+    } else if (isRequired) {
+      // For required fields, ensure they have proper validation
+      if (fieldSchema instanceof z.ZodString) {
+        fieldSchema = fieldSchema.min(1, `${field.label} is required`);
+      } else if (fieldSchema instanceof z.ZodNumber) {
+        // For numbers, we might want to add additional validation if needed
+        // For now, just ensure it's not optional
+        fieldSchema = fieldSchema.refine((val) => val !== undefined && val !== null, {
+          message: `${field.label} is required`,
+        });
+      } else if (fieldSchema instanceof z.ZodBoolean) {
+        // For booleans, ensure they're not optional
+        fieldSchema = fieldSchema.refine((val) => val !== undefined && val !== null, {
+          message: `${field.label} is required`,
+        });
+      } else {
+        // For other types, ensure they're not optional
+        fieldSchema = fieldSchema.refine((val) => val !== undefined && val !== null, {
+          message: `${field.label} is required`,
+        });
+      }
+    } else {
+      // For optional fields, make them nullable to handle null values from server
+      if (fieldSchema instanceof z.ZodString) {
+        fieldSchema = fieldSchema.nullable().optional();
+      } else if (fieldSchema instanceof z.ZodNumber) {
+        fieldSchema = fieldSchema.nullable().optional();
+      } else if (fieldSchema instanceof z.ZodBoolean) {
+        fieldSchema = fieldSchema.nullable().optional();
+      } else {
+        fieldSchema = fieldSchema.nullable().optional();
+      }
     }
 
     schemaObject[field.name] = fieldSchema;
@@ -31,6 +105,15 @@ export function extractDefaultValues(fields: (FieldDefinition | MessageDefinitio
 
   fields.forEach((field) => {
     if (field.type === "message") return;
+
+    // Check if the field has a default value
+    if (Object.prototype.hasOwnProperty.call(field, "defaultValue") && field.defaultValue !== undefined) {
+      const customDefault = typeof field.defaultValue === "function" ? field.defaultValue() : field.defaultValue;
+      defaultValues[field.name] = customDefault;
+      return;
+    }
+
+    // If the field does not have a default value, try to get it from the schema
     try {
       // Try to get the default value from the schema by accessing the internal structure
       const schemaAny = field.schema as any;
@@ -113,6 +196,20 @@ export function getFieldByName(
 export function getFieldsForRow(
   fields: (FieldDefinition | MessageDefinition)[],
   rowFields: string[],
+  target?: "import" | "export",
 ): (FieldDefinition | MessageDefinition)[] {
-  return rowFields.map((fieldName) => getFieldByName(fields, fieldName)).filter(Boolean) as FieldDefinition[];
+  const filteredFields = rowFields.map((fieldName) => getFieldByName(fields, fieldName)).filter(Boolean) as (
+    | FieldDefinition
+    | MessageDefinition
+  )[];
+
+  // Filter fields based on target if specified
+  if (target) {
+    return filteredFields.filter((field) => {
+      if (field.type === "message") return true; // Always show messages
+      return !field.target || field.target === target;
+    });
+  }
+
+  return filteredFields;
 }

@@ -1,7 +1,7 @@
 import factory
 from core.utils.common import load_func
 from django.conf import settings
-from projects.models import Project, ProjectMember
+from projects.models import Project
 
 
 class ProjectFactory(factory.django.DjangoModelFactory):
@@ -13,9 +13,3 @@ class ProjectFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Project
-
-    @factory.post_generation
-    def created_by_relationship(self, create, extracted, **kwargs):
-        if not create or not self.created_by:
-            return
-        ProjectMember.objects.create(user=self.created_by, project=self)

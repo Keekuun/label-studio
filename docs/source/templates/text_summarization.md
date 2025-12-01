@@ -3,7 +3,7 @@ title: Text Summarization
 type: templates
 category: Natural Language Processing
 cat: natural-language-processing
-order: 206
+order: 220
 meta_title: Text Summarization Data Labeling Template
 meta_description: Template for summarizing text with Label Studio for your machine learning and data science projects.
 ---

@@ -55,7 +55,7 @@ export const ReviewStep = ({ formData, filesPreview, formatSize }: ReviewStepPro
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-3xl mx-auto">
+    <div>
       <div className="border-b pb-4 mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Ready to Connect</h2>
         <p className="text-gray-600 mt-1">Review your connection details and confirm to start importing</p>
@@ -96,11 +96,9 @@ export const ReviewStep = ({ formData, filesPreview, formatSize }: ReviewStepPro
       </div>
 
       {/* Import Process Section */}
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8">
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">Import Process</h3>
-        <p className="text-blue-700">
-          Files will be imported in the background. You can continue working while the import is in progress.
-        </p>
+      <div className="bg-primary-background border border-primary-border-subtler rounded-small p-4 mb-8">
+        <h3 className="text-lg font-semibold mb-2">Import Process</h3>
+        <p>Files will be imported in the background. You can continue working while the import is in progress.</p>
       </div>
     </div>
   );

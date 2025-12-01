@@ -3,7 +3,7 @@ title: Keypoint Labeling
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 104
+order: 120
 meta_title: Image Keypoint Data Labeling Template
 meta_description: Template for adding keypoints to images with Label Studio for your machine learning and data science projects.
 ---

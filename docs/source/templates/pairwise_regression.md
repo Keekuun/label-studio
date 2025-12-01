@@ -3,7 +3,7 @@ title: Pairwise Regression
 type: templates
 category: Ranking and Scoring
 cat: ranking-and-scoring
-order: 501
+order: 415
 meta_title: Pairwise Regression Data Labeling Template
 meta_description: Template for performing pairwise comparison tasks for regression models with Label Studio for your machine learning and data science projects.
 ---

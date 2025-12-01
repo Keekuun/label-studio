@@ -3,7 +3,7 @@ title: Document Retrieval
 type: templates
 category: Ranking and Scoring
 cat: ranking-and-scoring
-order: 502
+order: 430
 meta_title: Document Retrieval Data Labeling Template
 meta_description: Template for annotating documents for document retrieval tasks with Label Studio for your machine learning and data science projects. 
 ---

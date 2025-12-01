@@ -3,7 +3,7 @@ title: Dialogue Analysis
 type: templates
 category: Conversational AI
 cat: conversational-ai
-order: 305
+order: 815
 meta_title: Dialogue Analysis Data Labeling Template
 meta_description: Template for performing dialogue analysis for conversational AI use cases with Label Studio for your machine learning and data science projects.
 ---

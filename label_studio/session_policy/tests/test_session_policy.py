@@ -4,11 +4,9 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from session_policy.models import SessionTimeoutPolicy
 
-from label_studio.tests.conftest import fflag_feat_utc_46_session_timeout_policy_on  # noqa: F401
-
 
 @pytest.mark.django_db
-def test_session_timeout_policy(fflag_feat_utc_46_session_timeout_policy_on):
+def test_session_timeout_policy():
     organization = OrganizationFactory()
 
     client = APIClient()
@@ -37,7 +35,7 @@ def test_session_timeout_policy(fflag_feat_utc_46_session_timeout_policy_on):
 
 
 @pytest.mark.django_db
-def test_session_policy_api(fflag_feat_utc_46_session_timeout_policy_on):
+def test_session_policy_api():
     # Create organization and user
     organization = OrganizationFactory()
     client = APIClient()

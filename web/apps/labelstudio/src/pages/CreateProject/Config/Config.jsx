@@ -5,7 +5,7 @@ import { IconTrash } from "@humansignal/icons";
 import { ToggleItems } from "../../../components";
 import { Form, Input } from "../../../components/Form";
 import { useAPI } from "../../../providers/ApiProvider";
-import { Block, cn, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import { Palette } from "../../../utils/colors";
 import { FF_UNSAVED_CHANGES, isFF } from "../../../utils/feature-flags";
 import { colorNames } from "./colors";
@@ -17,7 +17,7 @@ import { TemplatesList } from "./TemplatesList";
 import tags from "@humansignal/core/lib/utils/schema/tags.json";
 import { UnsavedChanges } from "./UnsavedChanges";
 import { Checkbox, CodeEditor, Select } from "@humansignal/ui";
-import { toSnakeCase } from "strman";
+import snakeCase from "lodash/snakeCase";
 
 const wizardClass = cn("wizard");
 const configClass = cn("configure");
@@ -550,11 +550,9 @@ const Configurator = ({
         {disableSaveButton !== true && onSaveClick && (
           <Form.Actions size="small" extra={configure === "code" && extra} valid>
             {saved && (
-              <Block name="form-indicator">
-                <Elem tag="span" mod={{ type: "success" }} name="item">
-                  Saved!
-                </Elem>
-              </Block>
+              <div className={cn("form-indicator").toClassName()}>
+                <span className={cn("form-indicator").elem("item").mod({ type: "success" }).toClassName()}>Saved!</span>
+              </div>
             )}
             <Button
               size="small"
@@ -601,7 +599,7 @@ export const ConfigPage = ({
   const setSelectedGroup = React.useCallback(
     (group) => {
       _setSelectedGroup(group);
-      __lsa(`labeling_setup.list.${toSnakeCase(group)}`);
+      __lsa(`labeling_setup.list.${snakeCase(group)}`);
     },
     [_setSelectedGroup],
   );
@@ -659,7 +657,7 @@ export const ConfigPage = ({
       setTemplate(recipe.config);
       setSelectedRecipe(recipe);
       setMode("view");
-      __lsa(`labeling_setup.view.${toSnakeCase(recipe.group)}.${toSnakeCase(recipe.title)}`);
+      __lsa(`labeling_setup.view.${snakeCase(recipe.group)}.${snakeCase(recipe.title)}`);
     }
   });
 

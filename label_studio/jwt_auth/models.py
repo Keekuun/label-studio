@@ -2,7 +2,6 @@ from datetime import timedelta
 from typing import Any
 
 from annoying.fields import AutoOneToOneField
-from core.utils.common import is_community
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from organizations.models import Organization
@@ -18,7 +17,7 @@ class JWTSettings(models.Model):
     organization = AutoOneToOneField(Organization, related_name='jwt', primary_key=True, on_delete=models.DO_NOTHING)
     api_tokens_enabled = models.BooleanField(
         _('JWT API tokens enabled'),
-        default=False,
+        default=True,
         help_text='Enable JWT API token authentication for this organization',
     )
     api_token_ttl_days = models.IntegerField(
@@ -28,38 +27,15 @@ class JWTSettings(models.Model):
     )
     legacy_api_tokens_enabled = models.BooleanField(
         _('legacy API tokens enabled'),
-        default=True,
+        default=False,
         help_text='Enable legacy API token authentication for this organization',
     )
 
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
 
-    def has_view_permission(self, user):
-        """Any member of the organization can view JWT settings."""
-        return self.organization.has_permission(user)
-
-    def has_modify_permission(self, user):
-        """Determine who can modify JWT settings.
-
-        In label studio enterprise: Only organization owners/admins can modify JWT settings.
-        In label studio open-source: Any organization member can modify JWT settings.
-        """
-        if not self.organization.has_permission(user):
-            return False
-
-        # open-source
-        if is_community():
-            return True
-
-        # enterprise
-        is_owner = user.is_owner if hasattr(user, 'is_owner') else (user.id == self.organization.created_by.id)
-        is_administrator = hasattr(user, 'is_administrator') and user.is_administrator
-        return is_owner or is_administrator
-
     def has_permission(self, user):
-        """Only organization owners/admins can modify JWT settings."""
-        return self.has_modify_permission(user)
+        return self.organization.has_permission(user)
 
 
 class LSTokenBackend(TokenBackend):

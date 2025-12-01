@@ -56,10 +56,6 @@ export default class TransformerComponent extends Component {
     const selectedNodes = [];
 
     selectedRegions.forEach((shape) => {
-      if (shape.height < 0) {
-        shape.flipRegion?.();
-      }
-
       const shapeContainer = stage.findOne((node) => {
         return node.hasName(shape.id) && node.parent;
       });
@@ -178,6 +174,17 @@ export default class TransformerComponent extends Component {
     });
   };
 
+  applyRegionsTransform = () => {
+    if (!this.transformer) return;
+
+    const { item } = this.props;
+    const { selectedRegions } = item;
+
+    selectedRegions.forEach((region) => {
+      region.applyTransform?.({}, null);
+    });
+  };
+
   renderLSTransformer() {
     return (
       <>
@@ -218,10 +225,14 @@ export default class TransformerComponent extends Component {
           }}
           dragBoundFunc={this.dragBoundFunc}
           onDragEnd={() => {
+            // Call applyTransform for VectorRegion instances
+            this.applyRegionsTransform();
             this.unfreeze();
             setTimeout(this.checkNode);
           }}
           onTransformEnd={() => {
+            // Call applyTransform for VectorRegion instances
+            this.applyRegionsTransform();
             setTimeout(this.checkNode);
           }}
           backSelector={this.props.draggableBackgroundSelector}
@@ -266,10 +277,14 @@ export default class TransformerComponent extends Component {
           }}
           dragBoundFunc={this.dragBoundFunc}
           onDragEnd={() => {
+            // Call applyTransform for VectorRegion instances
+            this.applyRegionsTransform();
             this.unfreeze();
             setTimeout(this.checkNode);
           }}
           onTransformEnd={() => {
+            // Call applyTransform for VectorRegion instances
+            this.applyRegionsTransform();
             setTimeout(this.checkNode);
           }}
           backSelector={this.props.draggableBackgroundSelector}

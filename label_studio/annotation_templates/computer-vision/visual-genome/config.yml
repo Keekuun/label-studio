@@ -2,7 +2,16 @@ title: Visual Genome
 type: community
 group: Computer Vision
 image: /static/templates/visual-genome.png
-details: <h1>Label different described features</h1>
+details: |
+  <h1>Label different described features</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>scene understanding, visual reasoning, computer vision research, multimodal AI, robotics training, autonomous systems, visual question answering, image captioning, visual relationship detection, scene graph generation, complex scene analysis</dd>
+    <dt>Associated Models</dt>
+    <dd>region detection, attribute classification, relationship extraction, structured scene representation</dd>
+    <dt>Domain Terminology</dt>
+    <dd>scene graphs, visual knowledge, spatial relationships, object interactions, contextual understanding</dd>
+  </dl>
 config: |
   <View>
     <View style="display: flex; flex-wrap: wrap;">

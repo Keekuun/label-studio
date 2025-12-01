@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { inject, observer } from "mobx-react";
-import { useCopyText } from "@humansignal/core/lib/hooks/useCopyText";
+import { useCopyText } from "@humansignal/core";
 import { isDefined, userDisplayName } from "@humansignal/core/lib/utils/helpers";
-import { Block, cn, Elem } from "../../utils/bem";
+import { cn } from "../../utils/bem";
 import {
   IconAnnotationGroundTruth,
   IconAnnotationSkipped2,
@@ -15,10 +15,14 @@ import {
   IconSparks,
   IconStar,
   IconStarOutline,
+  IconAnalytics,
+  IconViewAll,
+  IconClipboardCheck,
 } from "@humansignal/icons";
 import { Tooltip, Userpic, ToastType, useToast } from "@humansignal/ui";
 import { TimeAgo } from "../../common/TimeAgo/TimeAgo";
-import { useDropdown } from "../../common/Dropdown/DropdownTrigger";
+import { useDropdown } from "@humansignal/ui";
+import { isFF } from "../../utils/feature-flags";
 import i18n from "i18next";
 import { Trans } from 'react-i18next';
 
@@ -84,6 +88,8 @@ export const AnnotationButton = observer(
       hiddenUser = { email: isCurrentUser ? "Me" : "User" };
     }
 
+    const displayUsername = hiddenUser ? hiddenUser.email : username;
+
     const CommentIcon = renderCommentIcon(entity);
     // need to find a more reliable way to grab this value
     // const historyActionType = annotationStore.history.toJSON()?.[0]?.actionType;
@@ -99,7 +105,7 @@ export const AnnotationButton = observer(
         if (type === "prediction") {
           annotationStore.selectPrediction(id);
         } else {
-          annotationStore.selectAnnotation(id);
+          annotationStore.selectAnnotation(id, { exitViewAll: true });
         }
       }
     }, [entity]);
@@ -116,7 +122,7 @@ export const AnnotationButton = observer(
           url.searchParams.delete("region");
           return url.toString();
         }, [entity.pk]);
-        const [copyLink] = useCopyText(annotationLink);
+        const [copyLink] = useCopyText({ defaultText: annotationLink });
         const toast = useToast();
         const dropdown = useDropdown();
         const clickHandler = () => {
@@ -138,17 +144,58 @@ export const AnnotationButton = observer(
         const linkAnnotation = useCallback<MenuActionOnClick>(() => {
           copyLink();
           dropdown?.close();
-          toast.show({
+          toast?.show({
             message: i18n.t('anno_copied'),
             type: ToastType.info,
           });
         }, [entity, copyLink]);
+        const [copyAnnotationId] = useCopyText({ defaultText: entity.pk?.toString() ?? entity.id?.toString() ?? "" });
+        const copyAnnotationIdHandler = useCallback<MenuActionOnClick>(() => {
+          copyAnnotationId();
+          dropdown?.close();
+          toast?.show({
+            message: "Annotation ID copied to clipboard",
+            type: ToastType.info,
+          });
+        }, [entity, copyAnnotationId]);
+        const openPerformanceDashboard = useCallback<MenuActionOnClick>(() => {
+          // Only available in LSE
+          const isLSE = (window as any).APP_SETTINGS?.version?.edition === "Enterprise";
+          if (!isLSE) return;
+
+          const url = new URL(window.location.origin);
+          const useNewAnalytics = isFF("fflag_feat_all_fit_778_analytics_short");
+
+          // Route to different dashboards based on feature flag
+          if (useNewAnalytics) {
+            url.pathname = "/analytics/member-performance";
+          } else {
+            url.pathname = "/performance";
+          }
+
+          // Add user, project, and annotation context
+          if (entity.user?.id) {
+            url.searchParams.set("user", entity.user.id);
+          }
+
+          const projectMatch = window.location.pathname.match(/\/projects\/(\d+)/);
+          if (projectMatch) {
+            url.searchParams.set("project", projectMatch[1]);
+          }
+
+          window.open(url.toString(), "_blank");
+          dropdown?.close();
+        }, [entity, annotationStore]);
+        const showOtherAnnotations = useCallback<MenuActionOnClick>(() => {
+          annotationStore.toggleViewingAllAnnotations();
+          clickHandler();
+        }, [annotationStore]);
         const deleteAnnotation = useCallback(() => {
           clickHandler();
           confirm({
             title: i18n.t('del_anno_title'),
             body: <Trans i18nKey="del_anno_desc" />,
-            buttonLook: "destructive",
+            buttonLook: "negative",
             okText: i18n.t('delete'),
             cancelText: i18n.t('cancel'),
             onOk: () => {
@@ -160,8 +207,19 @@ export const AnnotationButton = observer(
         const isDraft = !isDefined(entity.pk);
         const showGroundTruth = capabilities.groundTruthEnabled && !isPrediction && !isDraft;
         const showDuplicateAnnotation = capabilities.enableCreateAnnotation && !isDraft;
+        const isLSE = (window as any).APP_SETTINGS?.version?.edition === "Enterprise";
+
+        // Check if project ID is available (from store or URL)
+        const hasProjectId = !!window.location.pathname.match(/\/projects\/(\d+)/);
+
         const actions = useMemo<ContextMenuAction[]>(
           () => [
+            {
+              label: "Copy Annotation ID",
+              onClick: copyAnnotationIdHandler,
+              icon: <IconClipboardCheck width={20} height={20} />,
+              enabled: !isDraft,
+            },
             {
               label: `${isGroundTruth ? i18n.t('unset') + ' ' : i18n.t('set') + ' '} ${i18n.t('as_gt')}`,
               onClick: setGroundTruth,
@@ -185,6 +243,18 @@ export const AnnotationButton = observer(
               enabled: !isDraft && store.hasInterface("annotations:copy-link"),
             },
             {
+              label: "Open Performance Dashboard",
+              onClick: openPerformanceDashboard,
+              icon: <IconAnalytics width={20} height={20} />,
+              enabled: isLSE && hasProjectId && !isDraft && !isPrediction,
+            },
+            {
+              label: "Show Other Annotations",
+              onClick: showOtherAnnotations,
+              icon: <IconViewAll width={20} height={20} />,
+              enabled: true,
+            },
+            {
               label: i18n.t('del_anno'),
               onClick: deleteAnnotation,
               icon: <IconTrashRect />,
@@ -198,9 +268,14 @@ export const AnnotationButton = observer(
             isGroundTruth,
             isPrediction,
             isDraft,
+            isLSE,
+            hasProjectId,
             capabilities.enableAnnotationDelete,
             capabilities.enableCreateAnnotation,
             capabilities.groundTruthEnabled,
+            copyAnnotationIdHandler,
+            openPerformanceDashboard,
+            showOtherAnnotations,
           ],
         );
 
@@ -209,20 +284,23 @@ export const AnnotationButton = observer(
     );
 
     return (
-      <Block name="annotation-button" mod={{ selected: entity.selected }}>
-        <Elem name="mainSection" onClick={clickHandler}>
-          <Elem name="picSection">
-            <Elem
-              name="userpic"
-              tag={Userpic}
-              showUsername
+      <div
+        className={cn("annotation-button").mod({ selected: entity.selected }).toClassName()}
+        data-annotation-id={entity.pk ?? entity.id}
+      >
+        <div className={cn("annotation-button").elem("mainSection").toClassName()} onClick={clickHandler}>
+          <div className={cn("annotation-button").elem("picSection").toClassName()}>
+            <Userpic
+              className={cn("annotation-button").elem("userpic").mod({ prediction: isPrediction }).toClassName()}
+              showUsernameTooltip
               username={isPrediction ? entity.createdBy : null}
               user={hiddenUser ?? entity.user ?? { email: entity.createdBy }}
-              mod={{ prediction: isPrediction }}
               size={24}
+              block="lsf-annotation-button"
             >
               {isPrediction && <IconSparks style={{ width: 18, height: 18 }} />}
-            </Elem>
+            </Userpic>
+            {/* TODO: Remove block. Selenium is using this anchor that was mistakenly propagated into this element. */}
             {/* to do: return these icons when we have a better way to grab the history action type */}
             {/* {historyActionType === 'accepted' && <Elem name='status' mod={{ approved: true }}><IconCheckBold /></Elem>}
           {historyActionType && (
@@ -235,62 +313,57 @@ export const AnnotationButton = observer(
               <IconCheckBold />
             </Elem>
           )} */}
-          </Elem>
-          <Elem name="main">
-            <Elem name="user">
-              <Elem tag="span" name="name">
-                {hiddenUser ? hiddenUser.email : username}
-              </Elem>
-              {!infoIsHidden && (
-                <Elem tag="span" name="entity-id">
-                  #{entity.pk ?? entity.id}
-                </Elem>
-              )}
-            </Elem>
+          </div>
+          <div className={cn("annotation-button").elem("main").toClassName()}>
+            <div className={cn("annotation-button").elem("user").toClassName()}>
+              <Tooltip title={displayUsername}>
+                <span className={cn("annotation-button").elem("name").toClassName()}>{displayUsername}</span>
+              </Tooltip>
+            </div>
             {!infoIsHidden && (
-              <Elem name="info">
-                <Elem name="date" component={TimeAgo} date={entity.createdDate} />
+              <div className={cn("annotation-button").elem("info").toClassName()}>
+                <TimeAgo className={cn("annotation-button").elem("date").toClassName()} date={entity.createdDate} />
                 {isPrediction && isDefined(entity.score) && (
                   <span title={`Prediction score = ${entity.score}`}>
                     {" · "} {(entity.score * 100).toFixed(2)}%
                   </span>
                 )}
-              </Elem>
+              </div>
             )}
-          </Elem>
+          </div>
           {!isPrediction && (
-            <Elem name="icons">
+            <div className={cn("annotation-button").elem("icons").toClassName()}>
               {entity.draftId > 0 && (
                 <Tooltip title="Draft">
-                  <Elem name="icon" mod={{ draft: true }}>
+                  <div className={cn("annotation-button").elem("icon").mod({ draft: true }).toClassName()}>
                     <IconDraftCreated2 color="#617ADA" />
-                  </Elem>
+                  </div>
                 </Tooltip>
               )}
               {entity.skipped && (
                 <Tooltip title={i18n.t('skipped')}>
-                  <Elem name="icon" mod={{ skipped: true }}>
+                  <div className={cn("annotation-button").elem("icon").mod({ skipped: true }).toClassName()}>
                     <IconAnnotationSkipped2 color="#DD0000" />
-                  </Elem>
+                  </div>
                 </Tooltip>
               )}
               {isGroundTruth && (
                 <Tooltip title={i18n.t('ground_truth')}>
-                  <Elem name="icon" mod={{ groundTruth: true }}>
+                  <div className={cn("annotation-button").elem("icon").mod({ groundTruth: true }).toClassName()}>
                     <IconAnnotationGroundTruth />
-                  </Elem>
+                  </div>
                 </Tooltip>
               )}
               {CommentIcon && (
                 <Tooltip title={renderCommentTooltip(entity)}>
-                  <Elem name="icon" mod={{ comments: true }}>
+                  <div className={cn("annotation-button").elem("icon").mod({ comments: true }).toClassName()}>
                     <CommentIcon />
-                  </Elem>
+                  </div>
                 </Tooltip>
               )}
-            </Elem>
+            </div>
           )}
-        </Elem>
+        </div>
         <ContextMenuTrigger
           className={cn("annotation-button").elem("trigger").toClassName()}
           content={
@@ -301,7 +374,7 @@ export const AnnotationButton = observer(
             />
           }
         />
-      </Block>
+      </div>
     );
   },
 );

@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useMemo, useState } from "react";
 import sanitizeHtml from "sanitize-html";
 import { IconSlack } from "@humansignal/icons";
-import { Block, Elem } from "../../utils/bem";
+import { cn } from "../../utils/bem";
 import { absoluteURL, copyText } from "../../utils/helpers";
 import { Button } from "@humansignal/ui";
 import { Space } from "../Space/Space";
@@ -19,6 +19,7 @@ export const ErrorWrapper = ({
   onGoBack,
   onReload,
   possum = false,
+  minimal = false,
 }) => {
   const preparedStackTrace = useMemo(() => {
     return (stacktrace ?? "").trim();
@@ -33,31 +34,30 @@ export const ErrorWrapper = ({
   }, [preparedStackTrace]);
 
   return (
-    <Block name="error-message">
-      {possum !== false && (
-        <Elem
-          tag="img"
-          name="heidi"
+    <div className={cn("error-message").toClassName()}>
+      {!minimal && possum !== false && (
+        <img
+          className={cn("error-message").elem("heidi").toClassName()}
           src={absoluteURL("/static/images/opossum_broken.svg")}
           height="111"
           alt="Heidi's down"
         />
       )}
 
-      {title && <Elem name="title">{title}</Elem>}
+      {!minimal && title && <div className={cn("error-message").elem("title").toClassName()}>{title}</div>}
 
-      {message && (
-        <Elem
-          name="detail"
+      {!minimal && message && (
+        <div
+          className={cn("error-message").elem("detail").toClassName()}
           dangerouslySetInnerHTML={{
             __html: sanitizeHtml(String(message)),
           }}
         />
       )}
 
-      {preparedStackTrace && (
-        <Elem
-          name="stracktrace"
+      {!minimal && preparedStackTrace && (
+        <div
+          className={cn("error-message").elem("stracktrace").toClassName()}
           dangerouslySetInnerHTML={{
             __html: sanitizeHtml(preparedStackTrace.replace(/(\n)/g, "<br>")),
           }}
@@ -65,56 +65,67 @@ export const ErrorWrapper = ({
       )}
 
       {validation?.length > 0 && (
-        <Elem tag="ul" name="validation">
+        <ul className={cn("error-message").elem("validation").toClassName()}>
           {validation.map(([field, errors]) => (
             <Fragment key={field}>
               {[].concat(errors).map((err, i) => (
-                <Elem tag="li" key={i} name="message" dangerouslySetInnerHTML={{ __html: sanitizeHtml(err) }} />
+                <li
+                  key={i}
+                  className={cn("error-message").elem("message").toClassName()}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(err) }}
+                />
               ))}
             </Fragment>
           ))}
-        </Elem>
+        </ul>
       )}
 
-      {(version || errorId) && (
-        <Elem name="version">
+      {!minimal && (version || errorId) && (
+        <div className={cn("error-message").elem("version").toClassName()}>
           <Space>
             {version && `Version: ${version}`}
             {errorId && `Error ID: ${errorId}`}
           </Space>
-        </Elem>
+        </div>
       )}
 
-      <Elem name="actions">
-        <Space spread>
-          <Elem tag={Button} name="action-slack" target="_blank" icon={<IconSlack />} href={SLACK_INVITE_URL}>
-            Ask on Slack
-          </Elem>
+      {!minimal && (
+        <div className={cn("error-message").elem("actions").toClassName()}>
+          <Space spread>
+            <Button
+              className={cn("error-message").elem("action-slack").toClassName()}
+              target="_blank"
+              icon={<IconSlack />}
+              href={SLACK_INVITE_URL}
+            >
+              Ask on Slack
+            </Button>
 
-          <Space size="small">
-            {preparedStackTrace && (
-              <Button
-                disabled={copied}
-                onClick={copyStacktrace}
-                className="w-[100px]"
-                aria-label="Copy error stacktrace"
-              >
-                {copied ? "Copied" : "Copy Stacktrace"}
-              </Button>
-            )}
-            {onGoBack && (
-              <Button onClick={onGoBack} aria-label="Go back">
-                Go Back
-              </Button>
-            )}
-            {onReload && (
-              <Button onClick={onReload} aria-label="Reload page">
-                Reload
-              </Button>
-            )}
+            <Space size="small">
+              {preparedStackTrace && (
+                <Button
+                  disabled={copied}
+                  onClick={copyStacktrace}
+                  className="w-[100px]"
+                  aria-label="Copy error stacktrace"
+                >
+                  {copied ? "Copied" : "Copy Stacktrace"}
+                </Button>
+              )}
+              {onGoBack && (
+                <Button onClick={onGoBack} aria-label="Go back">
+                  Go Back
+                </Button>
+              )}
+              {onReload && (
+                <Button onClick={onReload} aria-label="Reload page">
+                  Reload
+                </Button>
+              )}
+            </Space>
           </Space>
-        </Space>
-      </Elem>
-    </Block>
+        </div>
+      )}
+    </div>
   );
 };

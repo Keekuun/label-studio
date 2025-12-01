@@ -1,3 +1,5 @@
+import type { Ability } from "../providers/AuthProvider";
+
 export type APIUser = {
   id: number;
   first_name: string;
@@ -15,4 +17,5 @@ export type APIUser = {
   };
   allow_newsletters: boolean;
   date_joined: string;
+  permissions?: Ability[];
 };

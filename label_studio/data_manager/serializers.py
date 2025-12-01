@@ -3,10 +3,13 @@
 import os
 
 import ujson as json
+from core.current_request import CurrentContext
+from core.feature_flags import flag_set
 from data_manager.models import Filter, FilterGroup, View
 from django.conf import settings
 from django.db import transaction
 from drf_spectacular.utils import extend_schema_field
+from fsm.serializer_fields import FSMStateField
 from projects.models import Project
 from rest_framework import serializers
 from tasks.models import Task
@@ -21,7 +24,35 @@ from users.models import User
 from label_studio.core.utils.common import round_floats
 
 
+class ChildFilterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Filter
+        fields = '__all__'
+
+    def to_representation(self, value):
+        parent = self.parent  # the owning FilterSerializer instance
+        serializer = parent.__class__(instance=value, context=self.context)
+        return serializer.data
+
+    def to_internal_value(self, data):
+        """Allow ChildFilterSerializer to be writable.
+
+        We instantiate the *parent* serializer class (which in this case is
+        ``FilterSerializer``) to validate the nested payload. The validated
+        data produced by that serializer is returned so that the enclosing
+        serializer (``FilterSerializer``) can include it in its own
+        ``validated_data`` structure.
+        """
+
+        parent_cls = self.parent.__class__  # FilterSerializer
+        serializer = parent_cls(data=data, context=self.context)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validated_data
+
+
 class FilterSerializer(serializers.ModelSerializer):
+    child_filter = ChildFilterSerializer(required=False)
+
     class Meta:
         model = Filter
         fields = '__all__'
@@ -73,6 +104,35 @@ class FilterSerializer(serializers.ModelSerializer):
 class FilterGroupSerializer(serializers.ModelSerializer):
     filters = FilterSerializer(many=True)
 
+    def to_representation(self, instance):
+        def _build_filter_tree(filter_obj):
+            """Build hierarchical filter representation."""
+            item = {
+                'filter': filter_obj.column,
+                'operator': filter_obj.operator,
+                'type': filter_obj.type,
+                'value': filter_obj.value,
+            }
+
+            # Add child filter if exists (only one level of nesting)
+            child_filters = filter_obj.children.all()
+            if child_filters:
+                child = child_filters[0]   # Only support one child
+                child_item = {
+                    'filter': child.column,
+                    'operator': child.operator,
+                    'type': child.type,
+                    'value': child.value,
+                }
+                item['child_filter'] = child_item
+
+            return item
+
+        # Only process root filters (ordered by index)
+        roots = instance.filters.filter(parent__isnull=True).prefetch_related('children').order_by('index')
+
+        return {'conjunction': instance.conjunction, 'items': [_build_filter_tree(f) for f in roots]}
+
     class Meta:
         model = FilterGroup
         fields = '__all__'
@@ -114,15 +174,26 @@ class ViewSerializer(serializers.ModelSerializer):
         if 'filter_group' not in data and conjunction:
             data['filter_group'] = {'conjunction': conjunction, 'filters': []}
             if 'items' in filters:
+                # Support "nested" list where each root item may contain ``child_filters``
+
+                def _convert_filter(src_filter):
+                    """Convert a single filter JSON object into internal representation."""
+
+                    filter_payload = {
+                        'column': src_filter.get('filter', ''),
+                        'operator': src_filter.get('operator', ''),
+                        'type': src_filter.get('type', ''),
+                        'value': src_filter.get('value', {}),
+                    }
+
+                    if child_filter := src_filter.get('child_filter'):
+                        filter_payload['child_filter'] = _convert_filter(child_filter)
+
+                    return filter_payload
+
+                # Iterate over top-level items (roots)
                 for f in filters['items']:
-                    data['filter_group']['filters'].append(
-                        {
-                            'column': f.get('filter', ''),
-                            'operator': f.get('operator', ''),
-                            'type': f.get('type', ''),
-                            'value': f.get('value', {}),
-                        }
-                    )
+                    data['filter_group']['filters'].append(_convert_filter(f))
 
         ordering = _data.pop('ordering', {})
         data['ordering'] = ordering
@@ -131,21 +202,10 @@ class ViewSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         result = super().to_representation(instance)
+
+        # Handle filter_group serialization
         filters = result.pop('filter_group', {})
         if filters:
-            filters['items'] = []
-            filters.pop('filters', [])
-            filters.pop('id', None)
-
-            for f in instance.filter_group.filters.order_by('index'):
-                filters['items'].append(
-                    {
-                        'filter': f.column,
-                        'operator': f.operator,
-                        'type': f.type,
-                        'value': f.value,
-                    }
-                )
             result['data']['filters'] = filters
 
         selected_items = result.pop('selected_items', {})
@@ -159,11 +219,38 @@ class ViewSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _create_filters(filter_group, filters_data):
-        filter_index = 0
-        for filter_data in filters_data:
-            filter_data['index'] = filter_index
-            filter_group.filters.add(Filter.objects.create(**filter_data))
-            filter_index += 1
+        """Create Filter objects inside the provided ``filter_group``.
+
+        * For **root** filters (``parent`` is ``None``) we enumerate the
+          ``index`` so that the UI can preserve left-to-right order.
+        * For **child** filters we leave ``index`` as ``None`` – they are not
+          shown in the top-level ordering bar.
+        """
+
+        def _create_recursive(data, parent=None, index=None):
+
+            # Extract nested children early (if any) and remove them from payload
+            child_filter = data.pop('child_filter', None)
+
+            # Handle explicit parent reference present in the JSON payload only
+            # for root elements. For nested structures we rely on the actual
+            # ``parent`` FK object instead of its primary key.
+            if parent is not None:
+                data.pop('parent', None)
+
+            # Assign display order for root filters
+            if parent is None:
+                data['index'] = index
+
+            # Persist the filter
+            obj = Filter.objects.create(parent=parent, **data)
+            filter_group.filters.add(obj)
+
+            if child_filter:
+                _create_recursive(child_filter, parent=obj)
+
+        for index, data in enumerate(filters_data):
+            _create_recursive(data, index=index)
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -190,6 +277,8 @@ class ViewSerializer(serializers.ModelSerializer):
                 filter_group = instance.filter_group
                 if filter_group is None:
                     filter_group = FilterGroup.objects.create(**filter_group_data)
+                    instance.filter_group = filter_group
+                    instance.save(update_fields=['filter_group'])
 
                 conjunction = filter_group_data.get('conjunction')
                 if conjunction and filter_group.conjunction != conjunction:
@@ -348,6 +437,8 @@ class PredictionsDMFieldSerializer(serializers.SerializerMethodField):
 
 
 class DataManagerTaskSerializer(TaskSerializer):
+    """Data Manager Task Serializer with FSM state support."""
+
     predictions = PredictionsDMFieldSerializer(required=False, read_only=True)
     annotations = AnnotationsDMFieldSerializer(required=False, many=True, default=[], read_only=True)
     drafts = AnnotationDraftDMFieldSerializer(required=False, read_only=True)
@@ -368,13 +459,14 @@ class DataManagerTaskSerializer(TaskSerializer):
     avg_lead_time = serializers.FloatField(required=False)
     draft_exists = serializers.BooleanField(required=False)
     updated_by = UpdatedByDMFieldSerializer(required=False, read_only=True)
+    state = FSMStateField(read_only=True)  # FSM state - automatically uses annotation if present
 
     CHAR_LIMITS = 500
 
     class Meta:
         model = Task
         ref_name = 'data_manager_task_serializer'
-        fields = '__all__'
+        exclude = ('precomputed_agreement',)
         expandable_fields = {'annotations': (AnnotationSerializer, {'many': True})}
 
     def to_representation(self, obj):
@@ -384,6 +476,13 @@ class DataManagerTaskSerializer(TaskSerializer):
             ret.pop('annotations', None)
         if not self.context.get('predictions'):
             ret.pop('predictions', None)
+        # Remove state field if feature flags are disabled
+        user = CurrentContext.get_user()
+        if not (
+            flag_set('fflag_feat_fit_568_finite_state_management', user=user)
+            and flag_set('fflag_feat_fit_710_fsm_state_fields', user=user)
+        ):
+            ret.pop('state', None)
         return ret
 
     def _pretty_results(self, task, field, unique=False):

@@ -50,7 +50,7 @@ export class Loader extends HTMLElement {
           height: 100%;
           width: 100%;
           border-radius: var(--ls-loader-progress-border-radius, 8px);
-          background-color: var(--ls-loader-progress-color, rgba(105, 192, 255, 1));
+          background-color: var(--ls-loader-progress-color, var(--color-primary-content));
           transition: transform 0.15s ease;
           transform-origin: left;
           transform: translateX(var(--ls-loader-position, -100%));
@@ -80,7 +80,7 @@ export class Loader extends HTMLElement {
           margin: 0;
         }
         .error {
-          color: var(--ls-loader-error-color, rgba(207, 19, 34, 1));
+          color: var(--ls-loader-error-color, var(--color-negative-content));
         }
         @keyframes shimmer {
           50% {

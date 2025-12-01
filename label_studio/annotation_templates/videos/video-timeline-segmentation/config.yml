@@ -2,7 +2,16 @@ title: Video Timeline Segmentation
 type: community
 group: Videos
 image: /static/templates/video-timeline-segmentation.png
-details: <h1>Select and classify video segments</h1>
+details: |
+  <h1>Select and classify video segments</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>video editing, broadcast media, sports analysis, content creation, educational videos, documentary production, conference recordings, training materials, entertainment industry, surveillance footage, highlight generation, automatic video editing, content indexing</dd>
+    <dt>Associated Models</dt>
+    <dd>temporal segmentation, scene boundary detection, video summarization, content-based segmentation</dd>
+    <dt>Domain Terminology</dt>
+    <dd>video chapters, scene detection, temporal annotation, segment labeling, timeline markup</dd>
+  </dl>
 config: |
   <View>
     <Header value="Video timeline segmentation via Audio sync trick"/>

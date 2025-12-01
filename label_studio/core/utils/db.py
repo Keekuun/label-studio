@@ -1,10 +1,13 @@
 import itertools
 import logging
 import time
-from typing import Optional, TypeVar
+from typing import Dict, Optional, TypeVar
 
-from django.db import OperationalError, models, transaction
+from django.db import OperationalError, connection, models, transaction
 from django.db.models import Model, QuerySet, Subquery
+from django.db.models.signals import post_migrate
+from django.db.utils import DatabaseError, ProgrammingError
+from django.dispatch import receiver
 
 logger = logging.getLogger(__name__)
 
@@ -118,3 +121,83 @@ def batch_delete(queryset, batch_size=500):
             total_deleted += deleted
 
     return total_deleted
+
+
+# =====================
+# Schema helpers
+# =====================
+
+_column_presence_cache: Dict[str, Dict[str, Dict[str, bool]]] = {}
+
+
+def current_db_key() -> str:
+    """Return a process-stable identifier for the current DB connection.
+
+    Using vendor + NAME isolates caches between sqlite test DBs and postgres runs,
+    avoiding stale lookups across pytest sessions or multi-DB setups.
+    """
+    try:
+        name = str(connection.settings_dict.get('NAME'))
+    except Exception as e:
+        name = 'unknown'
+        logger.error(f'Error getting current DB key: {e}')
+    return f'{connection.vendor}:{name}'
+
+
+def has_column_cached(table_name: str, column_name: str) -> bool:
+    """Check if a DB column exists for the given table, with per-process memoization.
+
+    Notes:
+    - Uses Django introspection; caches per (table, column) with case-insensitive column keys.
+    - Safe during early migrations; returns False on any error.
+    - Works in both sync and async contexts by temporarily allowing async-unsafe operations.
+    """
+    col_key = column_name.lower()
+    db_cache = _column_presence_cache.get(current_db_key())
+    table_cache = db_cache.get(table_name) if db_cache else None
+    if table_cache and col_key in table_cache:
+        return table_cache[col_key]
+
+    # Check if we're in an async context and need to allow async-unsafe operations
+    import asyncio
+    import os
+
+    in_async_context = False
+    previous_value = os.environ.get('DJANGO_ALLOW_ASYNC_UNSAFE')
+
+    try:
+        asyncio.get_running_loop()
+        in_async_context = True
+        # Temporarily allow async-unsafe operations for schema introspection
+        # This is safe because:
+        # 1. We're only reading DB schema metadata, not data
+        # 2. This happens once per process during startup and is cached
+        # 3. No concurrent access to the same data
+        os.environ['DJANGO_ALLOW_ASYNC_UNSAFE'] = 'true'
+    except RuntimeError:
+        pass  # Not in async context
+
+    try:
+        with connection.cursor() as cursor:
+            cols = connection.introspection.get_table_description(cursor, table_name)
+        present = any(getattr(col, 'name', '').lower() == col_key for col in cols)
+    except (DatabaseError, ProgrammingError):
+        present = False
+    finally:
+        # Restore the previous value
+        if in_async_context:
+            if previous_value is None:
+                os.environ.pop('DJANGO_ALLOW_ASYNC_UNSAFE', None)
+            else:
+                os.environ['DJANGO_ALLOW_ASYNC_UNSAFE'] = previous_value
+
+    _column_presence_cache.setdefault(current_db_key(), {}).setdefault(table_name, {})[col_key] = present
+    return present
+
+
+@receiver(post_migrate)
+def signal_clear_column_presence_cache(**_kwargs):
+    """If some migration adds a column, we need to clear the column_presence_cache
+    so that the next migration can introspect the new column using has_column_cached()."""
+    logger.debug('Clearing column presence cache in post_migrate signal')
+    _column_presence_cache.clear()

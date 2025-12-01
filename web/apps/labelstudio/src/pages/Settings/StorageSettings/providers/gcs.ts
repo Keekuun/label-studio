@@ -16,6 +16,14 @@ export const gcsProvider: ProviderConfig = {
       schema: z.string().min(1, "Bucket name is required"),
     },
     {
+      name: "prefix",
+      type: "text",
+      label: "Bucket prefix",
+      placeholder: "path/to/files",
+      schema: z.string().optional().default(""),
+      target: "export",
+    },
+    {
       name: "google_application_credentials",
       type: "password",
       label: "Google Application Credentials",
@@ -38,6 +46,8 @@ export const gcsProvider: ProviderConfig = {
       description:
         "When pre-signed URLs are enabled, all data bypasses the platform and user browsers directly read data from storage",
       schema: z.boolean().default(true),
+      target: "import",
+      resetConnection: false,
     },
     {
       name: "presign_ttl",
@@ -47,22 +57,20 @@ export const gcsProvider: ProviderConfig = {
       max: 10080,
       step: 1,
       schema: z.number().min(1).max(10080).default(15),
-      // dependency: "presign" // Not implemented in UI yet
+      target: "import",
+      resetConnection: false,
+      dependsOn: {
+        field: "presign",
+        value: true,
+      },
     },
   ],
   layout: [
-    {
-      fields: ["bucket"],
-    },
-    {
-      fields: ["google_application_credentials"],
-    },
-    {
-      fields: ["google_project_id"],
-    },
-    {
-      fields: ["presign", "presign_ttl"],
-    },
+    { fields: ["bucket"] },
+    { fields: ["prefix"] },
+    { fields: ["google_application_credentials"] },
+    { fields: ["google_project_id"] },
+    { fields: ["presign", "presign_ttl"] },
   ],
 };
 

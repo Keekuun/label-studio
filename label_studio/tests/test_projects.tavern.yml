@@ -211,7 +211,7 @@ stages:
       url: "{django_live_url}/api/projects"
       json:
         title: create_batch_tasks_assignments
-        label_config: <View><Image name="image" value="$image"/><RectangleLabels name="objects" toName="image" choices="multiple"><Label
+        label_config: <View><Image name="image" value="$image"/><RectangleLabels name="bbox" toName="image" choices="multiple"><Label
           value="Cat"/><Label value="Dog"/></RectangleLabels></View>
         is_published: true
       method: POST
@@ -364,8 +364,8 @@ stages:
       url: "{django_live_url}/api/projects"
       json:
         title: create_batch_tasks_assignments
-        label_config: <View><Image name="image" value="$image"/><RectangleLabels name="objects" toName="image" choices="multiple"><Label
-          value="Cat"/><Label value="Dog"/></RectangleLabels></View>
+        label_config: <View><Image name="image" value="$image"/><RectangleLabels name="label" toName="image" choices="multiple"><Label
+          value="Car"/><Label value="Dog"/></RectangleLabels></View>
         is_published: true
       method: POST
       headers:

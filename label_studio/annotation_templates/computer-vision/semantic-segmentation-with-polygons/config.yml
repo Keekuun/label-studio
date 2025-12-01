@@ -3,7 +3,16 @@ type: community
 group: Computer Vision
 order: 1
 image: /static/templates/semantic-segmentation-with-polygons.png
-details: <h1>Draw a polygon around object</h1>
+details: |
+  <h1>Draw a polygon around object</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>autonomous driving, medical image analysis, satellite imagery analysis, geospatial mapping, urban planning, precision agriculture, environmental monitoring, industrial inspection, pathology, radiology, aerial surveying, land cover classification</dd>
+    <dt>Associated Models</dt>
+    <dd>DeepLab, PSPNet, U-Net, SegNet, Mask R-CNN, FCN</dd>
+    <dt>Domain Terminology</dt>
+    <dd>polygon annotation, boundary detection, precise segmentation, vector annotation, contour detection</dd>
+  </dl>
 config: |
   <View>
 

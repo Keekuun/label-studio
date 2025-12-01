@@ -1,4 +1,5 @@
 import styles from "./Card.module.scss";
+import { Tooltip } from "@humansignal/ui";
 
 type CardProps = {
   header?: React.ReactNode;
@@ -16,7 +17,9 @@ export const Card = ({ header, extra, headerLine, noMargin, children, style }: C
     <div className={cardClass} style={style}>
       {(header || extra) && (
         <div className={headerClass}>
-          <div className={styles.headerContent}>{header}</div>
+          <Tooltip title={header}>
+            <div className="line-clamp-1">{header}</div>
+          </Tooltip>
 
           {extra && <div className={styles.headerExtra}>{extra}</div>}
         </div>

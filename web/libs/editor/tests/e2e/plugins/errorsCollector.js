@@ -60,6 +60,7 @@ async function safeJsonValue(arg) {
     return await arg.jsonValue();
   } catch (error) {
     if (error.message && error.message.includes("Target closed")) return;
+    if (error.message && error.message.includes("Target page, context or browser has been closed")) return;
 
     console.error(error);
   }

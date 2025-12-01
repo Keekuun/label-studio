@@ -1,5 +1,4 @@
 import { debounce } from "../../utils/debounce";
-import { FF_PER_FIELD_COMMENTS, isFF } from "../../utils/feature-flags";
 import { wrapArray } from "../../utils/utilities";
 import { Geometry } from "./Geometry";
 import { RelationShape } from "./RelationShape";
@@ -12,7 +11,9 @@ const parentImagePropsWatch = {
     "zoomingPositionY",
     "rotation",
     "currentImage",
-    ...(isFF(FF_PER_FIELD_COMMENTS) ? ["containerWidth", "containerHeight", "canvasSize"] : []),
+    "containerWidth",
+    "containerHeight",
+    "canvasSize",
   ],
 };
 
@@ -37,6 +38,8 @@ const obtainWatcher = (node) => {
       return createPropertyWatcher(["x", "y", "radiusX", "radiusY", "rotation", "hidden", parentImagePropsWatch]);
     case "polygonregion":
       return createPropertyWatcher(["hidden", { points: ["x", "y"] }, parentImagePropsWatch]);
+    case "vectorregion":
+      return createPropertyWatcher(["hidden", "bbox", parentImagePropsWatch]);
     case "keypointregion":
       return createPropertyWatcher(["x", "y", "hidden", parentImagePropsWatch]);
     case "brushregion":

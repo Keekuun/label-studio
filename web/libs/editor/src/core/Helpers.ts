@@ -24,5 +24,7 @@ export function cloneNode(node: IStateTreeNode) {
     id: guidGenerator(),
   });
 
+  snapshotRandomId.afterClone?.(node);
+
   return snapshotRandomId;
 }

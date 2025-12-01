@@ -15,6 +15,7 @@ const VisibilityMixin = types
     whentagname: types.maybeNull(types.string),
     whenchoicevalue: types.maybeNull(types.string),
     whenlabelvalue: types.maybeNull(types.string),
+    whenrole: types.maybeNull(types.string),
   })
   .views((self) => ({
     get isVisible() {
@@ -24,7 +25,7 @@ const VisibilityMixin = types
 
       if (self.visiblewhen) {
         const fns = {
-          "region-selected": ({ tagName, labelValue }) => {
+          "region-selected": ({ tagName, labelValue, roleValue }) => {
             const area = self.annotation.highlightedNode;
 
             if (!area || (tagName && area.labeling?.from_name.name !== tagName)) {
@@ -32,6 +33,8 @@ const VisibilityMixin = types
             }
 
             if (labelValue) return labelValue.split(",").some((v) => area.hasLabel(v));
+
+            if (roleValue) return roleValue.split(",").some((v) => area.chatmessage?.role === v);
 
             return true;
           },
@@ -63,6 +66,7 @@ const VisibilityMixin = types
             tagName: self.whentagname,
             choiceValue: self.whenchoicevalue,
             labelValue: self.whenlabelvalue,
+            roleValue: self.whenrole,
           });
 
           return res !== false;

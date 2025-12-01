@@ -3,6 +3,7 @@
 import bleach
 from constants import SAFE_HTML_ATTRIBUTES, SAFE_HTML_TAGS
 from django.db.models import Q
+from fsm.serializer_fields import FSMStateField
 from label_studio_sdk.label_interface import LabelInterface
 from label_studio_sdk.label_interface.control_tags import (
     BrushLabelsTag,
@@ -97,6 +98,7 @@ class ProjectSerializer(FlexFieldsModelSerializer):
 
     queue_total = serializers.SerializerMethodField()
     queue_done = serializers.SerializerMethodField()
+    state = FSMStateField(read_only=True)  # FSM state - automatically uses annotation if present
 
     @property
     def user_id(self):
@@ -106,11 +108,11 @@ class ProjectSerializer(FlexFieldsModelSerializer):
             return next(iter(self.context['user_cache']))
 
     @staticmethod
-    def get_config_has_control_tags(project):
+    def get_config_has_control_tags(project) -> bool:
         return len(project.get_parsed_config()) > 0
 
     @staticmethod
-    def get_config_suitable_for_bulk_annotation(project):
+    def get_config_suitable_for_bulk_annotation(project) -> bool:
         li = LabelInterface(project.label_config)
 
         # List of tags that should not be present
@@ -168,7 +170,7 @@ class ProjectSerializer(FlexFieldsModelSerializer):
     def get_parsed_label_config(project):
         return project.get_parsed_config()
 
-    def get_start_training_on_annotation_update(self, instance):
+    def get_start_training_on_annotation_update(self, instance) -> bool:
         # FIXME: remake this logic with start_training_on_annotation_update
         return True if instance.min_annotations_to_start_training else False
 
@@ -249,6 +251,7 @@ class ProjectSerializer(FlexFieldsModelSerializer):
             'queue_total',
             'queue_done',
             'config_suitable_for_bulk_annotation',
+            'state',
         ]
 
     def validate_label_config(self, value):
@@ -285,14 +288,14 @@ class ProjectSerializer(FlexFieldsModelSerializer):
 
         return super().update(instance, validated_data)
 
-    def get_queue_total(self, project):
+    def get_queue_total(self, project) -> int:
         remain = project.tasks.filter(
             Q(is_labeled=False) & ~Q(annotations__completed_by_id=self.user_id)
             | Q(annotations__completed_by_id=self.user_id)
         ).distinct()
         return remain.count()
 
-    def get_queue_done(self, project):
+    def get_queue_done(self, project) -> int:
         tasks_filter = {
             'project': project,
             'annotations__completed_by_id': self.user_id,
@@ -396,10 +399,33 @@ class ProjectModelVersionExtendedSerializer(serializers.Serializer):
     latest = serializers.DateTimeField()
 
 
+class ProjectModelVersionParamsSerializer(serializers.Serializer):
+    extended = serializers.BooleanField(required=False, default=False)
+    include_live_models = serializers.BooleanField(required=False, default=False)
+    limit = serializers.IntegerField(required=False, default=None)
+
+
 class GetFieldsSerializer(serializers.Serializer):
-    include = serializers.CharField(required=False)
-    filter = serializers.CharField(required=False, default='all')
-    search = serializers.CharField(required=False, default=None)
+    include = serializers.CharField(
+        required=False,
+        help_text=(
+            'Comma-separated list of count fields to include in the response to optimize performance. '
+            'Available fields: task_number, finished_task_number, total_predictions_number, '
+            'total_annotations_number, num_tasks_with_annotations, useful_annotation_number, '
+            'ground_truth_number, skipped_annotations_number. If not specified, all count fields are included.'
+        ),
+    )
+    filter = serializers.CharField(
+        required=False,
+        default='all',
+        help_text=(
+            "Filter projects by pinned status. Use 'pinned_only' to return only pinned projects, "
+            "'exclude_pinned' to return only non-pinned projects, or 'all' to return all projects."
+        ),
+    )
+    search = serializers.CharField(
+        required=False, default=None, help_text='Search term for project title and description'
+    )
 
     def validate_include(self, value):
         if value is not None:

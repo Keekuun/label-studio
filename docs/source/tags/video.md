@@ -1,7 +1,7 @@
 ---
 title: Video
 type: tags
-order: 310
+order: 311
 meta_title: Video Tag for Video Labeling
 meta_description: Customize Label Studio with the Video tag for basic video annotation tasks for machine learning and data science projects.
 ---
@@ -53,6 +53,16 @@ Labeling configuration to display a video on the labeling interface
   <Video name="video" value="$video" />
 </View>
 ```
+### Example
+
+Video with custom playback speed settings
+
+```html
+<View>
+  <Video name="video" value="$video" defaultPlaybackSpeed="2" minPlaybackSpeed="1.5" />
+</View>
+```
+
 ### Example
 
 Video classification

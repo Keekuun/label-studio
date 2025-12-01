@@ -21,6 +21,10 @@ class CollapseHelper {
     return this.panels.contains(".ant-collapse-item", text);
   }
 
+  findTab(text: string) {
+    return this.panels.contains(".ant-collapse-header", text);
+  }
+
   getPanelByIdx(idx: number) {
     return this.panels.eq(idx);
   }

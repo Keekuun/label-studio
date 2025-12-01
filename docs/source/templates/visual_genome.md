@@ -3,7 +3,7 @@ title: Visual Genome
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 154
+order: 155
 meta_title: Label different described features
 meta_description: 
 ---

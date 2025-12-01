@@ -5,7 +5,7 @@ import { observer } from "mobx-react";
 import { Hotkey } from "../../core/Hotkey";
 
 import "./Settings.scss";
-import { Block, Elem } from "../../utils/bem";
+import { cn } from "../../utils/bem";
 import { triggerResizeEvent } from "../../utils/utilities";
 
 import EditorSettings from "../../core/settings/editorsettings";
@@ -32,23 +32,23 @@ const HotkeysDescription = () => {
         key: k,
         combo: k.split(",").map((keyGroup) => {
           return (
-            <Elem name="key-group" key={keyGroup}>
+            <div className={cn("keys").elem("key-group").toClassName()} key={keyGroup}>
               {keyGroup
                 .trim()
                 .split("+")
                 .map((k) => (
-                  <Elem tag="kbd" name="key" key={k}>
+                  <kbd className={cn("keys").elem("key").toClassName()} key={k}>
                     {k}
-                  </Elem>
+                  </kbd>
                 ))}
-            </Elem>
+            </div>
           );
         }),
         descr: i18n.t(descr[k]),
       }));
 
   return (
-    <Block name="keys">
+    <div className={cn("keys").toClassName()}>
       <Tabs size="small">
         {Object.entries(keyNamespaces).map(([ns, data]) => {
           if (Object.keys(data.descriptions).length === 0) {
@@ -61,7 +61,7 @@ const HotkeysDescription = () => {
           );
         })}
       </Tabs>
-    </Block>
+    </div>
   );
 };
 
@@ -84,26 +84,28 @@ if (isFF(FF_DEV_3873)) {
 }
 
 const SettingsTag = ({ children }) => {
-  return <Block name="settings-tag">{children}</Block>;
+  return <div className={cn("settings-tag").toClassName()}>{children}</div>;
 };
 
 const GeneralSettings = observer(({ store }) => {
   return (
-    <Block name="settings" mod={newUI}>
+    <div className={cn("settings").mod(newUI).toClassName()}>
       {editorSettingsKeys.map((obj, index) => {
         return (
-          <Elem name="field" tag="label" key={index}>
+          <label className={cn("settings").elem("field").toClassName()} key={index}>
             {isFF(FF_DEV_3873) ? (
               <>
-                <Block name="settings__label">
-                  <Elem name="title">
+                <div className={cn("settings__label").toClassName()}>
+                  <div className={cn("settings__label").elem("title").toClassName()}>
                     {i18n.t(EditorSettings[obj].newUI.title)}
                     {!!EditorSettings[obj].newUI.tags && i18n.t(EditorSettings[obj].newUI.tags)?.split(",").map((tag) => (
                       <SettingsTag key={tag}>{tag}</SettingsTag>
                     ))}
-                  </Elem>
-                  <Elem name="description">{i18n.t(EditorSettings[obj].newUI.description)}</Elem>
-                </Block>
+                  </div>
+                  <div className={cn("settings__label").elem("description").toClassName()}>
+                    {i18n.t(EditorSettings[obj].newUI.description)}
+                  </div>
+                </div>
                 <Toggle
                   key={index}
                   checked={store.settings[obj]}
@@ -123,17 +125,17 @@ const GeneralSettings = observer(({ store }) => {
                 <br />
               </>
             )}
-          </Elem>
+          </label>
         );
       })}
-    </Block>
+    </div>
   );
 });
 
 const LayoutSettings = observer(({ store }) => {
   return (
-    <Block name="settings" mod={newUI}>
-      <Elem name="field">
+    <div className={cn("settings").mod(newUI).toClassName()}>
+      <div className={cn("settings").elem("field").toClassName()}>
         <Checkbox
           checked={store.settings.bottomSidePanel}
           onChange={() => {
@@ -143,15 +145,15 @@ const LayoutSettings = observer(({ store }) => {
         >
           {i18n.t('move_sidepanel_to_btm')}
         </Checkbox>
-      </Elem>
+      </div>
 
-      <Elem name="field">
+      <div className={cn("settings").elem("field").toClassName()}>
         <Checkbox checked={store.settings.displayLabelsByDefault} onChange={store.settings.toggleSidepanelModel}>
           {i18n.t('display_res_in_panel')}
         </Checkbox>
-      </Elem>
+      </div>
 
-      <Elem name="field">
+      <div className={cn("settings").elem("field").toClassName()}>
         <Checkbox
           value="Show Annotations panel"
           defaultChecked={store.settings.showAnnotationsPanel}
@@ -161,9 +163,9 @@ const LayoutSettings = observer(({ store }) => {
         >
           {i18n.t('show_anno_panel')}
         </Checkbox>
-      </Elem>
+      </div>
 
-      <Elem name="field">
+      <div className={cn("settings").elem("field").toClassName()}>
         <Checkbox
           value="Show Predictions panel"
           defaultChecked={store.settings.showPredictionsPanel}
@@ -173,10 +175,10 @@ const LayoutSettings = observer(({ store }) => {
         >
           {i18n.t('show_pre_panel')}
         </Checkbox>
-      </Elem>
+      </div>
 
       {/* Saved for future use */}
-      {/* <Elem name="field">
+      {/* <div className={cn("settings").elem("field").toClassName()}>
         <Checkbox
           value="Show image in fullsize"
           defaultChecked={store.settings.imageFullSize}
@@ -186,8 +188,8 @@ const LayoutSettings = observer(({ store }) => {
         >
           Show image in fullsize
         </Checkbox>
-      </Elem> */}
-    </Block>
+      </div> */}
+    </div>
   );
 });
 
@@ -230,12 +232,14 @@ export default observer(({ store }) => {
   }, []);
 
   return (
-    <Block
-      tag={Modal}
+    <Modal
+      className={cn(DEFAULT_MODAL_SETTINGS.name).toClassName()}
       open={store.showingSettings}
       onCancel={store.toggleSettings}
       footer=""
-      {...DEFAULT_MODAL_SETTINGS}
+      title={DEFAULT_MODAL_SETTINGS.title}
+      closeIcon={DEFAULT_MODAL_SETTINGS.closeIcon}
+      bodyStyle={DEFAULT_MODAL_SETTINGS.bodyStyle}
     >
       <div style={{position: "absolute", top: "80px", right: "20px", zIndex: 10}}>
         <LanguageSwitcher />
@@ -252,6 +256,6 @@ export default observer(({ store }) => {
           </Tabs.TabPane>
         ))}
       </Tabs>
-    </Block>
+    </Modal>
   );
 });

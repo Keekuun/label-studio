@@ -13,6 +13,14 @@ from .serializers import SessionTimeoutPolicySerializer
         tags=['Session Policy'],
         summary='Retrieve Session Policy',
         description='Retrieve session timeout policy for the currently active organization.',
+        responses={
+            200: SessionTimeoutPolicySerializer,
+        },
+        extensions={
+            'x-fern-sdk-group-name': 'session_policy',
+            'x-fern-sdk-method-name': 'get',
+            'x-fern-audiences': ['public'],
+        },
     ),
 )
 @method_decorator(
@@ -21,6 +29,15 @@ from .serializers import SessionTimeoutPolicySerializer
         tags=['Session Policy'],
         summary='Update Session Policy',
         description='Update session timeout policy for the currently active organization.',
+        request=SessionTimeoutPolicySerializer,
+        responses={
+            200: SessionTimeoutPolicySerializer,
+        },
+        extensions={
+            'x-fern-sdk-group-name': 'session_policy',
+            'x-fern-sdk-method-name': 'update',
+            'x-fern-audiences': ['public'],
+        },
     ),
 )
 class SessionTimeoutPolicyView(generics.RetrieveUpdateAPIView):

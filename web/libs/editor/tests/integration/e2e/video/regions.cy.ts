@@ -47,23 +47,21 @@ describe("Video segmentation", suiteConfig, () => {
 
     VideoView.canvasShouldChange("canvas", 0);
   });
-  // @todo: This test is flaky in CI, needs to be fixed
-  it.skip("Should be invisible out of the lifespan (rectangle)", () => {
+  it("Should be invisible out of the lifespan (rectangle)", () => {
     LabelStudio.params().config(simpleVideoConfig).data(simpleVideoData).withResult(simpleVideoResult).init();
     LabelStudio.waitForObjectsReady();
     // Wait for video and regions to be fully loaded
-    cy.wait(1000);
+    VideoView.waitForRegionInKonvaByIndex(0);
+    VideoView.waitForStableState();
 
     Sidebar.hasRegions(1);
 
     VideoView.captureCanvas("canvas");
 
-    cy.wait(1000);
-
     VideoView.clickAtFrame(4);
-
-    // Ensure drawing operations are complete before comparison
-    cy.wait(1000);
+    VideoView.waitForFrame(4);
+    VideoView.waitForRegionNotInKonvaByIndex(0);
+    VideoView.waitForStableState();
 
     VideoView.canvasShouldChange("canvas", 0);
   });
@@ -72,23 +70,25 @@ describe("Video segmentation", suiteConfig, () => {
     LabelStudio.params().config(simpleVideoConfig).data(simpleVideoData).withResult(simpleVideoResult).init();
     LabelStudio.waitForObjectsReady();
     // Wait for frame change to be fully processed
-    cy.wait(1000);
+    VideoView.waitForRegionInKonvaByIndex(0);
+    VideoView.waitForStableState();
     Sidebar.hasRegions(1);
 
     cy.log("Remember an empty canvas state");
     VideoView.clickAtFrame(4);
-    cy.wait(1000);
+    VideoView.waitForFrame(4);
+    VideoView.waitForRegionNotInKonvaByIndex(0);
+    VideoView.waitForStableState();
     VideoView.captureCanvas("canvas");
 
     VideoView.clickAtFrame(3);
-    cy.wait(TWO_FRAMES_TIMEOUT);
+    VideoView.waitForRegionInKonvaByIndex(0);
+    VideoView.waitForStableState();
     cy.log("Select region");
     VideoView.clickAtRelative(0.5, 0.5);
-    cy.wait(TWO_FRAMES_TIMEOUT);
     Sidebar.hasSelectedRegions(1);
-    cy.wait(TWO_FRAMES_TIMEOUT);
     VideoView.clickAtFrame(4);
-    cy.wait(TWO_FRAMES_TIMEOUT);
+    VideoView.waitForFrame(4); // Wait for frame 4
     Sidebar.hasSelectedRegions(1);
 
     cy.wait(1000);

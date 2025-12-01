@@ -42,7 +42,7 @@
 import { inject, observer } from "mobx-react";
 import { destroy } from "mobx-state-tree";
 import { unmountComponentAtNode } from "react-dom";
-import { toCamelCase } from "strman";
+import camelCase from "lodash/camelCase";
 import { instruments } from "../components/DataManager/Toolbar/instruments";
 import { APIProxy } from "../utils/api-proxy";
 import { FF_LSDV_4620_3_ML, isFF } from "../utils/feature-flags";
@@ -55,7 +55,7 @@ import { LSFWrapper } from "./lsf-sdk";
 import { taskToLSFormat } from "./lsf-utils";
 
 const DEFAULT_TOOLBAR =
-  "actions columns filters ordering label-button loading-possum error-box | refresh import-button export-button grid-size view-toggle";
+  "actions columns filters ordering label-button loading-possum error-box | refresh import-button export-button density-toggle grid-size view-toggle";
 
 const prepareInstruments = (instruments) => {
   const result = Object.entries(instruments).map(([name, builder]) => [name, builder({ inject, observer })]);
@@ -137,6 +137,9 @@ export class DataManager {
   /** @type {"dm" | "labelops"} */
   type = "dm";
 
+  /** @type {string} */
+  role = null;
+
   /**
    * Constructor
    * @param {DMConfig} config
@@ -144,7 +147,7 @@ export class DataManager {
   constructor(config) {
     this.root = config.root;
     this.project = config.project;
-    this.projectId = config.projectId;
+    this.projectId = config.projectId ?? this?.project?.id;
     this.dataset = config.dataset;
     this.datasetId = config.datasetId;
     this.settings = config.settings;
@@ -162,6 +165,7 @@ export class DataManager {
     this.instruments = prepareInstruments(config.instruments ?? {});
     this.apiTransform = config.apiTransform ?? {};
     this.preload = config.preload ?? {};
+    this.role = config.role ?? null;
     this.interfaces = objectToMap({
       tabs: true,
       toolbar: true,
@@ -302,7 +306,7 @@ export class DataManager {
    */
   on(eventName, callback) {
     if (this.lsf && eventName.startsWith("lsf:")) {
-      const evt = toCamelCase(eventName.replace(/^lsf:/, ""));
+      const evt = camelCase(eventName.replace(/^lsf:/, ""));
 
       this.lsf?.lsfInstance?.on(evt, callback);
     }
@@ -321,7 +325,7 @@ export class DataManager {
    */
   off(eventName, callback) {
     if (this.lsf && eventName.startsWith("lsf:")) {
-      const evt = toCamelCase(eventName.replace(/^lsf:/, ""));
+      const evt = camelCase(eventName.replace(/^lsf:/, ""));
 
       this.lsf?.lsfInstance?.off(evt, callback);
     }
@@ -340,7 +344,7 @@ export class DataManager {
 
     lsfEvents.forEach((evt) => {
       const callbacks = Array.from(this.getEventCallbacks(evt));
-      const eventName = toCamelCase(evt.replace(/^lsf:/, ""));
+      const eventName = camelCase(evt.replace(/^lsf:/, ""));
 
       callbacks.forEach((clb) => this.lsf?.lsfInstance?.off(eventName, clb));
     });

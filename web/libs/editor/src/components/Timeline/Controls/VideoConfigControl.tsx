@@ -18,6 +18,7 @@ export interface VideoConfigControlProps {
   onSpeedChange: (speed: number) => void;
   loopTimelineRegion: boolean;
   onLoopTimelineRegionChange: (loopRegion: boolean) => void;
+  minSpeed?: number;
 }
 
 export const VideoConfigControl: FC<VideoConfigControlProps> = ({
@@ -27,6 +28,7 @@ export const VideoConfigControl: FC<VideoConfigControlProps> = ({
   onSpeedChange,
   loopTimelineRegion,
   onLoopTimelineRegionChange,
+  minSpeed = MIN_SPEED,
 }) => {
   // Refs for positioning
   const modalRef = useRef<HTMLDivElement>(null);
@@ -159,7 +161,7 @@ export const VideoConfigControl: FC<VideoConfigControlProps> = ({
         <div className={styles.scrollContent}>
           <div className={styles.sectionHeader}>Playback Settings</div>
           <Slider
-            min={MIN_SPEED}
+            min={minSpeed}
             max={MAX_SPEED}
             step={0.05}
             value={speed}

@@ -2,7 +2,16 @@ title: Intent Classification and Slot Filling
 type: community
 group: Conversational AI
 image: /static/templates/intent-classification-and-slot-filling.png
-details: <h1>Build task-oriented dialogue system by selecting dialogue intents and extracting slot entities</h1>
+details: |
+  <h1>Build a task-oriented dialogue system by selecting dialogue intents and extracting slot entities</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>chatbots, virtual assistants, customer service automation, voice assistants, smart speakers, IVR systems, booking systems, e-commerce assistants, banking chatbots, healthcare assistants, travel booking, restaurant reservations</dd>
+    <dt>Associated Models</dt>
+    <dd>natural language understanding, joint training, BERT-based models, multi-task learning</dd>
+    <dt>Domain Terminology</dt>
+    <dd>NLP, NLU, slot extraction, intent recognition, dialogue systems, task-oriented conversation</dd>
+  </dl>
 config: |
   <View>
     <ParagraphLabels name="entity_slot" toName="dialogue">

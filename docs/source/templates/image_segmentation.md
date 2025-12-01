@@ -3,7 +3,7 @@ title: Semantic Segmentation with Masks
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 102
+order: 105
 meta_title: Semantic Segmentation with Masks Data Labeling Template
 meta_description: Template for performing semantic segmentation with brush masks with Label Studio for your machine learning and data science projects.
 ---

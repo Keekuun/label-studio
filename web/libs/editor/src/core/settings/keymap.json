@@ -75,6 +75,7 @@
     "mac": "command+shift+z",
     "description": "polygon_redo_description"
   },
+
   "region:delete-all": {
     "key": "ctrl+backspace",
     "mac": "command+backspace",
@@ -259,6 +260,11 @@
     "description": "Select the polygon annotation tool"
   },
 
+  "tool:vector": {
+    "key": "P",
+    "description": "Select the vector annotation tool"
+  },
+
   "tool:rect": {
     "key": "R",
     "description": "tool_rect_description"
@@ -292,5 +298,30 @@
   "tool:increase-tool": {
     "key": "]",
     "description": "tool_increase_tool_description"
+  },
+  "phrases:next-phrase": {
+    "key": "ctrl+down",
+    "mac": "command+down",
+    "description": "Move to next phrase"
+  },
+  "phrases:previous-phrase": {
+    "key": "ctrl+up",
+    "mac": "command+up",
+    "description": "Move to previous phrase"
+  },
+  "phrases:next-region": {
+    "key": "ctrl+left",
+    "mac": "command+left",
+    "description": "Select next region in current phrase"
+  },
+  "phrases:previous-region": {
+    "key": "ctrl+right",
+    "mac": "command+right",
+    "description": "Select previous region in current phrase"
+  },
+  "phrases:select_all_annotate": {
+    "key": "ctrl+shift+a",
+    "mac": "command+shift+a",
+    "description": "Select all and annotate current phrase"
   }
 }

@@ -1,20 +1,19 @@
+import { Button, buttonVariant, ToastContext, ToastType } from "@humansignal/ui";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { generatePath, useHistory } from "react-router";
 import { Link, NavLink } from "react-router-dom";
 import { Spinner } from "../../components";
-import { Button, buttonVariant } from "@humansignal/ui";
 import { modal } from "../../components/Modal/Modal";
 import { Space } from "../../components/Space/Space";
 import { useAPI } from "../../providers/ApiProvider";
 import { useProject } from "../../providers/ProjectProvider";
 import { useContextProps, useParams } from "../../providers/RoutesProvider";
 import { addCrumb, deleteCrumb } from "../../services/breadrumbs";
-import { Block, Elem } from "../../utils/bem";
+import { cn } from "../../utils/bem";
 import { isDefined } from "../../utils/helpers";
 import { ImportModal } from "../CreateProject/Import/ImportModal";
 import { ExportPage } from "../ExportPage/ExportPage";
 import { APIConfig } from "./api-config";
-import { ToastContext, ToastType } from "@humansignal/ui";
 
 import "./DataManager.scss";
 
@@ -34,7 +33,7 @@ const initializeDataManager = async (root, props, params) => {
     apiGateway: `${window.APP_SETTINGS.hostname}/api/dm`,
     apiVersion: 2,
     project: params.project,
-    polling: !window.APP_SETTINGS,
+    polling: window.APP_SETTINGS?.polling,
     showPreviews: false,
     apiEndpoints: APIConfig.endpoints,
     interfaces: {
@@ -113,22 +112,27 @@ export const DataManagerPage = ({ ...props }) => {
       }
 
       if (isMissingTaskError) {
-        history.push(buildLink("", { id: params.id }));
+        history.push(buildLink("", { id: params?.id ?? project?.id }));
       } else if (isMissingProjectError) {
         history.push("/projects");
       }
     });
 
     dataManager.on("settingsClicked", () => {
-      history.push(buildLink("/settings/labeling", { id: params.id }));
+      history.push(buildLink("/settings/labeling", { id: params?.id ?? project?.id }));
     });
 
     dataManager.on("importClicked", () => {
-      history.push(buildLink("/data/import", { id: params.id }));
+      history.push(buildLink("/data/import", { id: params?.id ?? project?.id }));
+    });
+
+    // Navigate to Storage Settings and auto-open Add Source Storage modal
+    dataManager.on("openSourceStorageModal", () => {
+      history.push(buildLink("/settings/storage?open=source", { id: params?.id ?? project?.id }));
     });
 
     dataManager.on("exportClicked", () => {
-      history.push(buildLink("/data/export", { id: params.id }));
+      history.push(buildLink("/data/export", { id: params?.id ?? project?.id }));
     });
 
     dataManager.on("error", (response) => {
@@ -142,7 +146,7 @@ export const DataManagerPage = ({ ...props }) => {
     dataManager.on("navigate", (route) => {
       const target = route.replace(/^projects/, "");
 
-      if (target) history.push(buildLink(target, { id: params.id }));
+      if (target) history.push(buildLink(target, { id: params?.id ?? project?.id }));
       else history.push("/projects");
     });
 
@@ -205,13 +209,13 @@ export const DataManagerPage = ({ ...props }) => {
   }, []);
 
   return crashed ? (
-    <Block name="crash">
-      <Elem name="info">Project was deleted or not yet created</Elem>
+    <div className={cn("crash").toClassName()}>
+      <div className={cn("crash").elem("info").toClassName()}>Project was deleted or not yet created</div>
 
       <Button to="/projects" aria-label="Back to projects">
         Back to projects
       </Button>
-    </Block>
+    </div>
   ) : (
     <>
       {loading && (
@@ -220,7 +224,7 @@ export const DataManagerPage = ({ ...props }) => {
         </div>
       )}
       {/* Allow this to exist before the DataManager is initialized as the async app.fetchData call eventually calls startLabeling, and that requires the root element to exist */}
-      <Block ref={root} name="datamanager" />
+      <div ref={root} className={cn("datamanager").toClassName()} />
     </>
   );
 };
@@ -289,7 +293,13 @@ DataManagerPage.context = ({ dmRef }) => {
           onClick={() => {
             modal({
               title: "Instructions",
-              body: () => <div dangerouslySetInnerHTML={{ __html: project.expert_instruction }} />,
+              body: () => (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: project.expert_instruction,
+                  }}
+                />
+              ),
             });
           }}
         >

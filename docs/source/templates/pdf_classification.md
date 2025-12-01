@@ -3,7 +3,7 @@ title: PDF Classification
 type: templates
 category: Structured Data Parsing
 cat: structured-data-parsing
-order: 602
+order: 510
 meta_title: PDF Classification Data Labeling Template
 meta_description: Template for classifying PDF data with Label Studio for your machine learning and data science projects.
 ---

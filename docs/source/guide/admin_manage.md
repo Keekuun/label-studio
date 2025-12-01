@@ -33,7 +33,7 @@ You can see user info, including their API token, as the last line of the respon
 {'id': 1, 'first_name': 'User', 'last_name': 'Somebody', 'username': 'label-studio', 'email': 'example@labelstud.io', 'last_activity': '2021-06-15T19:37:29.594618Z', 'avatar': '/data/avatars/img.jpg', 'initials': 'el', 'phone': '', 'active_organization': 1, 'token': '<api_token>', 'status': 'ok'}
 ```
 
-Users can also retrieve their own tokens from the Label Studio app. For more information, see [Manage your user account settings](user_account). 
+Users can also retrieve their own tokens from the Label Studio app. For more information, see [Access Tokes](access_tokens). 
 
 
 ## Review existing accounts in Label Studio

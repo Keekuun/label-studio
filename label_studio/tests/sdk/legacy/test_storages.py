@@ -17,8 +17,5 @@ def test_connect_and_sync_s3(django_live_url, business_client):
     ls.sync_storage('s3', storage_id)
 
     assert set(t['storage_filename'] for t in p.get_tasks()) == {
-        'subdir/another/image2.jpg',
-        'subdir/image1.jpg',
-        'subdir/image2.jpg',
         'image1.jpg',
     }

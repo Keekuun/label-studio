@@ -3,7 +3,7 @@ title: Content Moderation
 type: templates
 category: Natural Language Processing
 cat: natural-language-processing
-order: 209
+order: 235
 meta_title: Content Moderation Labeling Template
 meta_description: Template for performing content moderation labeling tasks. 
 ---

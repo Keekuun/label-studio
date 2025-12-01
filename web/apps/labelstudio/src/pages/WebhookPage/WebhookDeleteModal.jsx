@@ -24,7 +24,6 @@ export const WebhookDeleteModal = ({ onDelete }) => {
       return (
         <Space align="end">
           <Button
-            className="w-44"
             look="outlined"
             onClick={() => {
               ctrl.hide();
@@ -35,14 +34,13 @@ export const WebhookDeleteModal = ({ onDelete }) => {
           </Button>
           <Button
             variant="negative"
-            className="w-44"
             onClick={async () => {
               await onDelete();
               ctrl.hide();
             }}
             aria-label="Confirm webhook deletion"
           >
-            Delete
+            Delete Webhook
           </Button>
         </Space>
       );

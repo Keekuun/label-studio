@@ -50,9 +50,18 @@ You can review tasks in random order, or order tasks in the project data manager
 - Order tasks by agreement, to review annotations with more uncertainty among annotators first.
 - Order tasks by model confidence score, to review the annotations that a machine learning model was less certain about first.
 
+#### Task ordering and limiting (Enterprise)
+
+For Label Studio Enterprise projects, you can configure the review stream ordering and limit the review slice:
+
+- Task Ordering: Choose between By Task ID (sequential) and Random. Random preserves the order of annotations within each task but randomizes task order.
+- Task Limit (%): When Random is selected, optionally limit the percentage of project tasks available for review. The limit is applied after any filters such as “Show only finished tasks.” When reviewers start a review session from a Data Manager selection (selected items), the limit is bypassed for that session.
+
+See **Settings > Review > Task Ordering** and **Task Limit** for configuration details.
+
 ### Navigate between tasks or annotations
 
-You can now navigate back through the review stream in the same path as moving forward when `Mark task as reviewed after all annotations are processed` option is set. The go back (`<`)functionality takes you back through the same set of annotations as it had moving forward.
+You can now navigate back through the review stream in the same path as moving forward when `Task is reviewed after all annotations are reviewed` option is set. The go back (`<`)functionality takes you back through the same set of annotations as it had moving forward.
 
 1. As an **ADMINISTRATOR**, log in to the [Label Studio app](https://app.heartex.com/projects/?page=1).
 
@@ -64,7 +73,7 @@ You can now navigate back through the review stream in the same path as moving f
 
 5. Navigate to **Settings** >> **Review**.
 
-6. Select `Mark task as reviewed after all annotations are processed` option.
+6. Select `Task is reviewed after all annotations are reviewed` option.
 
 7. Click **SAVE** button.
 

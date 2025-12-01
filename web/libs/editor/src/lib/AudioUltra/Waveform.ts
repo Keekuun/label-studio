@@ -24,16 +24,37 @@ export interface WaveformOptions {
   container: string | HTMLElement;
 
   /**
-   * Height of the interface. Inferred from the container size
-   * @default 110
+   * Height of the interface.
+   * @deprecated Use waveformHeight and spectrogramHeight for explicit control
+   * Falls back to this value for both components if specific heights not provided
+   * @default 96
    * */
   height?: number;
 
   /**
    * Height of a single waveform per channel.
-   * @default 30
+   * @deprecated Use waveformHeight instead
+   * @default 32
    * */
   waveHeight?: number;
+
+  /**
+   * Height of the waveform component
+   * @default height ?? 32
+   */
+  waveformHeight?: number;
+
+  /**
+   * Height of the spectrogram component
+   * @default height ?? 32
+   */
+  spectrogramHeight?: number;
+
+  /**
+   * Height of the timeline component
+   * @default 20
+   */
+  timelineHeight?: number;
 
   /**
    * Zoom factor. 1 – no zoom
@@ -60,6 +81,12 @@ export interface WaveformOptions {
   muted?: boolean;
 
   /**
+   * Buffering true/false.
+   * @default false
+   * */
+  buffering?: boolean;
+
+  /**
    * Playback speed rate. 1 – normal speed
    * @default 1
    * */
@@ -78,8 +105,9 @@ export interface WaveformOptions {
 
   /**
    * Decoder used to decode the audio to waveform data.
+   * Use "none" to skip decoding for fast loading of large files (disables waveform visualization).
    */
-  decoderType?: "webaudio" | "ffmpeg";
+  decoderType?: "webaudio" | "ffmpeg" | "none";
 
   /**
    * Player used to play the audio data.
@@ -182,6 +210,7 @@ interface WaveformEventTypes extends RegionsGlobalEvents, RegionGlobalEvents {
   scroll: (scroll: number) => void;
   layersUpdated: (layers: Map<string, Layer>) => void;
   frameDrawn: (frameState: WaveformFrameState) => void;
+  buffering: (buffering: boolean) => void;
 }
 
 export class Waveform extends Events<WaveformEventTypes> {
@@ -272,6 +301,16 @@ export class Waveform extends Events<WaveformEventTypes> {
 
   async load() {
     if (this.isDestroyed) return;
+
+    // Warn about incompatible features when decoder is "none"
+    if (this.params.decoderType === "none") {
+      if (this.params.splitChannels) {
+        console.warn('splitChannels is not available when decoder="none" (requires decoded audio data)');
+      }
+      if (this.params.playerType === "webaudio") {
+        console.warn('playerType="webaudio" is not available when decoder="none", forcing HTML5 player');
+      }
+    }
 
     const loader = this.media.load({
       muted: this.params.muted ?? false,
@@ -440,6 +479,14 @@ export class Waveform extends Events<WaveformEventTypes> {
    */
   get playing() {
     return this.player.playing;
+  }
+
+  get buffering() {
+    return this.player.buffering;
+  }
+
+  set buffering(buffering: boolean) {
+    this.player.buffering = buffering;
   }
 
   /**

@@ -39,7 +39,7 @@ export function InviteLink({
   return (
     <Modal
       ref={modalRef}
-      title="Invite people"
+      title="Invite members"
       opened={opened}
       bareFooter={true}
       body={<InvitationModal />}
@@ -57,7 +57,7 @@ const InvitationModal = () => {
     <Block name="invite">
       <Input value={link} style={{ width: "100%" }} readOnly />
       <Typography size="small" className="text-neutral-content-subtler mt-base mb-wider">
-        Invite people to join your Label Studio instance. People that you invite have full access to all of your
+        Invite members to join your Label Studio instance. People that you invite have full access to all of your
         projects.{" "}
         <a
           href="https://labelstud.io/guide/signup.html"

@@ -9,7 +9,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from organizations.models import Organization, OrganizationMember
 from organizations.serializers import (
     OrganizationIdSerializer,
@@ -186,12 +186,12 @@ class OrganizationMemberListAPI(generics.ListAPIView):
 
             # return only active users (exclude DISABLED and NOT_ACTIVATED)
             if active:
-                return org.active_members.order_by('user__username')
+                return org.active_members.prefetch_related('user__om_through').order_by('user__username')
 
             # organization page to show all members
-            return org.members.order_by('user__username')
+            return org.members.prefetch_related('user__om_through').order_by('user__username')
         else:
-            return org.members.order_by('user__username')
+            return org.members.prefetch_related('user__om_through').order_by('user__username')
 
 
 @method_decorator(
@@ -231,9 +231,10 @@ class OrganizationMemberListAPI(generics.ListAPIView):
             ),
         ],
         responses={
-            204: 'Member deleted successfully.',
-            405: 'User cannot soft delete self.',
-            404: 'Member not found',
+            204: OpenApiResponse(description='Member deleted successfully.'),
+            405: OpenApiResponse(description='User cannot soft delete self.'),
+            404: OpenApiResponse(description='Member not found'),
+            403: OpenApiResponse(description='You can delete members only for your current active organization'),
         },
         extensions={
             'x-fern-sdk-group-name': ['organizations', 'members'],
@@ -356,7 +357,7 @@ class OrganizationAPI(generics.RetrieveUpdateAPIView):
 class OrganizationInviteAPI(generics.RetrieveAPIView):
     parser_classes = (JSONParser,)
     queryset = Organization.objects.all()
-    permission_required = all_permissions.organizations_change
+    permission_required = all_permissions.organizations_invite
 
     def get(self, request, *args, **kwargs):
         org = request.user.active_organization

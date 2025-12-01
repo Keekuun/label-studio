@@ -158,6 +158,7 @@ export const DataStore = (modelName, { listItemType, apiMethod, properties, asso
     }))
     .volatile(() => ({
       requestId: null,
+      debouncedFetch: null,
     }))
     .actions((self) => ({
       updateItem(itemID, patch) {
@@ -173,7 +174,43 @@ export const DataStore = (modelName, { listItemType, apiMethod, properties, asso
         return item;
       },
 
-      fetch: flow(function* ({ id, query, pageNumber = null, reload = false, interaction, pageSize } = {}) {
+      // Initialize debounced fetch function
+      initDebouncedFetch() {
+        if (!self.debouncedFetch) {
+          let timeoutId = null;
+          let pendingPromise = null;
+
+          self.debouncedFetch = (params) => {
+            return new Promise((resolve, reject) => {
+              // Clear any existing timeout
+              if (timeoutId) {
+                clearTimeout(timeoutId);
+              }
+
+              // Cancel any pending promise
+              if (pendingPromise) {
+                pendingPromise.cancel?.();
+              }
+
+              // Set new timeout
+              timeoutId = setTimeout(async () => {
+                try {
+                  pendingPromise = self._performFetch(params);
+                  const result = await pendingPromise;
+                  resolve(result);
+                } catch (error) {
+                  reject(error);
+                } finally {
+                  pendingPromise = null;
+                }
+              }, 150);
+            });
+          };
+        }
+      },
+
+      // Internal fetch function that performs the actual API call
+      _performFetch: flow(function* ({ id, query, pageNumber = null, reload = false, interaction, pageSize } = {}) {
         let currentViewId;
         let currentViewQuery;
         const requestId = (self.requestId = guidGenerator());
@@ -258,6 +295,21 @@ export const DataStore = (modelName, { listItemType, apiMethod, properties, asso
 
         root.SDK.invoke("dataFetched", self);
       }),
+
+      // Public fetch function that uses debouncing
+      fetch({ id, query, pageNumber = null, reload = false, interaction, pageSize } = {}) {
+        const params = { id, query, pageNumber, reload, interaction, pageSize };
+        const root = getRoot(self);
+        // Only use debouncing for virtual tabs that use queries (like search/filter tabs)
+        const currentView = root.viewsStore.selected;
+        // const isVirtualTab = currentView?.virtual && currentView?.query;
+
+        // Initialize debounced function if not already done
+        self.initDebouncedFetch();
+
+        // For virtual tabs with queries, use debounced version
+        return self.debouncedFetch(params);
+      },
 
       reload: flow(function* ({ id, query, interaction } = {}) {
         yield self.fetch({ id, query, reload: true, interaction });

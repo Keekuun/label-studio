@@ -1,7 +1,7 @@
 import React from "react";
 import { IconEdit, IconTrashAlt, IconCheck } from "@humansignal/icons";
 import { Button, Tooltip, Typography } from "@humansignal/ui";
-import throttle from "lodash.throttle";
+import throttle from "lodash/throttle";
 
 // used for correct auto-height calculation
 const BORDER_WIDTH = 1;

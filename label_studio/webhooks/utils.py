@@ -7,8 +7,11 @@ from core.redis import start_job_async_or_sync
 from core.utils.common import load_func
 from django.conf import settings
 from django.db.models import Q
+from django.db.models.query import QuerySet
 
 from .models import Webhook, WebhookAction
+
+logger = logging.getLogger(__name__)
 
 
 def get_active_webhooks(organization, project, action):
@@ -71,6 +74,34 @@ def emit_webhooks_sync(organization, project, action, payload):
         run_webhook_sync(wh, action, payload)
 
 
+def _process_webhook_batch(webhooks, project, action, batch, action_meta):
+    """Process a single batch of instances for webhooks.
+
+    Args:
+        webhooks: Active webhooks to send
+        project: Project instance (optional)
+        action: Action name
+        batch: Batch of instances to process
+        action_meta: Action metadata from WebhookAction.ACTIONS
+    """
+    payload = {}
+
+    if batch and webhooks.filter(send_payload=True).exists():
+        serializer_class = action_meta.get('serializer')
+        if serializer_class:
+            payload[action_meta['key']] = serializer_class(instance=batch, many=action_meta['many']).data
+        if project and payload:
+            payload['project'] = load_func(settings.WEBHOOK_SERIALIZERS['project'])(instance=project).data
+        if payload and 'nested-fields' in action_meta:
+            for key, value in action_meta['nested-fields'].items():
+                payload[key] = value['serializer'](
+                    instance=get_nested_field(batch, value['field']), many=value['many']
+                ).data
+
+    for wh in webhooks:
+        run_webhook_sync(wh, action, payload)
+
+
 def emit_webhooks_for_instance_sync(organization, project, action, instance=None):
     """Run all active webhooks for the action using instances as payload.
 
@@ -79,27 +110,40 @@ def emit_webhooks_for_instance_sync(organization, project, action, instance=None
     webhooks = get_active_webhooks(organization, project, action)
     if not webhooks.exists():
         return
-    payload = {}
-    # if instances and there is a webhook that sends payload
-    # get serialized payload
+
     action_meta = WebhookAction.ACTIONS[action]
 
+    # Convert list of IDs to queryset
     if instance and isinstance(instance, list) and isinstance(instance[0], int):
         instance = action_meta['model'].objects.filter(id__in=instance)
 
-    if instance and webhooks.filter(send_payload=True).exists():
-        serializer_class = action_meta.get('serializer')
-        if serializer_class:
-            payload[action_meta['key']] = serializer_class(instance=instance, many=action_meta['many']).data
-        if project and payload:
-            payload['project'] = load_func(settings.WEBHOOK_SERIALIZERS['project'])(instance=project).data
-        if payload and 'nested-fields' in action_meta:
-            for key, value in action_meta['nested-fields'].items():
-                payload[key] = value['serializer'](
-                    instance=get_nested_field(instance, value['field']), many=value['many']
-                ).data
-    for wh in webhooks:
-        run_webhook_sync(wh, action, payload)
+    # Check if batching is needed
+    is_batch_collection = isinstance(instance, (list, QuerySet))
+    use_batching = is_batch_collection and flag_set('fflag_fix_back_plt_843_webhook_memory_improvement_12082025_short')
+
+    if use_batching:
+        # Process in batches
+        batch_size = settings.WEBHOOK_BATCH_SIZE
+
+        if isinstance(instance, QuerySet):
+            # For QuerySets, use iterator with chunk_size
+            total_count = instance.count()
+            logger.debug(f'Processing webhook for {total_count} instances in batches of {batch_size}')
+            for i in range(0, total_count, batch_size):
+                batch = instance[i : i + batch_size]
+                logger.debug(f'Processing batch {i // batch_size + 1} with {batch.count()} instances')
+                _process_webhook_batch(webhooks, project, action, batch, action_meta)
+        else:
+            # For lists, slice directly
+            total_count = len(instance)
+            logger.debug(f'Processing webhook for {total_count} instances in batches of {batch_size}')
+            for i in range(0, len(instance), batch_size):
+                batch = instance[i : i + batch_size]
+                logger.debug(f'Processing batch {i // batch_size + 1} with {len(batch)} instances')
+                _process_webhook_batch(webhooks, project, action, batch, action_meta)
+    else:
+        # Original behavior - process all at once
+        _process_webhook_batch(webhooks, project, action, instance, action_meta)
 
 
 def run_webhook(webhook, action, payload=None):

@@ -1,4 +1,4 @@
-import { types } from "mobx-state-tree";
+import { types, getRoot } from "mobx-state-tree";
 
 import Utils from "../utils";
 import { defaultStyle } from "../core/Constants";
@@ -140,6 +140,18 @@ export const HighlightMixin = types
      */
     updateAppearenceFromState() {
       if (!self._spans?.length) return;
+
+      // Update label visibility based on settings
+      const settings = getRoot(self).settings;
+      const lastSpan = self._spans[self._spans.length - 1];
+
+      if (lastSpan) {
+        if (!self.parent?.showlabels && !settings?.showLabels) {
+          lastSpan.classList.add("htx-no-label");
+        } else {
+          lastSpan.classList.remove("htx-no-label");
+        }
+      }
 
       if (self.parent?.canResizeSpans) {
         const start = self._spans[0].getAttribute("data-start");

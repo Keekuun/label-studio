@@ -1,5 +1,9 @@
 $border-thin: 1px solid rgb(137 128 152 / 16%);
 
+.paragraphs {
+  position: relative;
+}
+
 .phrase {
   background: var(--color-neutral-surface);
   padding: 0.5em;
@@ -7,12 +11,19 @@ $border-thin: 1px solid rgb(137 128 152 / 16%);
   margin-right: var(--spacing-tight);
   margin-bottom: 10px;
   display: table;
+  position: relative;
 
   &.numbered::before {
     counter-increment: phrase;
     content: counter(phrase);
     margin-right: 4px;
   }
+
+}
+
+.phrase:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 .name {
@@ -85,7 +96,7 @@ $border-thin: 1px solid rgb(137 128 152 / 16%);
 }
 
 .withAudio {
-  margin-left: 36px;
+  margin-left: 5px;
 }
 
 .collapsed {
@@ -162,25 +173,38 @@ $border-thin: 1px solid rgb(137 128 152 / 16%);
   z-index: 1;
 }
 
-.playNewUi {
-  user-select: none;
-  cursor: pointer;
-  position: absolute;
-  left: 5px;
-  margin-top: -0.3em;
-  font-size: inherit;
-
-  &:hover, &:active, &:focus {
-    background: none;
-  }
+.phraseContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+  margin-left: 0;
 }
+
+
+// .playNewUi {
+//   user-select: none;
+//   cursor: pointer;
+//   position: absolute;
+
+//   margin-top: -0.3em;
+//   font-size: inherit;
+//   z-index: 1; // Ensure it's above other elements
+
+//   &:hover, &:active, &:focus {
+//     background: none;
+//   }
+// }
 
 .play {
   user-select: none;
   position: absolute;
-  left: 0;
-  margin-top: -0.3em;
+  left: -32px; // Position in the left margin space
+  top: 50%; // Center vertically relative to phrase container
+  transform: translateY(-50%); // Perfect vertical centering
   font-size: inherit;
+  z-index: 1; // Ensure it's above other elements
+  margin-right: 5px;
 
   // highlight play/pause buttons on interactions
   &:active path {
@@ -193,12 +217,59 @@ $border-thin: 1px solid rgb(137 128 152 / 16%);
   }
 }
 
+.selectAllBtn {
+  user-select: none;
+  cursor: pointer;
+  position: absolute;
+  right: 5px;
+  top: 50%; // Center vertically
+  transform: translateY(-50%); // Perfect vertical centering
+  font-size: inherit;
+
+  &:hover, &:active, &:focus {
+    background: none;
+  }
+
+  // Match the play button interaction styles
+  &:active path {
+    fill: #1890ff;
+  }
+
+  &:focus path:first-child {
+    fill: #1890ff;
+  }
+}
+
+.selectAllBtnWrapper {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-block;
+}
+
+.selectAllBtnWrapper .selectAllBtn {
+  position: static;
+  transform: none;
+  top: auto;
+  right: auto;
+}
+
+.selectAllLabel {
+  margin-left: 6px;
+  font-size: 13px;
+  color: var(--color-primary-text, #333);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .newUI {
   transition: all .1s ease-out;
   border-radius: 4px;
   display: flex;
   flex-wrap: wrap;
   width: calc(100% - 36px);
+  position: relative;
 
   &.collapsed {
     background-color: var(--highlight-color);
@@ -212,6 +283,15 @@ $border-thin: 1px solid rgb(137 128 152 / 16%);
     border-bottom: 1px solid rgb(137 128 152 / 16%);
     border-right: 1px solid rgb(137 128 152 / 16%);
     padding: 8px 12px;
+  }
+
+  // Only add extra padding when select all button is present
+  &.withSelectAllButton {
+    padding-right: 40px; // Space for select all button on right
+
+    &:not(.collapsed) {
+      padding-right: 50px; // More space for select all button on right when not collapsed
+    }
   }
 
   .dialoguename {

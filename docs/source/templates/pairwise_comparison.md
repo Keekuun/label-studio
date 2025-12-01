@@ -3,7 +3,7 @@ title: Pairwise Classification
 type: templates
 category: Ranking and Scoring
 cat: ranking-and-scoring
-order: 503
+order: 420
 meta_title: Pairwise Classification Data Labeling Template
 meta_description: Template for performing pairwise classification and comparison tasks with Label Studio for your machine learning and data science projects.
 ---

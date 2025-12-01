@@ -85,7 +85,6 @@ class ExportFormatsListAPI(generics.RetrieveAPIView):
 @method_decorator(
     name='get',
     decorator=extend_schema(
-        deprecated=True,
         parameters=[
             OpenApiParameter(
                 name='export_type',
@@ -95,7 +94,7 @@ class ExportFormatsListAPI(generics.RetrieveAPIView):
             ),
             OpenApiParameter(
                 name='download_all_tasks',
-                type=OpenApiTypes.STR,
+                type=OpenApiTypes.BOOL,
                 location='query',
                 description='If true, download all tasks regardless of status. If false, download only annotated tasks.',
             ),
@@ -154,8 +153,8 @@ class ExportFormatsListAPI(generics.RetrieveAPIView):
             )
         },
         extensions={
-            'x-fern-sdk-group-name': 'projects',
-            'x-fern-sdk-method-name': 'export',
+            'x-fern-sdk-group-name': ['projects', 'exports'],
+            'x-fern-sdk-method-name': 'download_sync',
             'x-fern-audiences': ['public'],
         },
     ),
@@ -375,7 +374,7 @@ class ExportListAPI(generics.ListCreateAPIView):
             ),
             OpenApiParameter(
                 name='export_pk',
-                type=OpenApiTypes.STR,
+                type=OpenApiTypes.INT,
                 location='path',
                 description='Primary key identifying the export file.',
             ),
@@ -402,7 +401,7 @@ class ExportListAPI(generics.ListCreateAPIView):
             ),
             OpenApiParameter(
                 name='export_pk',
-                type=OpenApiTypes.STR,
+                type=OpenApiTypes.INT,
                 location='path',
                 description='Primary key identifying the export file.',
             ),
@@ -482,11 +481,20 @@ class ExportDetailAPI(generics.RetrieveDestroyAPIView):
             ),
             OpenApiParameter(
                 name='export_pk',
-                type=OpenApiTypes.STR,
+                type=OpenApiTypes.INT,
                 location='path',
                 description='Primary key identifying the export file.',
             ),
         ],
+        responses={
+            (200, 'application/*'): OpenApiResponse(
+                description='Export file',
+                response={
+                    'type': 'string',
+                    'format': 'binary',
+                },
+            ),
+        },
         extensions={
             'x-fern-sdk-group-name': ['projects', 'exports'],
             'x-fern-sdk-method-name': 'download',
@@ -611,7 +619,6 @@ def set_convert_background_failure(job, connection, type, value, traceback_obj):
     ConvertedFormat.objects.filter(id=convert_id).update(status=Export.Status.FAILED, traceback=trace)
 
 
-@method_decorator(name='get', decorator=extend_schema(exclude=True))
 @method_decorator(
     name='post',
     decorator=extend_schema(
@@ -628,11 +635,22 @@ def set_convert_background_failure(job, connection, type, value, traceback_obj):
             ),
             OpenApiParameter(
                 name='export_pk',
-                type=OpenApiTypes.STR,
+                type=OpenApiTypes.INT,
                 location='path',
                 description='Primary key identifying the export file.',
             ),
         ],
+        responses={
+            200: OpenApiResponse(
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'export_type': {'type': 'string'},
+                        'converted_format': {'type': 'integer'},
+                    },
+                },
+            ),
+        },
         extensions={
             'x-fern-sdk-group-name': ['projects', 'exports'],
             'x-fern-sdk-method-name': 'convert',
@@ -640,7 +658,7 @@ def set_convert_background_failure(job, connection, type, value, traceback_obj):
         },
     ),
 )
-class ExportConvertAPI(generics.RetrieveAPIView):
+class ExportConvertAPI(generics.CreateAPIView):
     queryset = Export.objects.all()
     lookup_url_kwarg = 'export_pk'
     permission_required = all_permissions.projects_change
@@ -652,11 +670,12 @@ class ExportConvertAPI(generics.RetrieveAPIView):
         export_type = serializer.validated_data['export_type']
         download_resources = serializer.validated_data.get('download_resources')
 
-        with transaction.atomic():
-            converted_format, created = ConvertedFormat.objects.get_or_create(export=snapshot, export_type=export_type)
+        converted_format, created = ConvertedFormat.objects.exclude(
+            status=ConvertedFormat.Status.FAILED
+        ).get_or_create(export=snapshot, export_type=export_type)
 
-            if not created:
-                raise ValidationError(f'Conversion to {export_type} already started')
+        if not created:
+            raise ValidationError(f'Conversion to {export_type} already started')
 
         start_job_async_or_sync(
             async_convert,

@@ -96,7 +96,7 @@ def allowlist_svg(dirty_xml):
         'line',
         'path',
         'polygon',
-        'polyline',
+        'vector',
         'rect',
     ]
 
@@ -240,6 +240,103 @@ def load_tasks_for_async_import(project_import, user):
 
     check_max_task_number(tasks)
     return tasks, file_upload_ids, found_formats, list(data_keys)
+
+
+def load_tasks_for_async_import_streaming(project_import, user, batch_size=1000):
+    """Load tasks from different types of request.data / request.files saved in project_import model,
+    yielding tasks in batches to reduce memory usage"""
+    from django.conf import settings
+
+    if not batch_size:
+        batch_size = settings.IMPORT_BATCH_SIZE
+
+    all_file_upload_ids = []
+    all_found_formats = {}
+    all_data_keys = set()
+
+    if project_import.file_upload_ids:
+        file_upload_ids = project_import.file_upload_ids
+        all_file_upload_ids = file_upload_ids.copy()
+
+        for batch_tasks, batch_formats, batch_data_keys in FileUpload.load_tasks_from_uploaded_files_streaming(
+            project_import.project, file_upload_ids, batch_size=batch_size
+        ):
+            all_found_formats.update(batch_formats)
+            all_data_keys.update(batch_data_keys)
+
+            # Validate each batch
+            if not isinstance(batch_tasks, list):
+                raise ValidationError('load_tasks: Data root must be list')
+            if not batch_tasks:
+                continue  # Skip empty batches
+
+            check_max_task_number(batch_tasks)
+            yield batch_tasks, file_upload_ids, batch_formats, list(batch_data_keys)
+
+    elif project_import.url:
+        # For URL imports, we still need to load everything at once
+        # since we don't have streaming support for URL-based imports yet
+        url = project_import.url
+        file_upload_ids, found_formats, data_keys = [], [], set()
+
+        # try to load json with task or tasks from url as string
+        json_data = str_to_json(url)
+        if json_data:
+            file_upload = create_file_upload(
+                user,
+                project_import.project,
+                SimpleUploadedFile('inplace.json', url.encode()),
+            )
+            file_upload_ids.append(file_upload.id)
+            tasks, found_formats, data_keys = FileUpload.load_tasks_from_uploaded_files(
+                project_import.project, file_upload_ids
+            )
+        else:
+            could_be_tasks_list = False
+            (
+                data_keys,
+                found_formats,
+                tasks,
+                file_upload_ids,
+                could_be_tasks_list,
+            ) = tasks_from_url(file_upload_ids, project_import.project, user, url, could_be_tasks_list)
+            if could_be_tasks_list:
+                project_import.could_be_tasks_list = True
+                project_import.save(update_fields=['could_be_tasks_list'])
+
+        if not isinstance(tasks, list):
+            raise ValidationError('load_tasks: Data root must be list')
+        if not tasks:
+            raise ValidationError('load_tasks: No tasks added')
+
+        check_max_task_number(tasks)
+
+        all_file_upload_ids = file_upload_ids.copy()
+        all_found_formats = found_formats.copy()
+        all_data_keys = data_keys.copy()
+
+        for i in range(0, len(tasks), batch_size):
+            batch_tasks = tasks[i : i + batch_size]
+            yield batch_tasks, file_upload_ids, found_formats, list(data_keys)
+
+    elif project_import.tasks:
+        tasks = project_import.tasks
+
+        if not isinstance(tasks, list):
+            raise ValidationError('load_tasks: Data root must be list')
+        if not tasks:
+            raise ValidationError('load_tasks: No tasks added')
+
+        check_max_task_number(tasks)
+
+        for i in range(0, len(tasks), batch_size):
+            batch_tasks = tasks[i : i + batch_size]
+            yield batch_tasks, [], {}, []
+
+    else:
+        raise ValidationError('load_tasks: No tasks added')
+
+    return all_file_upload_ids, all_found_formats, list(all_data_keys)
 
 
 def load_tasks(request, project):

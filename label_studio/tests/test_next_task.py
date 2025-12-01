@@ -490,14 +490,14 @@ def test_active_learning_with_uploaded_predictions(business_client):
         label_config="""
             <View>
               <Text name="location" value="$text"></Text>
-              <Choices name="text_class" choice="single">
+              <Choices name="text_class" toName="location" choice="single">
                 <Choice value="class_A"></Choice>
                 <Choice value="class_B"></Choice>
               </Choices>
             </View>""",
     )
     project = make_project(config, business_client.user, use_ml_backend=False)
-    result = [{'from_name': 'text_class', 'to_name': 'text', 'type': 'choices', 'value': {'choices': ['class_A']}}]
+    result = [{'from_name': 'text_class', 'to_name': 'location', 'type': 'choices', 'value': {'choices': ['class_A']}}]
     tasks = [
         {'data': {'text': 'score = 0.5'}, 'predictions': [{'result': result, 'score': 0.5}]},
         {'data': {'text': 'score = 0.1'}, 'predictions': [{'result': result, 'score': 0.1}]},

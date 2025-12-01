@@ -5,6 +5,7 @@ import { useDataManagerUsers } from "../../hooks/useUsers";
 import { Select, Tooltip, Userpic } from "@humansignal/ui";
 import { cn } from "../../utils/bem";
 import { SelectSize } from "@humansignal/ui/lib/select/types";
+import { userDisplayName } from "@humansignal/core/lib/utils/helpers";
 
 const DEBOUNCE_DELAY = 300;
 
@@ -31,16 +32,16 @@ export const UserSelect = observer(({ filter, onChange, multiple, value, placeho
   );
   const options = useMemo(() => {
     return users.map((user) => {
+      const displayName = userDisplayName(user);
+      user.displayName = displayName;
       return {
         value: user.id,
-        raw: { id: user.id, email: user.email, displayName: user.displayName, username: user.username },
+        raw: { id: user.id, email: user.email, displayName, username: user.username },
         label: (
-          <Tooltip title={user.displayName ?? user.username} alignment="top-left">
+          <Tooltip title={user.displayName} alignment="top-left">
             <div className="flex gap-2 w-full items-center">
               <Userpic user={user} size={16} key={`user-${user.id}`} showName={true} />
-              <span className="text-ellipsis text-nowrap overflow-hidden w-full">
-                {user.displayName ?? user.username}
-              </span>
+              <span className="text-ellipsis text-nowrap overflow-hidden w-full">{user.displayName}</span>
             </div>
           </Tooltip>
         ),

@@ -3,7 +3,16 @@ type: community
 group: Generative AI
 order: 6
 image: /static/templates/response-grading.png
-details:  Assign a grade to LLM responses based on how well it meets your internal guidelines.
+details: |
+  <h1>Assign a grade to LLM responses based on how well it meets your internal guidelines</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>model evaluation, content quality assessment, educational assessment, AI tutoring systems, automated grading, writing assessment, customer service evaluation, chatbot quality control, academic writing, student response evaluation, content moderation, LLM benchmarking, AI evaluation</dd>
+    <dt>Associated Models</dt>
+    <dd>human evaluation, quality metrics, response scoring, rubric-based assessment</dd>
+    <dt>Domain Terminology</dt>
+    <dd>gen AI, response quality, content grading, automated assessment, performance rating</dd>
+  </dl>
 config: |
   <View>
     <Style>

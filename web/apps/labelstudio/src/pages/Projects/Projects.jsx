@@ -6,12 +6,12 @@ import { Oneof } from "../../components/Oneof/Oneof";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { ApiContext } from "../../providers/ApiProvider";
 import { useContextProps } from "../../providers/RoutesProvider";
-import { Block, Elem } from "../../utils/bem";
+import { cn } from "../../utils/bem";
 import { CreateProject } from "../CreateProject/CreateProject";
 import { DataManagerPage } from "../DataManager/DataManager";
 import { SettingsPage } from "../Settings";
 import { EmptyProjectsList, ProjectsList } from "./ProjectsList";
-import { useAbortController } from "@humansignal/core";
+import { useAbortController, useUpdatePageTitle } from "@humansignal/core";
 import "./Projects.scss";
 
 const getCurrentPage = () => {
@@ -28,6 +28,8 @@ export const ProjectsPage = () => {
   const [currentPage, setCurrentPage] = useState(getCurrentPage());
   const [totalItems, setTotalItems] = useState(1);
   const setContextProps = useContextProps();
+
+  useUpdatePageTitle("Projects");
   const defaultPageSize = Number.parseInt(localStorage.getItem("pages:projects-list") ?? 30);
 
   const [modal, setModal] = React.useState(false);
@@ -50,6 +52,7 @@ export const ProjectsPage = () => {
       "color",
       "is_published",
       "assignment_settings",
+      "state",
     ].join(",");
 
     const data = await api.callApi("projects", {
@@ -114,12 +117,12 @@ export const ProjectsPage = () => {
   }, [projectsList.length]);
 
   return (
-    <Block name="projects-page">
+    <div className={cn("projects-page").toClassName()}>
       <Oneof value={networkState}>
-        <Elem name="loading" case="loading">
+        <div className={cn("projects-page").elem("loading").toClassName()} case="loading">
           <Spinner size={64} />
-        </Elem>
-        <Elem name="content" case="loaded">
+        </div>
+        <div className={cn("projects-page").elem("content").toClassName()} case="loaded">
           {projectsList.length ? (
             <ProjectsList
               projects={projectsList}
@@ -132,9 +135,9 @@ export const ProjectsPage = () => {
             <EmptyProjectsList openModal={openModal} />
           )}
           {modal && <CreateProject onClose={closeModal} />}
-        </Elem>
+        </div>
       </Oneof>
-    </Block>
+    </div>
   );
 };
 

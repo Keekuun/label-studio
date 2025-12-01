@@ -3,7 +3,16 @@ type: community
 group: Generative AI
 order: 4
 image: /static/templates/llm-ranker.png
-details: Here is a demo that showcases how to construct an interface enabling users to drag, arrange, and rank responses from different Large Language Models (LLMs) and chatbot systems based on their relevance to a specified prompt and their perceived bias, thus facilitating an intuitive and visual understanding of how well these AI systems align with the topic and the degree of subjective interpretation they exhibit.
+details: |
+  <h1>Rank and compare LLM responses</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>model evaluation, A/B testing, model comparison, performance ranking, response quality, model benchmarking, AI model selection, bias detection, fairness evaluation, AI safety, red teaming, harmful content, model auditing, responsible AI, chatbot evaluation, conversational AI, customer service AI, content generation</dd>
+    <dt>Associated Models</dt>
+    <dd>RLHF, reward modeling, constitutional AI, alignment, fine-tuning, instruction tuning</dd>
+    <dt>Domain Terminology</dt>
+    <dd>gen AI, human feedback, preference learning, prompt engineering</dd>
+  </dl>
 config: |
   <View>
      <View style="display: flex; align-items: center; font-size: 1em;">

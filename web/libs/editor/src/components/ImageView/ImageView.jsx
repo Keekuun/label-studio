@@ -25,28 +25,23 @@ import {
   FF_DEV_3077,
   FF_DEV_3793,
   FF_LSDV_4583_6,
-  FF_LSDV_4711,
   FF_LSDV_4930,
   FF_ZOOM_OPTIM,
   isFF,
 } from "../../utils/feature-flags";
 import { Pagination } from "../../common/Pagination/Pagination";
 import { Image } from "./Image";
-import { isHoveringNonTransparentPixel } from "../../regions/BitmaskRegion/utils";
-import { ff } from "@humansignal/core";
-import { FF_BITMASK } from "@humansignal/core/lib/utils/feature-flags";
 
 Konva.showWarnings = false;
 
 const hotkeys = Hotkey("Image");
-const imgDefaultProps = {};
-
-if (isFF(FF_LSDV_4711)) imgDefaultProps.crossOrigin = "anonymous";
+const imgDefaultProps = { crossOrigin: "anonymous" };
 
 const splitRegions = (regions) => {
   const brushRegions = [];
   const shapeRegions = [];
   const bitmaskRegions = [];
+  const vectorRegions = [];
 
   for (const region of regions) {
     switch (region.type) {
@@ -65,6 +60,7 @@ const splitRegions = (regions) => {
   return {
     brushRegions,
     bitmaskRegions,
+    vectorRegions,
     shapeRegions,
   };
 };
@@ -74,7 +70,9 @@ const Region = memo(({ region, showSelected = false }) => {
 });
 
 const RegionsLayer = memo(({ regions, name, useLayers, showSelected = false, smoothing = true }) => {
-  const content = regions.map((el) => <Region key={`region-${el.id}`} region={el} showSelected={showSelected} />);
+  const content = regions.map((el) => {
+    return <Region key={`region-${el.id}`} region={el} showSelected={showSelected} />;
+  });
 
   return useLayers === false ? (
     content
@@ -114,7 +112,7 @@ const DrawingRegion = observer(({ item }) => {
   const Wrapper = drawingRegion && isBrush ? Fragment : Layer;
 
   return (
-    <Wrapper imageSmoothingEnabled={item.smoothing}>
+    <Wrapper imageSmoothingEnabled={item.smoothingEnabled}>
       {drawingRegion ? <Region key={"drawing"} region={drawingRegion} /> : drawingRegion}
     </Wrapper>
   );
@@ -460,7 +458,7 @@ const PixelGridLayer = observer(({ item }) => {
   const ZOOM_THRESHOLD = 20;
 
   const visible = item.zoomScale > ZOOM_THRESHOLD;
-  const { naturalWidth, naturalHeight } = item.currentImageEntity;
+  const { naturalWidth, naturalHeight } = item.currentImageEntity ?? {};
   const { stageWidth, stageHeight } = item;
   const imageSmallerThanStage = naturalWidth < stageWidth || naturalHeight < stageHeight;
 
@@ -507,6 +505,7 @@ const PixelGridLayer = observer(({ item }) => {
     </Layer>
   );
 });
+
 /**
  * Component that creates an overlay on top
  * of the image to support Magic Wand tool
@@ -543,11 +542,13 @@ export default observer(
     skipNextClick = false;
     skipNextMouseUp = false;
     mouseDownPoint = null;
+    mouseDown = false;
 
     constructor(props) {
       super(props);
 
-      if (typeof props.item.smoothing === "boolean") props.store.settings.setSmoothing(props.item.smoothing);
+      if (typeof props.item.smoothingEnabled === "boolean")
+        props.store.settings.setSmoothing(props.item.smoothingEnabled);
     }
 
     handleOnClick = (e) => {
@@ -582,29 +583,22 @@ export default observer(
       // entire stage with a single image that is not click-through, and there is no particular
       // shape we can click on. Here we're relying on cursor position and non-transparent pixels
       // of the mask to detect cursor-region collision.
-      if (ff.isActive(FF_BITMASK)) {
-        const hasSelected = item.selectedRegions.some((r) => r.type === "bitmaskregion");
-        const isBitmask = ["BitmaskTool", "BitmaskEraserTool"].includes(
-          item.getToolsManager().findSelectedTool().toolName,
-        );
+      const allowedHoverTypes = /bitmask|vector/i;
+      const hasSelected = item.selectedRegions.some((r) => r.type.match(allowedHoverTypes) !== null);
+      const tool = item.getToolsManager().findSelectedTool();
+      const isAllowedTool = tool?.toolName?.match?.(allowedHoverTypes) !== null ?? false;
 
-        // We want to avoid weird behavior here with drawing while selecting another region
-        // so we just do nothing when clicked outside AND we have a tool selected
-        if (hasSelected && isBitmask) {
-          return;
-        }
+      const hoveredRegion = item.regs.find((reg) => {
+        if (reg.selected || tool?.mode === "drawing") return false;
 
-        const hoveredRegion = item.regs.find((reg) => {
-          if (reg.type !== "bitmaskregion") return false;
-          if (reg.selected) return false;
+        return reg.isHovered?.() ?? false;
+      });
 
-          return isHoveringNonTransparentPixel(reg);
-        });
-
-        if (hoveredRegion) {
-          hoveredRegion.onClickRegion(e);
-          return;
-        }
+      if (hoveredRegion && !evt.defaultPrevented) {
+        tool?.disable();
+        hoveredRegion.onClickRegion(e);
+        tool?.enable();
+        return;
       }
       return item.event("click", evt, x, y);
     };
@@ -639,6 +633,7 @@ export default observer(
     };
 
     handleMouseDown = (e) => {
+      this.mouseDown = true;
       const { item } = this.props;
       const isPanTool = item.getToolsManager().findSelectedTool()?.fullName === "ZoomPanTool";
       const isMoveTool = item.getToolsManager().findSelectedTool()?.fullName === "MoveTool";
@@ -773,6 +768,7 @@ export default observer(
      * Mouse up on Stage
      */
     handleMouseUp = (e) => {
+      this.mouseDown = false;
       const { item } = this.props;
 
       if (isFF(FF_DEV_1442)) {
@@ -824,25 +820,31 @@ export default observer(
         item.event("mousemove", e, e.evt.offsetX, e.evt.offsetY);
       }
 
-      // Handle Bitmask hover
-      // We can only do it here due to Bitmask implementation. See `self.handleOnClick` method
-      // for a full explanation.
-      if (!e.evt.ctrlKey && !e.evt.shiftKey && ff.isActive(FF_BITMASK)) {
+      if (!e.evt.ctrlKey && !e.evt.shiftKey && !this.mouseDown) {
+        const allowedTypes = /bitmask|vector/;
+        const tool = item.getToolsManager().findSelectedTool();
+
         if (item.regs.some((r) => r.isDrawing)) return;
-        if (!item.regs.some((r) => r.type === "bitmaskregion")) return;
+        if (!item.regs.some((r) => r.type.match(allowedTypes) !== null)) return;
+
+        // Exclusive to Vector but can be leveraged by other region types
+        if (item.regs.some((r) => r.isTransforming?.())) return;
+
         requestAnimationFrame(() => {
+          tool?.enable();
           for (const region of item.regs) {
             region.setHighlight(false);
             region.updateCursor(false);
           }
+
           for (const region of item.regs) {
-            if (region.type !== "bitmaskregion") continue;
+            if (region.type.match(allowedTypes) === null) continue;
 
             const checkHover = !region.selected && !region.isDrawing;
-            const hovered = checkHover && isHoveringNonTransparentPixel(region);
+            const hovered = (checkHover && region.isHovered?.()) ?? false;
 
             if (hovered) {
-              // region.setHighlight(true);
+              tool?.disable();
               region.updateCursor(true);
               break;
             }
@@ -1313,7 +1315,7 @@ const ImageLayer = observer(({ item }) => {
   useEffect(() => {
     const node = konvaImageRef.current;
     if (node && loadedImage) {
-      node.cache();
+      node.cache({ pixelRatio: 1 });
       node.filters([Konva.Filters.Brighten, Konva.Filters.Contrast]);
       node.brightness(brightness);
       node.contrast(contrast);
@@ -1322,7 +1324,7 @@ const ImageLayer = observer(({ item }) => {
   }, [loadedImage, brightness, contrast]);
 
   return loadedImage ? (
-    <Layer imageSmoothingEnabled={item.smoothing} scale={{ x: item.stageZoom, y: item.stageZoom }}>
+    <Layer imageSmoothingEnabled={item.smoothingEnabled} scale={{ x: item.stageZoom, y: item.stageZoom }}>
       <KonvaImage ref={konvaImageRef} image={loadedImage} width={width} height={height} listening={false} />
     </Layer>
   ) : null;
@@ -1427,13 +1429,13 @@ const StageContent = observer(({ item, store, state, crosshairRef }) => {
 
   return (
     <>
-      {ff.isActive(ff.FF_BITMASK) && <ImageLayer item={item} />}
+      <ImageLayer item={item} />
       {item.grid && item.sizeUpdated && <ImageGrid item={item} />}
 
       {isFF(FF_LSDV_4930) ? <TransformerBack item={item} /> : null}
 
       {renderableRegions.map(([groupName, list]) => {
-        const isBrush = groupName.match(/brush/i) !== null;
+        const useLayers = groupName.match(/brush/i) === null;
         const isSuggestion = groupName.match("suggested") !== null;
 
         return list.length > 0 ? (
@@ -1441,9 +1443,9 @@ const StageContent = observer(({ item, store, state, crosshairRef }) => {
             key={groupName}
             name={groupName}
             regions={list}
-            useLayers={isBrush === false}
+            useLayers={useLayers}
             suggestion={isSuggestion}
-            smoothing={item.smoothing}
+            smoothing={item.smoothingEnabled}
           />
         ) : (
           <Fragment key={groupName} />
@@ -1451,7 +1453,7 @@ const StageContent = observer(({ item, store, state, crosshairRef }) => {
       })}
       <Selection item={item} isPanning={state.isPanning} />
       <DrawingRegion item={item} />
-      {ff.isActive(ff.FF_BITMASK) && item.smoothing === false && <PixelGridLayer item={item} />}
+      {item.smoothingEnabled === false && <PixelGridLayer item={item} />}
 
       {item.crosshair && (
         <Crosshair

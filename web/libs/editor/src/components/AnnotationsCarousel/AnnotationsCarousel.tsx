@@ -1,7 +1,7 @@
 import { Button, IconChevronLeft, IconChevronRight } from "@humansignal/ui";
 import { observer } from "mobx-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Block, Elem } from "../../utils/bem";
+import { cn } from "../../utils/bem";
 import { clamp, sortAnnotations } from "../../utils/utilities";
 import { AnnotationButton } from "./AnnotationButton";
 import "./AnnotationsCarousel.scss";
@@ -26,7 +26,7 @@ export const AnnotationsCarousel = observer(({ store, annotationStore }: Annotat
   const [isRightDisabled, setIsRightDisabled] = useState(false);
 
   const updatePosition = useCallback(
-    (e: React.MouseEvent, goLeft = true) => {
+    (_e: React.MouseEvent, goLeft = true) => {
       if (containerRef.current && carouselRef.current) {
         const step = containerRef.current.clientWidth;
         const carouselWidth = carouselRef.current.clientWidth;
@@ -62,9 +62,14 @@ export const AnnotationsCarousel = observer(({ store, annotationStore }: Annotat
   }, [annotationStore, JSON.stringify(annotationStore.predictions), JSON.stringify(annotationStore.annotations)]);
 
   return enableAnnotations || enablePredictions || enableCreateAnnotation ? (
-    <Block name="annotations-carousel" style={{ "--carousel-left": `${currentPosition}px` }}>
-      <Elem ref={containerRef} name="container">
-        <Elem ref={carouselRef} name="carosel">
+    <div
+      className={cn("annotations-carousel")
+        .mod({ scrolled: currentPosition > 0 })
+        .toClassName()}
+      style={{ "--carousel-left": `${currentPosition}px` } as any}
+    >
+      <div ref={containerRef as any} className={cn("annotations-carousel").elem("container").toClassName()}>
+        <div ref={carouselRef as any} className={cn("annotations-carousel").elem("carosel").toClassName()}>
           {sortAnnotations(entities).map((entity) => (
             <AnnotationButton
               key={entity?.id}
@@ -79,10 +84,10 @@ export const AnnotationsCarousel = observer(({ store, annotationStore }: Annotat
               annotationStore={annotationStore}
             />
           ))}
-        </Elem>
-      </Elem>
+        </div>
+      </div>
       {(!isLeftDisabled || !isRightDisabled) && (
-        <Elem name="carousel-controls">
+        <div className={cn("annotations-carousel").elem("carousel-controls").toClassName()}>
           <Button
             disabled={isLeftDisabled}
             aria-label="Carousel left"
@@ -101,8 +106,8 @@ export const AnnotationsCarousel = observer(({ store, annotationStore }: Annotat
           >
             <IconChevronRight />
           </Button>
-        </Elem>
+        </div>
       )}
-    </Block>
+    </div>
   ) : null;
 });

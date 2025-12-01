@@ -342,7 +342,6 @@ function extractNames(root: IAnyStateTreeNode) {
   traverseTree(root, (node) => {
     const isControlTag = node.name && !objectTypes.includes(node.type);
     // auto-infer missed toName if there is only one object tag in the config
-
     if (isControlTag && !node.toname && objects.length === 1) {
       node.toname = objects[0];
     }

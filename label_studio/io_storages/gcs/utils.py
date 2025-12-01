@@ -115,6 +115,7 @@ class GCS(object):
         regex_filter: str = None,
         limit: int = None,
         return_key: bool = False,
+        recursive_scan: bool = True,
     ):
         """
         Iterate files on the bucket. Optionally return limited number of files that match provided extensions
@@ -127,12 +128,18 @@ class GCS(object):
         :return: Iterator object
         """
         total_read = 0
-        blob_iter = client.list_blobs(bucket_name, prefix=prefix)
-        prefix = str(prefix) if prefix else ''
+        # Normalize prefix to end with '/'
+        normalized_prefix = (str(prefix).rstrip('/') + '/') if prefix else ''
+        # Use delimiter for non-recursive listing
+        if recursive_scan:
+            blob_iter = client.list_blobs(bucket_name, prefix=normalized_prefix or None)
+        else:
+            blob_iter = client.list_blobs(bucket_name, prefix=normalized_prefix or None, delimiter='/')
+        prefix = normalized_prefix
         regex = re.compile(str(regex_filter)) if regex_filter else None
         for blob in blob_iter:
-            # skip dir level
-            if blob.name == (prefix.rstrip('/') + '/'):
+            # skip directory entries at any level (directories end with '/')
+            if blob.name.endswith('/'):
                 continue
             # check regex pattern filter
             if regex and not regex.match(blob.name):

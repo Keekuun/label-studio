@@ -137,6 +137,7 @@ class ToolsManager {
     }
 
     currentTool?.handleToolSwitch?.(tool);
+    currentTool?.complete?.();
 
     if (selected) {
       this.unselectAll();

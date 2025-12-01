@@ -1,5 +1,5 @@
 ---
-title: AI Assistant - Beta 🧪
+title: AI Assistant
 short: AI Assistant
 tier: enterprise
 type: guide
@@ -33,15 +33,15 @@ You can also use AI Assistant to ask for troubleshooting and general help with L
 
 ### How do I enable or disable AI Assistant?
 
-Your organization can enable AI Assistant from the **Organization > Billing & Usage** page. 
+Your organization can enable AI Assistant from the **Organization > Usage & License** page. 
 
 !!! note
-    Only users in the Owners role have access to view and modify this page. 
+    Only users in the Owner role can modify these settings. For Starter Cloud users, [open a support ticket](mailto:support@humansignal.com) to request disablement. 
 
 ![Screenshot of settings](/images/admin/ai-settings.png) 
 
-* **Enable AI Features**--This enables AI Assistant for your labeling interface configuration. 
-* **Early Adopter**--If AI features are enabled, this also ensures you can use the AI Assistant for general Label Studio help. 
+* **Enable AI Features**--Enable AI Assistant for your labeling interface configuration. 
+* **Enable Ask AI**--Enable the AI Assistant for general Label Studio help. 
 
 ### What models do you use?
 
@@ -61,7 +61,7 @@ Only the data you provide in the chat window is used to generate responses, this
 
 ### How is my data used to train models?
 
-The model is trained on public resources like our documentation, codebase, blog, and website. We also train it on additional examples we've written specifically for the the model. 
+The model is trained on public resources like our documentation, codebase, blog, and website. We also train it on additional examples we've written specifically for the model. 
 
 We are on a Tier 5 OpenAI account, and opt out of all requests for training data.
 

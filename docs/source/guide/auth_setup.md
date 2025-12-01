@@ -4,11 +4,12 @@ short: SSO and SAML
 tier: enterprise
 type: guide
 order: 0
-order_enterprise: 384
+order_enterprise: 387
 meta_title: SSO authentication for Label Studio Enterprise
 meta_description: Label Studio Enterprise documentation for setting up SSO authentication for your data labeling, machine learning, and data science projects.
 section: "Manage Your Organization"
-
+parent: "admin_auth"
+parent_enterprise: "admin_auth"
 ---
 
 Set up single sign-on using SAML to manage access to Label Studio using your existing Identity Provider (IdP).

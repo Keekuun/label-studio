@@ -1,9 +1,8 @@
-import { Label, Toggle, Select } from "@humansignal/ui";
+import { Label, Toggle, Select, Tooltip, cn } from "@humansignal/ui";
 import { Form, Input } from "apps/labelstudio/src/components/Form";
 import { IconDocument, IconSearch } from "@humansignal/icons";
 import { formatDistanceToNow } from "date-fns";
 import type { ForwardedRef } from "react";
-import { InlineError } from "apps/labelstudio/src/components/Error/InlineError";
 
 interface PreviewStepProps {
   formData: any;
@@ -103,7 +102,7 @@ export const PreviewStep = ({
             ref={formRef}
             action={action}
             params={{ target, type, project, pk: storage?.id }}
-            formData={{ ...(storage ?? {}) }}
+            formData={formData}
             skipEmpty={false}
             onSubmit={onSubmit}
             autoFill="off"
@@ -113,7 +112,7 @@ export const PreviewStep = ({
               {/* Path/Bucket Prefix Section - Hide for localfiles since it has its own path field */}
               {type !== "localfiles" && (
                 <div className="space-y-2">
-                  <Label text={type === "redis" ? "Path to Files" : "Bucket Prefix"} />
+                  <Label text={`${type === "redis" ? "Path to Files" : "Bucket Prefix"} (optional)`} />
                   <p className="text-sm text-muted-foreground">
                     {type === "redis"
                       ? "Specify the folder path within your storage where your files are located"
@@ -123,33 +122,71 @@ export const PreviewStep = ({
                     id={type === "redis" ? "path" : "prefix"}
                     name={type === "redis" ? "path" : "prefix"}
                     value={type === "redis" ? (formData.path ?? "") : (formData.prefix ?? "")}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e);
+                      // Reset preview when prefix/path changes
+                      onImportSettingsChange?.();
+                    }}
                     placeholder="path/to/files/ or leave empty for root"
                     style={{ width: "100%" }}
-                    label=""
-                    description=""
-                    footer=""
-                    className=""
-                    validate=""
                     required={false}
                     skip={false}
                     labelProps={{}}
                     ghost={false}
-                    tooltip=""
                     tooltipIcon={null}
                   />
                 </div>
               )}
 
+              {/* Import Method */}
+              <div className="space-y-2">
+                <Label text="Import Method (optional)" />
+                <p className="text-sm text-muted-foreground">Choose how to interpret your data from storage</p>
+                <Select
+                  name="use_blob_urls"
+                  value={formData.use_blob_urls ? "Files" : "Tasks"}
+                  onChange={(value) => {
+                    const isFiles = value === "Files";
+                    setFormState((prevState) => ({
+                      ...prevState,
+                      formData: {
+                        ...prevState.formData,
+                        use_blob_urls: isFiles,
+                        regex_filter: "", // Reset regex filter when import method changes
+                      },
+                    }));
+                    // Reset validation state when import method changes
+                    onImportSettingsChange?.();
+                  }}
+                  options={
+                    [
+                      {
+                        value: "Files",
+                        label: "Files - Automatically creates a task for each storage object (e.g. JPG, MP3, TXT)",
+                      },
+                      {
+                        value: "Tasks",
+                        label: "Tasks - Treat each JSON, JSONL, or Parquet as one or more task definitions per file",
+                      },
+                    ] as any
+                  }
+                  placeholder="Select import method"
+                />
+              </div>
+
               {/* File Filter Section */}
               <div className="space-y-2">
-                <Label text="File Name Filter (Optional)" />
+                <Label text="File Name Filter (optional)" />
                 <p className="text-sm text-muted-foreground">Use regex patterns to filter which files are imported</p>
                 <Input
                   id="regex_filter"
                   name="regex_filter"
                   value={formData.regex_filter ?? ""}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    // Reset preview when regex filter changes
+                    onImportSettingsChange?.();
+                  }}
                   placeholder={
                     formData.use_blob_urls
                       ? ".*\\.(jpg|png)$ - imports only JPG, PNG files"
@@ -188,6 +225,8 @@ export const PreviewStep = ({
                                 regex_filter: r.regex,
                               },
                             }));
+                            // Reset preview when common filter is selected
+                            onImportSettingsChange?.();
                           }}
                         >
                           {r.title}
@@ -197,41 +236,6 @@ export const PreviewStep = ({
                 </div>
               </div>
 
-              {/* Import Method */}
-              <div className="space-y-2">
-                <Label text="Import Method" />
-                <p className="text-sm text-muted-foreground">Choose how to interpret your data from storage</p>
-                <Select
-                  name="use_blob_urls"
-                  value={formData.use_blob_urls ? "Files" : "Tasks"}
-                  onChange={(value) => {
-                    const isFiles = value === "Files";
-                    setFormState((prevState) => ({
-                      ...prevState,
-                      formData: {
-                        ...prevState.formData,
-                        use_blob_urls: isFiles,
-                      },
-                    }));
-                    // Reset validation state when import method changes
-                    onImportSettingsChange?.();
-                  }}
-                  options={
-                    [
-                      {
-                        value: "Files",
-                        label: "Files - Automatically creates a task for each storage object (e.g. JPG, MP3, TXT)",
-                      },
-                      {
-                        value: "Tasks",
-                        label: "Tasks - Treat each JSON, JSONL, or Parquet as one or more task definitions per file",
-                      },
-                    ] as any
-                  }
-                  placeholder="Select import method"
-                />
-              </div>
-
               {/* Scan All Subfolders */}
               <div className="flex items-center justify-between">
                 <div>
@@ -239,7 +243,7 @@ export const PreviewStep = ({
                   <p className="text-sm text-muted-foreground">Include files from all nested folders</p>
                 </div>
                 <Toggle
-                  checked={formData.recursive_scan ?? true}
+                  checked={formData.recursive_scan ?? false}
                   onChange={(e) => {
                     setFormState((prevState) => ({
                       ...prevState,
@@ -291,11 +295,32 @@ export const PreviewStep = ({
                   {filesPreview.map((file, index) => (
                     <div
                       key={index}
-                      className="flex justify-between py-0.5 px-2 bg-gray-50 hover:bg-gray-100 border-b last:border-b-0 rounded-md"
+                      className={cn(
+                        "flex justify-between py-0.5 px-2 bg-neutral-surface border-b last:border-b-0 rounded-small",
+                        {
+                          "hover:bg-neutral-surface-hover": file.key !== null,
+                        },
+                      )}
                     >
-                      <div className="truncate max-w-[260px]">
-                        {file.key ? file.key : <span className="italic">... preview limit reached ...</span>}
-                      </div>
+                      <Tooltip title={file.key || "..."} disabled={file.key === null}>
+                        <div
+                          className={cn("max-w-[260px] overflow-hidden", {
+                            "cursor-help": file.key !== null,
+                          })}
+                        >
+                          {file.key ? (
+                            file.key.length > 28 ? (
+                              <span>
+                                {file.key.slice(0, 12)}...{file.key.slice(-13)}
+                              </span>
+                            ) : (
+                              file.key
+                            )
+                          ) : (
+                            <span className="italic">... preview limit reached ...</span>
+                          )}
+                        </div>
+                      </Tooltip>
                       <div className="flex items-center space-x-1 text-muted-foreground whitespace-nowrap">
                         <span>
                           {file.last_modified && formatDistanceToNow(new Date(file.last_modified), { addSuffix: true })}
@@ -311,8 +336,6 @@ export const PreviewStep = ({
           </div>
         </div>
       </div>
-
-      <InlineError includeValidation />
     </div>
   );
 };

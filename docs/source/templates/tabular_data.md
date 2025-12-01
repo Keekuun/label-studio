@@ -3,7 +3,7 @@ title: Tabular Data
 type: templates
 category: Structured Data Parsing
 cat: structured-data-parsing
-order: 603
+order: 505
 meta_title: Tabular Data Labeling Template
 meta_description: Template for labeling tabular data with Label Studio for your machine learning and data science projects.
 ---

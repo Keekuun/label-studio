@@ -30,6 +30,7 @@ stages:
         title: Testing S3 storage (bucket from conftest.py)
         use_blob_urls: true
         presign_ttl: 3600
+        recursive_scan: true
       method: POST
       url: "{django_live_url}/api/storages/s3"
     response:
@@ -269,6 +270,7 @@ stages:
         project: "{project_pk}"
         title: Test GCS storage import (mocked GCS client from conftest.py)
         use_blob_urls: true
+        recursive_scan: true
       method: POST
       url: "{django_live_url}/api/storages/gcs"
     response:
@@ -299,7 +301,7 @@ stages:
     response:
       json:
         data:
-          image_url: !re_match "/tasks/\\d+/resolve/\\?fileuri=Z3M6Ly90ZXN0LWdzLWJ1Y2tldC90ZXN0LWdzLWJ1Y2tldC9hYmM="
+          image_url: !re_match "/tasks/\\d+/resolve/\\?fileuri=Z3M6Ly90ZXN0LWdzLWJ1Y2tldC9hYmM="
       status_code: 200
 ---
 test_name: test_invalidate_gcs_storage
@@ -334,6 +336,7 @@ stages:
         title: Test Invalidate GCS storage (mocked GCS client from conftest.py)
         use_blob_urls: true
         google_application_credentials: '{{"wrong": "service account info"}}'
+        recursive_scan: true
       method: POST
       url: "{django_live_url}/api/storages/gcs/validate"
     response:
@@ -370,6 +373,7 @@ stages:
         project: "{project_pk}"
         title: Test GCS storage import (mocked GCS client from conftest.py)
         use_blob_urls: false
+        recursive_scan: true
       method: POST
       url: "{django_live_url}/api/storages/gcs"
     response:
@@ -454,6 +458,7 @@ stages:
         project: "{project_pk}"
         title: Test GCS storage import (mocked GCS client from conftest.py)
         use_blob_urls: false
+        recursive_scan: true
       method: POST
       url: "{django_live_url}/api/storages/gcs"
     response:
@@ -639,6 +644,7 @@ stages:
       bucket: pytest-export-gcs-bucket
       project: '{project_pk}'
       title: Testing Export GCS storage (bucket from conftest.py)
+      recursive_scan: true
     method: POST
     url: '{django_live_url}/api/storages/export/gcs'
   response:
@@ -813,6 +819,7 @@ stages:
       project: '{project_pk}'
       title: Testing Azure storage (bucket from conftest.py)
       use_blob_urls: true
+      recursive_scan: true
     method: POST
     url: '{django_live_url}/api/storages/azure'
   response:

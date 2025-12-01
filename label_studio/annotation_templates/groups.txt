@@ -2,8 +2,10 @@ Computer Vision
 Natural Language Processing
 Audio/Speech Processing
 Conversational AI
+Chat
 Ranking & Scoring
 Structured Data Parsing
 Time Series Analysis
 Videos
 Generative AI
+Community Contributions

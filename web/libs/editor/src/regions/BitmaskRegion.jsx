@@ -14,7 +14,7 @@ import { ImageModel } from "../tags/object/Image";
 import { FF_DEV_3793, isFF } from "../utils/feature-flags";
 import { AliveRegion } from "./AliveRegion";
 import { RegionWrapper } from "./RegionWrapper";
-import { BitmaskDrawing, getCanvasPixelBounds } from "./BitmaskRegion/utils";
+import { BitmaskDrawing, getCanvasPixelBounds, isHoveringNonTransparentPixel } from "./BitmaskRegion/utils";
 import chroma from "chroma-js";
 import { generateMultiShapeOutline } from "./BitmaskRegion/contour";
 import { observe } from "mobx";
@@ -381,6 +381,10 @@ const Model = types
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.drawImage(self.offscreenCanvasRef, 0, 0);
         return tempCanvas;
+      },
+
+      isHovered() {
+        return isHoveringNonTransparentPixel(self);
       },
 
       /**

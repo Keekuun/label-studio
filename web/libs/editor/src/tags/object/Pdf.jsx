@@ -40,7 +40,9 @@ const HtxPdf = inject("store")(
   }),
 );
 
-Registry.addTag("pdf", PdfModel, HtxPdf);
-Registry.addObjectType(PdfModel);
+if (!Registry.models.pdf) {
+  Registry.addTag("pdf", PdfModel, HtxPdf);
+  Registry.addObjectType(PdfModel);
+}
 
 export { HtxPdf, PdfModel };

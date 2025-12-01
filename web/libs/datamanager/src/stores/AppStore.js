@@ -1,6 +1,12 @@
 import { destroy, flow, types } from "mobx-state-tree";
 import { Modal } from "../components/Common/Modal/Modal";
-import { FF_DEV_2887, FF_LOPS_E_3, FF_REGION_VISIBILITY_FROM_URL, isFF } from "../utils/feature-flags";
+import {
+  FF_DEV_2887,
+  FF_DISABLE_GLOBAL_USER_FETCHING,
+  FF_LOPS_E_3,
+  FF_REGION_VISIBILITY_FROM_URL,
+  isFF,
+} from "../utils/feature-flags";
 import { History } from "../utils/history";
 import { isDefined } from "../utils/utils";
 import { Action } from "./Action";
@@ -16,7 +22,7 @@ import { ActivityObserver } from "../utils/ActivityObserver";
  */
 let networkActivity = null;
 
-const PROJECTS_FETCH_PERIOD = 10 * 1000; // 10 seconds
+const PROJECTS_FETCH_PERIOD = 20 * 1000; // interaction timer for 20 sec fetch period for project api
 
 export const AppStore = types
   .model("AppStore", {
@@ -536,14 +542,22 @@ export const AppStore = types
       return true;
     }),
 
+    /**
+     * @deprecated Use the useActions hook instead for better caching and performance
+     * This method is kept for backward compatibility but is no longer actively used
+     */
     fetchActions: flow(function* () {
-      const serverActions = yield self.apiCall("actions");
+      try {
+        const serverActions = yield self.apiCall("actions");
 
-      const actions = (serverActions ?? []).map((action) => {
-        return [action, undefined];
-      });
+        const actions = (serverActions ?? []).map((action) => {
+          return [action, undefined];
+        });
 
-      self.SDK.updateActions(actions);
+        self.SDK.updateActions(actions);
+      } catch (error) {
+        console.error("Error fetching actions:", error);
+      }
     }),
 
     fetchActionForm: flow(function* (actionId) {
@@ -569,14 +583,14 @@ export const AppStore = types
 
       self.viewsStore.fetchColumns();
 
-      const requests = [self.fetchProject(), self.fetchUsers()];
+      const requests = [self.fetchProject()];
+
+      // Only fetch all users if not disabled globally
+      if (!isFF(FF_DISABLE_GLOBAL_USER_FETCHING)) {
+        requests.push(self.fetchUsers());
+      }
 
       if (!isLabelStream || (self.project?.show_annotation_history && task)) {
-        if (self.SDK.type === "dm") {
-          // Fetch actions in background to avoid blocking the main thread
-          setTimeout(() => self.fetchActions(), 0);
-        }
-
         if (self.SDK.settings?.onlyVirtualTabs && self.project?.show_annotation_history && !task) {
           requests.push(
             self.viewsStore.addView(
@@ -700,6 +714,8 @@ export const AppStore = types
 
     invokeAction: flow(function* (actionId, options = {}) {
       const view = self.currentView ?? {};
+      const viewReloaded = view;
+      let projectFetched = self.project;
 
       const needsLock = self.availableActions.findIndex((a) => a.id === actionId) >= 0;
 
@@ -738,7 +754,13 @@ export const AppStore = types
       }
 
       if (actionCallback instanceof Function) {
-        return actionCallback(actionParams, view);
+        const result = actionCallback(actionParams, view);
+        self.SDK.invoke("actionDialogOkComplete", actionId, {
+          result,
+          view: viewReloaded,
+          project: projectFetched,
+        });
+        return result;
       }
 
       const requestParams = {
@@ -763,17 +785,28 @@ export const AppStore = types
 
       if (result.reload) {
         self.SDK.reload();
+        self.SDK.invoke("actionDialogOkComplete", actionId, {
+          result,
+          view: viewReloaded,
+          project: projectFetched,
+        });
         return;
       }
 
       if (options.reload !== false) {
         yield view.reload();
-        self.fetchProject();
+        yield self.fetchProject();
+        projectFetched = self.project;
         view.clearSelection();
       }
 
       view?.unlock?.();
 
+      self.SDK.invoke("actionDialogOkComplete", actionId, {
+        result,
+        view: viewReloaded,
+        project: projectFetched,
+      });
       return result;
     }),
 

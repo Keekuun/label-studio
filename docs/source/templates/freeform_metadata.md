@@ -3,7 +3,7 @@ title: Freeform Metadata
 type: templates
 category: Structured Data Parsing
 cat: structured-data-parsing
-order: 601
+order: 501
 meta_title: Freeform Metadata Data Labeling Template
 meta_description: Template for adding freeform content metadata to tasks with Label Studio for your machine learning and data science projects.
 ---

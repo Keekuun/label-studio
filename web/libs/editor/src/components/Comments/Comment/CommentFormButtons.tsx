@@ -2,7 +2,7 @@ import type { MouseEventHandler } from "react";
 
 import { IconCommentLinkTo, IconSend } from "@humansignal/icons";
 import { Tooltip } from "@humansignal/ui";
-import { Block, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import "./CommentFormButtons.scss";
 import i18n from "i18next";
 
@@ -11,18 +11,22 @@ export const CommentFormButtons = ({
   linking,
   onLinkTo,
 }: { region: any; linking: boolean; onLinkTo?: MouseEventHandler<HTMLElement> }) => (
-  <Block name="comment-form-buttons">
-    <Elem name="buttons">
+  <div className={cn("comment-form-buttons").toClassName()}>
+    <div className={cn("comment-form-buttons").elem("buttons").toClassName()}>
       {onLinkTo && !region && (
         <Tooltip title={i18n.t('link_to')}>
-          <Elem name="action" tag="button" mod={{ highlight: linking }} onClick={onLinkTo}>
+          <button
+            type="button"
+            className={cn("comment-form-buttons").elem("action").mod({ highlight: linking }).toClassName()}
+            onClick={onLinkTo}
+          >
             <IconCommentLinkTo />
-          </Elem>
+          </button>
         </Tooltip>
       )}
-      <Elem name="action" tag="button" type="submit">
+      <button type="submit" className={cn("comment-form-buttons").elem("action").toClassName()}>
         <IconSend />
-      </Elem>
-    </Elem>
-  </Block>
+      </button>
+    </div>
+  </div>
 );

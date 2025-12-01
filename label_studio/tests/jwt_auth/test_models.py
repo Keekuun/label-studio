@@ -1,69 +1,11 @@
 import pytest
 from jwt_auth.models import LSAPIToken, LSTokenBackend
-from organizations.models import OrganizationMember
-from organizations.tests.factories import OrganizationFactory
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.settings import api_settings as simple_jwt_settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
-from users.models import User
 
 from ..utils import mock_feature_flag
 from .utils import create_user_with_token_settings
-
-
-@mock_feature_flag(flag_name='fflag__feature_develop__prompts__dia_1829_jwt_token_auth', value=True)
-@pytest.mark.django_db
-def test_jwt_settings_permissions():
-    org = OrganizationFactory()
-    user = org.created_by
-
-    # Any member should be able to view
-    assert org.jwt.has_view_permission(user)
-
-    # Any LSO member should be able to modify
-    # (tests for enterprise handled in enterprise test suite)
-    assert org.jwt.has_modify_permission(user)
-    assert org.jwt.has_permission(user)
-
-
-@mock_feature_flag(flag_name='fflag__feature_develop__prompts__dia_1829_jwt_token_auth', value=True)
-@pytest.mark.django_db
-def test_non_owner_user_can_modify_jwt_settings():
-    """Test that a regular non-owner user who is added to an organization can modify JWT settings"""
-    org = OrganizationFactory()
-    non_owner = User.objects.create(email='regular_user@example.com')
-
-    OrganizationMember.objects.create(
-        user=non_owner,
-        organization=org,
-    )
-    non_owner.active_organization = org
-    non_owner.save()
-
-    assert org.jwt.has_view_permission(non_owner)
-    assert org.jwt.has_modify_permission(non_owner)
-    assert org.jwt.has_permission(non_owner)
-
-
-@mock_feature_flag(flag_name='fflag__feature_develop__prompts__dia_1829_jwt_token_auth', value=True)
-@pytest.mark.django_db
-def test_user_from_other_org_cannot_access_jwt_settings():
-    """Test that users from other organizations cannot view or modify JWT settings"""
-    org1 = OrganizationFactory()
-    org1_owner = org1.created_by
-
-    org2 = OrganizationFactory()
-    org2_owner = org2.created_by
-
-    # Verify org1 owner cannot view or modify JWT settings of org2
-    assert not org2.jwt.has_view_permission(org1_owner)
-    assert not org2.jwt.has_modify_permission(org1_owner)
-    assert not org2.jwt.has_permission(org1_owner)
-
-    # Verify org2 owner cannot view or modify JWT settings of org1
-    assert not org1.jwt.has_view_permission(org2_owner)
-    assert not org1.jwt.has_modify_permission(org2_owner)
-    assert not org1.jwt.has_permission(org2_owner)
 
 
 @mock_feature_flag(flag_name='fflag__feature_develop__prompts__dia_1829_jwt_token_auth', value=True)

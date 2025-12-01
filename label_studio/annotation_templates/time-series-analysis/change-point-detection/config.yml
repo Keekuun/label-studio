@@ -2,7 +2,16 @@ title: Change Point Detection
 type: community
 group: Time Series Analysis
 image: /static/templates/change-point-detection.png
-details: <h1>Identify changing points on time series signals</h1>
+details: |
+  <h1>Identify changing points on time series signals</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>financial market analysis, climate data analysis, medical signal analysis, manufacturing process control, energy consumption monitoring, network traffic analysis, supply chain optimization, economic forecasting, epidemiological studies, quality assurance, system performance monitoring, behavioral analysis</dd>
+    <dt>Associated Models</dt>
+    <dd>PELT, CUSUM, Bayesian change point detection, segmentation algorithms</dd>
+    <dt>Domain Terminology</dt>
+    <dd>CSV, Excel, XLS, Sheet, structural breaks, regime change, trend analysis, segmentation, temporal boundaries</dd>
+  </dl>
 config: |
   <View>
       <!-- Control tag for region labels -->

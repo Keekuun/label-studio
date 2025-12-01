@@ -85,7 +85,9 @@ Scenario(
 
     I.say("Magic wanding clouds with cloud class in upper left of image");
     await doDrawingAction(I, { msg: "Fill in clouds upper left", fromX: 454, fromY: 184, toX: 650, toY: 644 });
+    I.waitTicks(2);
     await doDrawingAction(I, { msg: "Fill in clouds lower left", fromX: 454, fromY: 834, toX: 650, toY: 644 });
+    I.waitTicks(2);
 
     I.say("Ensuring repeated magic wands back to back with same class collapsed into single region");
     AtOutliner.seeRegions(1);
@@ -131,7 +133,7 @@ Scenario(
     // 1, then redo it and ensure its back and our region list is still 1 again.
     I.say("Undoing last cloud magic wand and ensuring it worked correctly");
     I.click('button[aria-label="Undo"]');
-    I.wait(1);
+    I.waitTicks(2);
     await assertMagicWandPixel(
       I,
       300,
@@ -145,7 +147,7 @@ Scenario(
 
     I.say("Redoing last cloud magic wand and ensuring it worked correctly");
     I.click('button[aria-label="Redo"]');
-    I.wait(1);
+    I.waitTicks(2);
     await assertMagicWandPixel(
       I,
       300,
@@ -177,6 +179,7 @@ Scenario(
 
     I.say("Magic wanding cloud shadows with cloud shadow class in center of zoomed image");
     await doDrawingAction(I, { msg: "Cloud shadow in middle of image", fromX: 600, fromY: 500, toX: 500, toY: 500 });
+    I.waitTicks(2);
 
     I.say("Ensuring new cloud shadow magic wand region gets added to sidebar");
     AtOutliner.seeRegions(2);
@@ -207,6 +210,7 @@ Scenario(
     AtOutliner.seeRegions(2);
     AtOutliner.dontSee("Cloud Shadow");
     AtOutliner.see("Haze");
+    I.waitTicks(2);
     await I.executeScript(setKonvaLayersOpacity, [1.0]);
     await assertMagicWandPixel(I, 350, 360, true, HAZE.rgbArray, "Center area should have magic wand haze class");
   },

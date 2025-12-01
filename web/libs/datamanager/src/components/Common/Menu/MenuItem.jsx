@@ -10,7 +10,8 @@ export const MenuItem = ({
   to,
   className,
   href,
-  danger,
+  danger, // deprecated, use variant="negative" instead
+  variant,
   exact = false,
   forceReload = false,
   active = false,
@@ -39,11 +40,14 @@ export const MenuItem = ({
     </>
   );
 
+  // Support both deprecated danger prop and new variant prop
+  const isNegative = danger || variant === "negative";
+
   const linkAttributes = {
     className: rootClass
       .mod({
         active: isActive || active,
-        look: danger && "danger",
+        look: isNegative && "danger", // Keep existing CSS class for compatibility
       })
       .mix(className),
     onClick,
@@ -51,7 +55,9 @@ export const MenuItem = ({
   };
 
   if (forceReload) {
-    linkAttributes.onClick = () => (window.location.href = to ?? href);
+    linkAttributes.onClick = () => {
+      window.location.href = to ?? href;
+    };
   }
 
   return (

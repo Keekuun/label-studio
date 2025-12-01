@@ -8,8 +8,11 @@ import ProcessAttrsMixin from "../../../mixins/ProcessAttrs";
 import { SyncableMixin } from "../../../mixins/Syncable";
 import { parseValue } from "../../../utils/data";
 import { FF_VIDEO_FRAME_SEEK_PRECISION, isFF } from "../../../utils/feature-flags";
+import { ff } from "@humansignal/core";
 import ObjectBase from "../Base";
 import { isDefined } from "../../../utils/utilities";
+
+const isSyncedBuffering = ff.isActive(ff.FF_SYNCED_BUFFERING);
 
 /**
  * Video tag plays a simple video file. Use for video annotation tasks such as classification and transcription.
@@ -36,10 +39,10 @@ import { isDefined } from "../../../utils/utilities";
  * - `-pix_fmt yuv420p` ensures the pixel format is compatible with most browsers.
  * - `-r 30` forces a constant frame rate of 30 fps. You can also omit the -r option, ffmpeg will save your current frame rate. This is fine if you are 100% certain that your video has a constant frame rate.
  * - `-c:a aac -b:a 128k` encodes the audio in AAC at 128 kbps.
- * - `-to` stops writing output as soon as the container clock hits your video’s end timestamp, so any extra audio tail is automatically dropped.
+ * - `-to` stops writing output as soon as the container clock hits your video's end timestamp, so any extra audio tail is automatically dropped.
  * - `output_video.mp4` is the converted video file ready for use in Label Studio.
  *
- * Using this FFmpeg command to re-encode your videos will help eliminate playback issues and ensure that Label Studio detects the total video duration  accurately, providing a smooth annotation experience.
+ * Using this FFmpeg command to re-encode your videos will help eliminate playback issues and ensure that Label Studio detects the total video duration accurately, providing a smooth annotation experience.
  *
  * It is a good idea to check all parameters of your video using this command:
  * ```bash
@@ -76,6 +79,8 @@ import { isDefined } from "../../../utils/utilities";
  * @param {boolean} [muted=false] muted video
  * @param {number} [height=600] height of the video player
  * @param {number} [timelineHeight=64] height of the timeline with regions
+ * @param {number} [defaultPlaybackSpeed=1] default playback speed the player should start with when loaded
+ * @param {number} [minPlaybackSpeed=1] minimum allowed playback speed; defaultPlaybackSpeed cannot be set below this value
  */
 
 const TagAttrs = types.model({
@@ -85,6 +90,8 @@ const TagAttrs = types.model({
   height: types.optional(types.string, "600"),
   timelineheight: types.maybeNull(types.string),
   muted: false,
+  defaultplaybackspeed: types.optional(types.union(types.string, types.number), "1"),
+  minplaybackspeed: types.optional(types.union(types.string, types.number), "0.25"),
 });
 
 const Model = types
@@ -180,6 +187,24 @@ const Model = types
       if (!framerate || Number.isNaN(framerate)) self.framerate = "24";
       else if (framerate < 1) self.framerate = String(1 / framerate);
       else self.framerate = String(framerate);
+
+      // normalize playback speed parameters
+      const data = self.store.task?.dataObj;
+      const defaultPlaybackSpeed = Number(parseValue(String(self.defaultplaybackspeed), data));
+      const minPlaybackSpeed = Number(parseValue(String(self.minplaybackspeed), data));
+
+      // validate and set minPlaybackSpeed
+      self.minplaybackspeed =
+        !minPlaybackSpeed || isNaN(minPlaybackSpeed) || minPlaybackSpeed < 0.05 ? 0.25 : minPlaybackSpeed;
+
+      // validate and set defaultPlaybackSpeed
+      self.defaultplaybackspeed =
+        !defaultPlaybackSpeed || isNaN(defaultPlaybackSpeed) || defaultPlaybackSpeed < 0.05
+          ? 1
+          : Math.max(defaultPlaybackSpeed, self.minplaybackspeed);
+
+      // set initial speed to defaultPlaybackSpeed
+      self.speed = self.defaultplaybackspeed;
     },
   }))
   ////// Sync actions
@@ -204,12 +229,27 @@ const Model = types
       );
     },
 
-    triggerSyncPlay() {
+    triggerSyncPlay(isManual = false) {
+      if (isSyncedBuffering && self.isBuffering && !isManual) return;
+      self.wasPlayingBeforeBuffering = true;
       self.triggerSync("play", { playing: true });
     },
 
-    triggerSyncPause() {
+    triggerSyncPause(isManual = false) {
+      if (isSyncedBuffering && self.isBuffering && !isManual) return;
+      self.wasPlayingBeforeBuffering = false;
       self.triggerSync("pause", { playing: false });
+    },
+
+    triggerSyncBuffering(isBuffering) {
+      if (!self.ref.current) return;
+
+      const playing = self.wasPlayingBeforeBuffering;
+
+      self.triggerSync("buffering", {
+        buffering: isBuffering,
+        playing,
+      });
     },
 
     ////// Incoming
@@ -219,24 +259,51 @@ const Model = types
         self.syncHandlers.set(event, self.handleSync);
       }
       self.syncHandlers.set("speed", self.handleSyncSpeed);
+      if (isSyncedBuffering) {
+        self.syncHandlers.set("buffering", self.handleSyncBuffering);
+      }
     },
 
-    handleSync(data) {
+    handleSyncBuffering({ playing, ...data }) {
+      self.isBuffering = self.syncManager?.isBuffering;
+      if (data.buffering) {
+        self.wasPlayingBeforeBuffering = playing;
+        self.ref.current?.pause();
+      }
+      if (!self.isBuffering && !data.buffering) {
+        if (playing) {
+          self.ref.current?.play();
+        }
+      }
+      // process other data
+      self.handleSync(data);
+    },
+
+    handleSync(data, event) {
       if (!self.ref.current) return;
 
       const video = self.ref.current;
+      const isBuffering = self.syncManager?.isBuffering;
 
-      if (data.playing) {
-        if (!video.playing) video.play();
-      } else {
-        if (video.playing) video.pause();
+      if (!isSyncedBuffering || (!isBuffering && isDefined(data.playing))) {
+        if (data.playing) {
+          if (!video.playing) video.play();
+        } else {
+          if (video.playing) video.pause();
+        }
+      }
+      // during the buffering only these events has real `playing` values (in other cases it's paused all the time)
+      if (["play", "pause"].indexOf(event) > -1) {
+        self.wasPlayingBeforeBuffering = data.playing;
       }
 
       if (data.speed) {
         self.speed = data.speed;
       }
 
-      video.currentTime = data.time;
+      if (isDefined(data.time) && (!isSyncedBuffering || video.currentTime !== data.time)) {
+        video.currentTime = data.time;
+      }
     },
 
     handleSyncSpeed(data) {
@@ -246,12 +313,42 @@ const Model = types
     },
 
     handleSpeed(speed) {
-      self.speed = speed;
-      self.triggerSync("speed", { speed });
+      // enforce minimum playback speed
+      const constrainedSpeed = Math.max(speed, self.minplaybackspeed);
+
+      self.speed = constrainedSpeed;
+      self.triggerSync("speed", { speed: constrainedSpeed });
     },
 
     handleSeek() {
-      self.triggerSync("seek");
+      self.triggerSync("seek", isSyncedBuffering ? { playing: self.wasPlayingBeforeBuffering } : {});
+    },
+
+    handleBuffering(isBuffering) {
+      if (!isSyncedBuffering) return;
+      if (self.syncManager?.isBufferingOrigin(self.name) === isBuffering) return;
+      const isAlreadyBuffering = self.syncManager?.isBuffering;
+      const isLastCauseOfBuffering =
+        self.syncManager?.bufferingOrigins.size === 1 && self.syncManager?.isBufferingOrigin(self.name);
+      const willStartBuffering = !isAlreadyBuffering && isBuffering;
+      const willStopBuffering = isLastCauseOfBuffering && !isBuffering;
+
+      if (willStopBuffering) {
+        if (self.wasPlayingBeforeBuffering) {
+          self.ref.current?.play();
+        }
+      }
+
+      self.triggerSyncBuffering(isBuffering);
+
+      // The real value, relevant for all medias synced together we have only after triggering the buffering event
+      self.isBuffering = self.syncManager?.isBuffering;
+
+      if (willStartBuffering) {
+        if (self.ref.current?.playing) {
+          self.ref.current?.pause();
+        }
+      }
     },
 
     syncMuted(muted) {
@@ -302,13 +399,17 @@ const Model = types
           },
         ];
 
-        const area = self.annotation.createResult({ sequence }, {}, control, self);
+        const activeStates = self.activeStates();
+        const area = ff.isActive(ff.FF_MULTIPLE_LABELS_REGIONS)
+          ? self.annotation.createResult({ sequence }, {}, control, self, false, activeStates)
+          : self.annotation.createResult({ sequence }, {}, control, self, false);
 
-        // add labels
-        for (const tag of self.activeStates()) {
-          area.setValue(tag);
+        if (!ff.isActive(ff.FF_MULTIPLE_LABELS_REGIONS)) {
+          // add labels
+          for (const tag of self.activeStates()) {
+            area.setValue(tag);
+          }
         }
-
         return area;
       },
 
@@ -324,13 +425,24 @@ const Model = types
         const value = {
           ranges: [{ start: frame, end: frame }],
         };
-        // @todo only one attached labeling tag is supported right now :(
-        const labels = self.activeStates()?.[0];
-        const labeling = {
-          [labels.valueType]: labels.selectedValues(),
-        };
+        let labeling;
+        let additionalStates;
+        if (ff.isActive(ff.FF_MULTIPLE_LABELS_REGIONS)) {
+          const activeStates = self.activeStates();
+          additionalStates = activeStates.filter((state) => state !== control);
+          labeling = {
+            [control.valueType]: control.selectedValues(),
+          };
+        } else {
+          const labels = self.activeStates()?.[0];
+          labeling = {
+            [labels.valueType]: labels.selectedValues(),
+          };
+        }
 
-        return self.annotation.createResult(value, labeling, control, self);
+        return ff.isActive(ff.FF_MULTIPLE_LABELS_REGIONS)
+          ? self.annotation.createResult(value, labeling, control, self, false, additionalStates)
+          : self.annotation.createResult(value, labeling, control, self, false);
       },
 
       deleteRegion(id) {

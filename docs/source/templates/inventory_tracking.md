@@ -3,7 +3,7 @@ title: Inventory Tracking
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 152
+order: 150
 meta_title: Label exact products on the shelves
 meta_description: 
 ---

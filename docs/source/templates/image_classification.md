@@ -3,7 +3,7 @@ title: Image Classification
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 106
+order: 135
 meta_title: Image Classification Data Labeling Template
 meta_description: Template for classifying image data with Label Studio for your machine learning and data science projects.
 ---

@@ -228,6 +228,12 @@ body {
   padding: 10px 0;
   border: none;
   background: var(--color-neutral-inverted-surface);
+  cursor: pointer;
+}
+
+.login_page_new_ui form button:hover {
+    color: var(--color-neutral-inverted-content);
+    background: var(--color-neutral-inverted-surface-hover);
 }
 
 .login_page_new_ui .field_errors {

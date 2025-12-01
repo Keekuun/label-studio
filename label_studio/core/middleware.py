@@ -6,7 +6,6 @@ from datetime import timedelta
 from uuid import uuid4
 
 import ujson as json
-from core.feature_flags import flag_set
 from core.utils.contextlog import ContextLog
 from csp.middleware import CSPMiddleware
 from django.conf import settings
@@ -215,7 +214,7 @@ class InactivitySessionTimeoutMiddleWare(CommonMiddleware):
         last_login = request.session['last_login'] if 'last_login' in request.session else 0
 
         active_org = request.user.active_organization
-        if flag_set('fflag_feat_utc_46_session_timeout_policy', user=request.user) and active_org:
+        if active_org:
             org_max_session_age = timedelta(minutes=active_org.session_timeout_policy.max_session_age).total_seconds()
             max_time_between_activity = timedelta(
                 minutes=active_org.session_timeout_policy.max_time_between_activity

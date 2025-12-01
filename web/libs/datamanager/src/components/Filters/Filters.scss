@@ -13,28 +13,14 @@
   &_sidebar {
     width: 100%;
 
-    .filter-line {
-      padding-right: var(--spacing-tight);
-      padding-left: var(--spacing-tight);
-      align-items: stretch;
-
-      .ant-divider {
-        margin: 0;
-        height: 24px;
-      }
-
-      &__field {
+    .filterLine {
+      .datepicker__output_range {
+        display: flex;
         width: 100%;
-      }
 
-      &__settings {
-        flex-direction: column;
-      }
-
-      &__group {
-        flex: 1;
-        padding: 2px 0;
-        width: 100%;
+        .input-dm {
+          min-width: 100px;
+        }
       }
     }
   }
@@ -64,9 +50,9 @@
     padding: var(--spacing-tight) var(--spacing-tight) var(--spacing-tighter);
 
     &_withFilters {
-      display: grid;
-      grid-template-columns: 75px min-content min-content 1fr min-content;
-      grid-gap: 4px;
+      display: flex;
+      flex-flow: column nowrap;
+      gap: var(--spacing-tight);
     }
   }
 
@@ -74,10 +60,9 @@
     padding: var(--spacing-base) var(--spacing-tight) var(--spacing-tighter);
 
     &_withFilters {
-      grid-template-columns: 1fr 1fr 24px;
-      grid-row-gap: 4px;
-      grid-auto-flow: row;
-      align-items: center;
+      display: flex;
+      flex-flow: column nowrap;
+      gap: var(--spacing-tight);
     }
   }
 }
@@ -89,3 +74,5 @@
   display: inline-flex;
   align-items: center;
 }
+
+// Note: Dropdown padding is now controlled via triggerProps in FilterDropdown component

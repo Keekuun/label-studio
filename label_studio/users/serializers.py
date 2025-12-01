@@ -1,13 +1,11 @@
 """This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
 """
+from core.permissions import all_permissions
 from core.utils.common import load_func
-from core.utils.db import fast_first
 from django.conf import settings
-from organizations.models import OrganizationMember
 from rest_flex_fields import FlexFieldsModelSerializer
 from rest_framework import serializers
-
-from .models import User
+from users.models import User
 
 
 class BaseUserSerializer(FlexFieldsModelSerializer):
@@ -37,36 +35,28 @@ class BaseUserSerializer(FlexFieldsModelSerializer):
         return {'title': title, 'email': email}
 
     def _is_deleted(self, instance):
-        if 'deleted_organization_members' in self.context:
-            organization_members = self.context.get('deleted_organization_members', None)
-            return instance.id in organization_members
-
-        if organization_members := self.context.get('organization_members', None):
-            # Finds the first organization_member matching the instance's id. If not found, set to None.
-            organization_member_for_user = next(
-                (
-                    organization_member
-                    for organization_member in organization_members
-                    if organization_member.user_id == instance.id
-                ),
-                None,
-            )
+        if 'user' in self.context:
+            org_id = self.context['user'].active_organization_id
+        elif 'request' in self.context:
+            org_id = self.context['request'].user.active_organization_id
         else:
-            if 'user' in self.context:
-                org_id = self.context['user'].active_organization_id
-            elif 'request' in self.context:
-                org_id = self.context['request'].user.active_organization_id
-            else:
-                org_id = None
+            org_id = None
 
-            if not org_id:
-                return False
+        if not org_id:
+            return False
 
-            organization_member_for_user = fast_first(
-                OrganizationMember.objects.filter(user_id=instance.id, organization_id=org_id)
-            )
-            if not organization_member_for_user:
-                return True
+        # Will use prefetched objects if available
+        organization_members = instance.om_through.all()
+        organization_member_for_user = next(
+            (
+                organization_member
+                for organization_member in organization_members
+                if organization_member.organization_id == org_id
+            ),
+            None,
+        )
+        if not organization_member_for_user:
+            return True
         return bool(organization_member_for_user.deleted_at)
 
     def to_representation(self, instance):
@@ -109,6 +99,16 @@ class BaseUserSerializer(FlexFieldsModelSerializer):
 class BaseUserSerializerUpdate(BaseUserSerializer):
     class Meta(BaseUserSerializer.Meta):
         read_only_fields = ('email',)
+
+
+class BaseWhoAmIUserSerializer(BaseUserSerializer):
+    permissions = serializers.SerializerMethodField()
+
+    class Meta(BaseUserSerializer.Meta):
+        fields = BaseUserSerializer.Meta.fields + ('permissions',)
+
+    def get_permissions(self, user) -> list[str]:
+        return [perm for _, perm in all_permissions]
 
 
 class UserSimpleSerializer(BaseUserSerializer):
@@ -235,4 +235,5 @@ class HotkeysSerializer(serializers.Serializer):
 
 
 UserSerializer = load_func(settings.USER_SERIALIZER)
+WhoAmIUserSerializer = load_func(settings.WHOAMI_USER_SERIALIZER)
 UserSerializerUpdate = load_func(settings.USER_SERIALIZER_UPDATE)

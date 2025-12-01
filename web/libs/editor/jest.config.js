@@ -51,7 +51,7 @@ module.exports = {
           ],
         ],
         plugins: [
-          ["babel-plugin-import", { libraryName: "antd" }],
+          ["babel-plugin-import", { libraryName: "antd", style: false }],
           "@babel/plugin-proposal-class-properties",
           "@babel/plugin-proposal-private-methods",
           "@babel/plugin-proposal-optional-chaining",
@@ -67,9 +67,12 @@ module.exports = {
     "^keymaster": "identity-obj-proxy",
     "^react-konva-utils": "identity-obj-proxy",
     "\\.(s[ac]ss|css|svg|png|jpe?g)$": "identity-obj-proxy",
+    "^@adobe/css-tools$": "<rootDir>/../../__mocks__/@adobe/css-tools.js",
     "^@humansignal/ui": "<rootDir>/../ui/src/index.ts",
-    ...pathsToModuleNameMapper(tsconfig.compilerOptions.paths, { prefix: "<rootDir>/../../" }),
+    ...pathsToModuleNameMapper(tsconfig.compilerOptions.paths, {
+      prefix: "<rootDir>/../../",
+    }),
   },
   testPathIgnorePatterns: ["/node_modules/", "/e2e/"],
-  transformIgnorePatterns: ["node_modules/?!(nanoid|konva)"],
+  transformIgnorePatterns: ["node_modules/?!(nanoid|konva|@adobe)"],
 };

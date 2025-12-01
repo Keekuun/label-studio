@@ -1,5 +1,5 @@
 import { escapeHtml, isString } from "./utilities";
-import get from "lodash.get";
+import get from "lodash/get";
 
 /**
  * Simple way to retrieve linked data in `value` param from task

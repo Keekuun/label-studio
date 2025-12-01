@@ -609,6 +609,53 @@ export const DEFAULT_HOTKEYS = [
     description: "Increase tool size",
     active: true,
   },
+
+  // Paragraph Navigation
+  {
+    id: 6900,
+    section: "paragraphs",
+    element: "phrases:next-phrase",
+    label: "Next Phrase",
+    key: "ctrl+down",
+    description: "Navigate to the next phrase in paragraph view",
+    active: true,
+  },
+  {
+    id: 7000,
+    section: "paragraphs",
+    element: "phrases:previous-phrase",
+    label: "Previous Phrase",
+    key: "ctrl+up",
+    description: "Navigate to the previous phrase in paragraph view",
+    active: true,
+  },
+  {
+    id: 7100,
+    section: "paragraphs",
+    element: "phrases:select_all_annotate",
+    label: "Select All and Annotate",
+    key: "ctrl+shift+a",
+    description: "Select all text in current phrase and create annotation",
+    active: true,
+  },
+  {
+    id: 7200,
+    section: "paragraphs",
+    element: "phrases:next-region",
+    label: "Next Region in Phrase",
+    key: "ctrl+right",
+    description: "Navigate to the next region within current phrase",
+    active: true,
+  },
+  {
+    id: 7300,
+    section: "paragraphs",
+    element: "phrases:previous-region",
+    label: "Previous Region in Phrase",
+    key: "ctrl+left",
+    description: "Navigate to the previous region within current phrase",
+    active: true,
+  },
 ];
 
 export const HOTKEY_SECTIONS = [
@@ -655,6 +702,11 @@ export const HOTKEY_SECTIONS = [
     id: "image_gallery",
     title: "Image Gallery Navigation",
     description: "Shortcuts for navigating between images in multi-image tasks",
+  },
+  {
+    id: "paragraphs",
+    title: "Paragraph Navigation",
+    description: "Shortcuts for navigating phrases and regions in paragraph/dialogue view",
   },
 ];
 

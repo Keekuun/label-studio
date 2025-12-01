@@ -175,6 +175,13 @@ class GCSImportStorageBase(GCSStorageMixin, ImportStorage):
     presign_ttl = models.PositiveSmallIntegerField(
         _('presign_ttl'), default=1, help_text='Presigned URLs TTL (in minutes)'
     )
+    recursive_scan = models.BooleanField(
+        _('recursive scan'),
+        default=False,
+        db_default=False,
+        null=True,
+        help_text=_('Perform recursive scan over the bucket content'),
+    )
 
     def iter_objects(self):
         return GCS.iter_blobs(
@@ -183,6 +190,7 @@ class GCSImportStorageBase(GCSStorageMixin, ImportStorage):
             prefix=self.prefix,
             regex_filter=self.regex_filter,
             return_key=False,
+            recursive_scan=bool(self.recursive_scan),
         )
 
     def iter_keys(self):

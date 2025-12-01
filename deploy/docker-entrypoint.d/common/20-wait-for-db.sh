@@ -52,10 +52,10 @@ function postgres_ready(){
 python3 << END
 import sys
 import os
-import psycopg2
+import psycopg
 try:
-    conn = psycopg2.connect(dbname=os.getenv('POSTGRE_NAME', 'root'), user=os.getenv('POSTGRE_USER'), password=os.getenv('POSTGRE_PASSWORD'), host=os.getenv('POSTGRE_HOST'), port=os.getenv('POSTGRE_PORT'), sslmode=os.getenv('PGSSLMODE'), sslrootcert=os.getenv('PGSSLROOTCERT'), sslcert=os.getenv('PGSSLCERT'), sslkey=os.getenv('PGSSLKEY'))
-except psycopg2.OperationalError as e:
+    conn = psycopg.connect(dbname=os.getenv('POSTGRE_NAME', 'root'), user=os.getenv('POSTGRE_USER'), password=os.getenv('POSTGRE_PASSWORD'), host=os.getenv('POSTGRE_HOST'), port=os.getenv('POSTGRE_PORT'), sslmode=os.getenv('PGSSLMODE'), sslrootcert=os.getenv('PGSSLROOTCERT'), sslcert=os.getenv('PGSSLCERT'), sslkey=os.getenv('PGSSLKEY'))
+except psycopg.OperationalError as e:
     print(e)
     sys.exit(-1)
 sys.exit(0)

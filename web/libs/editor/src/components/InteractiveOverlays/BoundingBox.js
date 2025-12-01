@@ -123,6 +123,7 @@ const _detect = (region) => {
     case "rectangleregion":
     case "ellipseregion":
     case "polygonregion":
+    case "vectorregion":
     case "keypointregion":
     case "brushregion":
     case "bitmaskregion": {

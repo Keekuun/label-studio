@@ -3,7 +3,7 @@ title: Automatic Speech Recognition
 type: templates
 category: Audio/Speech Processing
 cat: audio-speech-processing
-order: 301
+order: 305
 meta_title: Audio Transcription Data Labeling Template
 meta_description: Template for audio transcription for automatic speech recognition use cases with Label Studio for your machine learning and data science projects.
 ---

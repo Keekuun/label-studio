@@ -1,10 +1,11 @@
 import { type DetailedHTMLProps, forwardRef, useCallback, useEffect, useRef, type VideoHTMLAttributes } from "react";
 import InfoModal from "../../components/Infomodal/Infomodal";
-import { FF_LSDV_4711, isFF } from "../../utils/feature-flags";
+import { patchPlayPauseMethods } from "../../utils/patchPlayPauseMethods";
 import i18n from "i18next"
 
 type VirtualVideoProps = DetailedHTMLProps<VideoHTMLAttributes<HTMLVideoElement>, HTMLVideoElement> & {
   canPlayType?: (supported: boolean) => void;
+  speed?: number;
 };
 
 const DEBUG_MODE = false;
@@ -95,8 +96,9 @@ export const VirtualVideo = forwardRef<HTMLVideoElement, VirtualVideoProps>((pro
     videoEl.muted = !!props.muted;
     videoEl.controls = false;
     videoEl.preload = "auto";
+    videoEl.playbackRate = props.speed ?? 1;
 
-    if (isFF(FF_LSDV_4711)) videoEl.crossOrigin = "anonymous";
+    videoEl.crossOrigin = "anonymous";
 
     Object.assign(videoEl.style, {
       top: "-9999px",
@@ -119,6 +121,7 @@ export const VirtualVideo = forwardRef<HTMLVideoElement, VirtualVideoProps>((pro
   }, []);
 
   const attachRef = useCallback((video: HTMLVideoElement | null) => {
+    if (video) video = patchPlayPauseMethods(video);
     if (ref instanceof Function) {
       ref(video);
     } else if (ref) {

@@ -1,6 +1,29 @@
 .timeline-controls {
+  position: relative;
   background: var(--color-neutral-background-bold);
   padding: 4px;
+
+  &__buffering {
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 4px;
+    position: absolute;
+    background-color: var(--color-primary-content);
+    overflow: hidden;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 25%;
+      height: 100%;
+      will-change: left;
+      background-color: var(--color-primary-content-subtle);
+      animation: buffering-media 800ms ease-out infinite;
+    }
+  }
 
   &__counter {
     height: 36px;
@@ -86,7 +109,7 @@
         }
       }
 
-      & + & {
+      &+& {
         border-left: 1px solid var(--color-neutral-border);
       }
     }
@@ -109,5 +132,15 @@
     display: inline-block;
     color: var(--color-neutral-content-subtle);
     background: var(--color-neutral-surface);
+  }
+}
+
+@keyframes buffering-media {
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
   }
 }

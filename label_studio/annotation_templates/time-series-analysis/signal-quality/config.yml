@@ -2,7 +2,16 @@ title: Signal Quality
 type: community
 group: Time Series Analysis
 image: /static/templates/signal-quality.png
-details: <h1>Rate signal quality</h1>
+details: |
+  <h1>Rate signal quality</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>Industrial equipment, medical device monitoring, telecommunications, audio signal processing, vibration analysis, environmental monitoring, power systems, automotive diagnostics, aerospace, manufacturing quality control, predictive maintenance, IoT sensor monitoring</dd>
+    <dt>Associated Models</dt>
+    <dd>signal-to-noise ratio, data quality assessment, sensor validation, signal integrity</dd>
+    <dt>Domain Terminology</dt>
+    <dd>CSV, Excel, XLS, Sheet, signal degradation, noise detection, data reliability, measurement quality, sensor calibration</dd>
+  </dl>
 config: |
   <View>
       <!-- No region selected section -->

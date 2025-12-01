@@ -3,7 +3,7 @@ title: Search Page Ranking
 type: templates
 category: Ranking and Scoring
 cat: ranking-and-scoring
-order: 555
+order: 405
 meta_title: Rank different kinds of results by given search query
 meta_description: 
 ---

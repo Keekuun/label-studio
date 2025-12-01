@@ -31,6 +31,18 @@ Test 1!
 
 
 
+function escapeHTML(str) {
+  return str.replace(/[&<>"']/g, function (char) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[char];
+  });
+}
+
 function openCodeTab(id, event) {
   const tabObj = document.querySelector(`${'#' + id}`);
   const anchorObj = document.querySelector(`${'#' + id + '-anchor'}`);
@@ -75,7 +87,7 @@ function openCodeTab(id, event) {
               'class="Heading XXSmall"' +
               'onclick="openCodeTab(\'' + id + '\', event)" ' +
               'href="#' + id + '-anchor">' +
-              name +
+              escapeHTML(name) +
             '</a>';
     })
 

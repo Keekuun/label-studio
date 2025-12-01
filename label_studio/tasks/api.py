@@ -5,6 +5,7 @@ import logging
 from core.feature_flags import flag_set
 from core.mixins import GetParentObjectMixin
 from core.permissions import ViewClassPermission, all_permissions
+from core.utils.common import is_community
 from core.utils.params import bool_from_request
 from data_manager.api import TaskListAPI as DMTaskListAPI
 from data_manager.functions import evaluate_predictions
@@ -72,7 +73,9 @@ logger = logging.getLogger(__name__)
             'x-fern-sdk-method-name': 'create',
             'x-fern-audiences': ['public'],
         },
-    ),
+    )
+    if is_community()
+    else lambda f: f,
 )
 @method_decorator(
     name='get',
@@ -164,11 +167,13 @@ logger = logging.getLogger(__name__)
             'x-fern-sdk-method-name': 'list',
             'x-fern-pagination': {
                 'offset': '$request.page',
-                'results': '$response.results',
+                'results': '$response.tasks',
             },
             'x-fern-audiences': ['public'],
         },
-    ),
+    )
+    if is_community()
+    else lambda f: f,
 )
 class TaskListAPI(DMTaskListAPI):
     serializer_class = TaskSerializer
@@ -283,8 +288,7 @@ class TaskAPI(generics.RetrieveUpdateDestroyAPIView):
         super().initial(request, *args, **kwargs)
         self.task = self.get_object()
 
-    @staticmethod
-    def prefetch(queryset):
+    def prefetch(self, queryset):
         return queryset.prefetch_related(
             'annotations',
             'predictions',
@@ -319,7 +323,8 @@ class TaskAPI(generics.RetrieveUpdateDestroyAPIView):
             project.evaluate_predictions_automatically or project.show_collab_predictions
         ) and not self.task.predictions.exists():
             evaluate_predictions([self.task])
-            self.task.refresh_from_db()
+            # refresh task from db with prefetches
+            self.task = self.get_object()
 
         serializer = self.get_serializer_class()(
             self.task, many=False, context=context, expand=['annotations.completed_by']

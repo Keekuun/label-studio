@@ -3,7 +3,7 @@ title: Object Detection with Bounding Boxes
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 103
+order: 110
 meta_title: Image Object Detection Data Labeling Template
 meta_description: Template for performing object detection with rectangular bounding boxes with Label Studio for your machine learning and data science projects.
 ---

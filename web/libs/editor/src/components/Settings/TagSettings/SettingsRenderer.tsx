@@ -3,17 +3,17 @@ import { Checkbox } from "@humansignal/ui";
 import { observer } from "mobx-react";
 import type { FC } from "react";
 import type { SettingsProperties, SettingsProperty } from "../../../core/settings/types";
-import { Block, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import { isFF } from "../../../utils/feature-flags";
 import i18n from "i18next";
 
 const SettingsRendererPure: FC<{ store: any; settings: SettingsProperties }> = ({ store, settings }) => {
   return (
-    <Block name="settings">
+    <div className={cn("settings").toClassName()}>
       {Object.entries(settings).map(([key, value]) => {
         return value.ff && !isFF(value.ff) ? null : <SettingsField key={key} name={key} store={store} value={value} />;
       })}
-    </Block>
+    </div>
   );
 };
 
@@ -55,7 +55,7 @@ const SettingsField: FC<{
   }
 
   return (
-    <Elem name="field" key={name}>
+    <div className={cn("settings").elem("field").toClassName()} key={name}>
       {value.type === "boolean" ? (
         <Checkbox {...props}>{i18n.t(value.description)}</Checkbox>
       ) : (
@@ -64,7 +64,7 @@ const SettingsField: FC<{
           <Input {...props} />
         </label>
       )}
-    </Elem>
+    </div>
   );
 });
 

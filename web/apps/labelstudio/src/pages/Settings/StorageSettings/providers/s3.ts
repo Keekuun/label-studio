@@ -20,15 +20,23 @@ export const s3Provider: ProviderConfig = {
       name: "region_name",
       type: "text",
       label: "Region Name",
-      placeholder: "us-east-1",
+      placeholder: "us-east-1 (default)",
       schema: z.string().optional().default(""),
     },
     {
       name: "s3_endpoint",
       type: "text",
       label: "S3 Endpoint",
-      placeholder: "https://s3.amazonaws.com",
+      placeholder: "https://s3.amazonaws.com (default)",
       schema: z.string().optional().default(""),
+    },
+    {
+      name: "prefix",
+      type: "text",
+      label: "Bucket prefix",
+      placeholder: "path/to/files",
+      schema: z.string().optional().default(""),
+      target: "export",
     },
     {
       name: "aws_access_key_id",
@@ -65,6 +73,8 @@ export const s3Provider: ProviderConfig = {
       description:
         "When pre-signed URLs are enabled, all data bypasses the platform and user browsers directly read data from storage",
       schema: z.boolean().default(true),
+      target: "import",
+      resetConnection: false,
     },
     {
       name: "presign_ttl",
@@ -74,20 +84,22 @@ export const s3Provider: ProviderConfig = {
       max: 10080,
       step: 1,
       schema: z.number().min(1).max(10080).default(15),
+      target: "import",
+      resetConnection: false,
+      dependsOn: {
+        field: "presign",
+        value: true,
+      },
     },
   ],
   layout: [
-    {
-      fields: ["bucket"],
-    },
-    {
-      fields: ["region_name", "s3_endpoint"],
-    },
-    {
-      fields: ["aws_access_key_id", "aws_secret_access_key", "aws_session_token"],
-    },
-    {
-      fields: ["presign", "presign_ttl"],
-    },
+    { fields: ["bucket"] },
+    { fields: ["region_name"] },
+    { fields: ["s3_endpoint"] },
+    { fields: ["prefix"] },
+    { fields: ["aws_access_key_id"] },
+    { fields: ["aws_secret_access_key"] },
+    { fields: ["aws_session_token"] },
+    { fields: ["presign", "presign_ttl"] },
   ],
 };

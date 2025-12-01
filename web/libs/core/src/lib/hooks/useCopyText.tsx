@@ -1,17 +1,17 @@
 import { useCallback, useState } from "react";
+import { copyText, isDefined } from "../utils/helpers";
 
-export function useCopyText(text: string) {
+export const useCopyText = ({ defaultText = "", timeout = 1200 }: { defaultText?: string; timeout?: number } = {}) => {
   const [copied, setCopied] = useState(false);
 
-  const copy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(text);
+  const copyTextCallback = useCallback(
+    (text?: string) => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [text]);
+      copyText(isDefined(text) ? text : defaultText);
+      setTimeout(() => setCopied(false), timeout);
+    },
+    [defaultText, timeout],
+  );
 
-  return [copy, copied] as const;
-}
+  return [copyTextCallback, copied] as const;
+};

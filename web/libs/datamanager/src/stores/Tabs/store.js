@@ -158,7 +158,6 @@ export const TabStore = types
     deleteView: flow(function* (view, { autoselect = true } = {}) {
       if (autoselect && self.selected === view) {
         let newView;
-
         if (self.selected.opener) {
           newView = self.opener.referrer;
         } else {
@@ -167,7 +166,7 @@ export const TabStore = types
           newView = index === 0 ? self.views[index + 1] : self.views[index - 1];
         }
 
-        self.setSelected(newView.key);
+        yield self.setSelected(newView.key);
       }
 
       if (view.saved) {

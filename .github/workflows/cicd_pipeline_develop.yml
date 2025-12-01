@@ -64,7 +64,7 @@ jobs:
     needs:
       - build-docker
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         env:
           DOCKER_IMAGE_VERSION: ${{ needs.build-docker.outputs.build_version }}
           RELEASE_NAME: 'ls-develop'

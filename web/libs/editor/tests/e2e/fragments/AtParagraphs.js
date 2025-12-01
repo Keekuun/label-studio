@@ -8,7 +8,9 @@ module.exports = {
   _phraseDialoguetextSelector: "[class^='dialoguetext--']",
 
   getParagraphTextSelector(idx) {
-    return `${this._rootSelector} ${this._phraseSelector}:nth-child(${idx}) ${this._phraseDialoguetextSelector}`;
+    // Convert 1-based test index to 0-based data-testid index
+    const zeroBasedIdx = idx - 1;
+    return `[data-testid="phrase:${zeroBasedIdx}"] [class^='dialoguetext--']`;
   },
 
   selectTextByOffset(paragraphIdx, startOffset, endOffset) {
@@ -61,5 +63,22 @@ module.exports = {
     // Close any open dropdown
     I.pressKey("Escape");
     I.waitTicks(3); // Wait for UI to update after filter change
+  },
+
+  // Select All button helpers
+  seeSelectAllButton(index) {
+    I.seeElement(`[data-testid="select-all-btn:${index}"]`);
+  },
+
+  clickSelectAllButton(index) {
+    I.click(`[data-testid="select-all-btn:${index}"]`);
+  },
+
+  seeSelectAllButtonDisabled(index) {
+    I.seeElement(`[data-testid="select-all-btn:${index}"][disabled]`);
+  },
+
+  dontSeeSelectAllButton(index) {
+    I.dontSeeElement(`[data-testid="select-all-btn:${index}"]`);
   },
 };

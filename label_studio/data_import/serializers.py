@@ -21,7 +21,14 @@ class ImportApiSerializer(TaskSerializer):
 
 class FileUploadSerializer(serializers.ModelSerializer):
     file = serializers.FileField(use_url=False)
+    size = serializers.SerializerMethodField()
 
     class Meta:
         model = FileUpload
-        fields = ['id', 'file']
+        fields = ['id', 'file', 'size']
+
+    def get_size(self, obj) -> int | None:
+        try:
+            return obj.file.size
+        except (ValueError, OSError):
+            return None

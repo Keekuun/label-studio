@@ -1,15 +1,15 @@
 {
   "projectCreation": [
     {
-      "title": "Did you know?",
-      "content": "It's easier to find the projects when you organize them into workspaces using Label Studio Enterprise.",
+      "title": "New Storage Connector",
+      "content": "You can connect Label Studio Enterprise to Databricks Unity Catalog (UC) Volumes to import files as tasks and export annotations.",
       "closable": true,
       "link": {
         "label": "Learn more",
-        "url": "https://docs.humansignal.com/guide/manage_projects#Create-workspaces-to-organize-projects",
+        "url": "https://docs.humansignal.com/guide/storage.html#Databricks-Files-UC-Volumes",
         "params": {
           "experiment": "project_creation_tip",
-          "treatment": "find_and_manage_projects_live"
+          "treatment": "databricks_uc_live"
         }
       }
     },
@@ -116,6 +116,19 @@
           "treatment": "integration_points_live"
         }
       }
+    },
+    {
+      "title": "Need Compliance?",
+      "content": "Label Studio Enterprise is fully SOC 2 and HIPAA compliant. Want more control? Deploy it On-Premises for maximum flexibility.",
+      "closable": true,
+      "link": {
+        "label": "Contact us",
+        "url": "https://humansignal.com/contact-sales/",
+        "params": {
+          "experiment": "organization_page_tip",
+          "treatment": "compliance_live"
+        }
+      }
     }
   ],
   "projectSettings": [
@@ -170,6 +183,19 @@
           "treatment": "connect_ml_models_live"
         }
       }
+    },
+    {
+      "title": "Native PDF support is coming!",
+      "content": "Label Studio Enterprise provides native PDF support.",
+      "closable": true,
+      "link": {
+        "label": "Request early access",
+        "url": "https://humansignal.com/pdf-interest-signup",
+        "params": {
+          "experiment": "project_settings_tip",
+          "treatment": "lse_pdf_live"
+        }
+      }
     }
   ],
   "authPage": [
@@ -186,38 +212,26 @@
       }
     },
     {
-      "title": "Evaluate and compare LLMs",
-      "description": "Compare accuracy, cost, and performance on your tasks with Label Studio Prompts.",
+      "title": "Behind the benchmark",
+      "description": "Learn how Legalbenchmarks.ai built and scaled a benchmark for practical contract drafting tasks using LLM-as-a-judge and human review in Label Studio Enterprise.",
       "link": {
         "label": "Learn more",
-        "url": "https://docs.humansignal.com/guide/prompts_overview",
+        "url": "https://humansignal.com/blog/how-legalbenchmarks-ai-built-a-domain-specific-ai-benchmark/",
         "params": {
           "experiment": "login_revamp",
-          "treatment": "model_eval_live"
-        }
-      }
-    },
-    {
-      "title": "New Feature!",
-      "description": "You can now label multi-page documents like PDFs.",
-      "link": {
-        "label": "Learn more",
-        "url": "https://labelstud.io/templates/multi-page-document-annotation",
-        "params": {
-          "experiment": "login_revamp",
-          "treatment": "multi_image_live"
+          "treatment": "legalbench_live"
         }
       }
     },
     {
       "title": "New Enterprise Feature!",
-      "description": "Save time by labeling many tasks at once with Bulk Labeling",
+      "description": "Chat conversations are now a native data type for creating and evaluating chat-based AI experiences in Label Studio.",
       "link": {
         "label": "Learn more",
-        "url": "https://docs.humansignal.com/guide/labeling.html#Bulk-labeling",
+        "url": "https://humansignal.com/blog/introducing-chat-4-use-cases-to-ship-a-high-quality-chatbot/",
         "params": {
           "experiment": "login_revamp",
-          "treatment": "bulk_labeling_live"
+          "treatment": "chat_live"
         }
       }
     },

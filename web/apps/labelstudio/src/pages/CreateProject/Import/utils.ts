@@ -33,8 +33,11 @@ export const importFiles = async ({
     { headers: { "Content-Type": contentType }, body },
   );
 
-  if (res && !res.error) onFinish?.(res);
-  else onError?.(res?.response);
+  if (res && !res.error) {
+    await onFinish?.(res);
+  } else {
+    onError?.(res?.response);
+  }
 
   onUploadFinish?.(files);
 };

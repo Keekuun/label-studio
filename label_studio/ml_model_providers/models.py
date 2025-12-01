@@ -1,11 +1,14 @@
 """This file and its contents are licensed under the Apache License 2.0. Please see the included NOTICE for copyright information and LICENSE for a copy of the license.
 """
+import logging
 from typing import List
 
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from tasks.models import PredictionMeta
+
+logger = logging.getLogger(__name__)
 
 
 class ModelProviders(models.TextChoices):
@@ -142,3 +145,17 @@ class ModelProviderConnection(models.Model):
         # opting for the goofy "self.budget_total_spent or 0" to avoid a db migration
         self.budget_total_spent = (self.budget_total_spent or 0) + total_cost
         self.save(update_fields=['budget_total_spent'])
+
+    def has_reached_budget_limit(self):
+        if (
+            self.is_internal
+            and self.budget_total_spent
+            and self.budget_limit
+            and self.budget_total_spent > self.budget_limit
+        ):
+            logger.info(
+                f'Model connection {self.id} has reached the budget limit: '
+                f'{self.budget_total_spent} > {self.budget_limit}'
+            )
+            return True
+        return False

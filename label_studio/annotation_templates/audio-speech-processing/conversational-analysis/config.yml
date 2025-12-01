@@ -2,7 +2,16 @@ title: Conversational Analysis
 type: community
 group: Audio/Speech Processing
 image: /static/templates/thumbnail-conversation-sentiment.png
-details: <h1>Analyse dialogue utterances and markup facts and sentiment aspects</h1>
+details: |
+  <h1>Analyse dialogue utterances and markup facts and sentiment aspects</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>call center quality, customer service analysis, sales call analysis, therapy session analysis, meeting transcription, interview analysis, focus group research, market research, podcast analysis, conference call analysis, legal deposition, telehealth consultations</dd>
+    <dt>Associated Models</dt>
+    <dd>conversation mining, dialogue act classification, sentiment analysis, emotion recognition</dd>
+    <dt>Domain Terminology</dt>
+    <dd>turn-taking, conversational AI, dialogue systems, discourse analysis, speech sentiment</dd>
+  </dl>
 config: |
   <View>
       <Audio name="audio" value="$audio"

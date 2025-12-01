@@ -1,3 +1,4 @@
+import Konva from "konva";
 import { getRoot, isAlive, types } from "mobx-state-tree";
 import { useContext } from "react";
 import { Rect } from "react-konva";
@@ -54,6 +55,7 @@ const RectRegionAbsoluteCoordsDEV3793 = types
       self.updateAppearenceFromState();
     },
     setPosition(x, y, width, height, rotation) {
+      [x, y, width, height, rotation] = self.beforeSetPosition(x, y, width, height, rotation);
       self.x = x;
       self.y = y;
       self.width = width;
@@ -333,6 +335,34 @@ const Model = types
       self.rotation = (rotation + 360) % 360;
     },
 
+    beforeSetPosition(x, y, width, height, rotation) {
+      // Konva flipping fix
+      if (height < 0) {
+        let flippedBack;
+        // If height is negative, it means it was flipped. We need to correct it
+        // Negative height also means that it was changed.
+        // In that case the difference between rotation and current rotation may be only 0 (or 360) and 180 degrees.
+        // However, as it's not an integer value, we had to check the difference to be sure,
+        // so 90 and 270 degrees are the safest values to check
+        const deltaRotation = Math.abs(rotation - self.rotation) % 360;
+        if (deltaRotation > 90 && deltaRotation < 270) {
+          // when rotation changes involved, it's a horizontal flip
+          flippedBack = self.flipBack({ x, y, width, height, rotation }, true);
+        } else {
+          // vertical flip
+          flippedBack = self.flipBack({ x, y, width, height, rotation });
+        }
+        [x, y, width, height, rotation] = [
+          flippedBack.x,
+          flippedBack.y,
+          flippedBack.width,
+          flippedBack.height,
+          flippedBack.rotation,
+        ];
+      }
+      return [x, y, width, height, rotation];
+    },
+
     /**
      * Bounding Box set position on canvas
      * @param {number} x
@@ -342,6 +372,7 @@ const Model = types
      * @param {number} rotation
      */
     setPosition(x, y, width, height, rotation) {
+      [x, y, width, height, rotation] = self.beforeSetPosition(x, y, width, height, rotation);
       const internalX = self.parent.canvasToInternalX(x);
       const internalY = self.parent.canvasToInternalY(y);
       const internalWidth = self.parent.canvasToInternalX(width);
@@ -362,8 +393,14 @@ const Model = types
         });
 
         // Calculate snapped dimensions
-        const snappedWidth = bottomRightPoint.x - topLeftPoint.x;
-        const snappedHeight = bottomRightPoint.y - topLeftPoint.y;
+        let snappedWidth = bottomRightPoint.x - topLeftPoint.x;
+        let snappedHeight = bottomRightPoint.y - topLeftPoint.y;
+
+        // Ensure at least 1 pixel in size after snapping
+        const minPixelWidth = self.parent?.zoomedPixelSize?.x ?? 1;
+        const minPixelHeight = self.parent?.zoomedPixelSize?.y ?? 1;
+        if (snappedWidth < minPixelWidth) snappedWidth = minPixelWidth;
+        if (snappedHeight < minPixelHeight) snappedHeight = minPixelHeight;
 
         self.setPositionInternal(topLeftPoint.x, topLeftPoint.y, snappedWidth, snappedHeight, rotation);
       } else {
@@ -395,27 +432,39 @@ const Model = types
      * - when the region is flipped horizontally with no rotation, we fix the rotation back to 0.
      * - when the region is flipped vertically, rotation is still 0, we just flip the height.
      */
-    flipRegion() {
-      const height = -self.height;
+    flipBack(attrs, isHorizontalFlip = false) {
+      // To make it calculable, we need to avoid relative coordinates
+      let { x, y, width, height, rotation } = attrs;
+      const radiansRotation = (rotation * Math.PI) / 180;
+      const transform = new Konva.Transform();
+      transform.rotate(radiansRotation);
+      let targetCorner;
 
-      // the most common case, when the region is flipped horizontally with no rotation,
-      // for this case we are fixing rotation back to 0, that's more intuitive for the user.
-      if (self.rotation === 180) {
-        self.height = height;
-        self.x -= self.width;
-        self.rotation = 0;
+      if (isHorizontalFlip) {
+        // When it flips horizontally, it turns the height negative and rotates the region by 180°.
+        // In general, we want to return a top-right corner to the top-left corner and rotate back
+        targetCorner = {
+          x: width,
+          y: 0,
+        };
+        rotation = (rotation + 180) % 360;
       } else {
-        // we need to invert the height and swap top-left and bottom-left corners, but with respect to rotation.
-        // we'll use tranform from Konva.js to not fight aspect ratio and rotation.
-        // transform is calculated in canvas coords, so we need to convert coords back and forth.
-        const transform = self.shapeRef.getAbsoluteTransform();
-        // bottom-left corner; it's "above" the top-left corner because of inverted height
-        const { x, y } = transform.point({ x: 0, y: -self.parent.internalToCanvasY(height) });
-
-        self.height = height;
-        self.x = self.parent.canvasToInternalX(x);
-        self.y = self.parent.canvasToInternalY(y);
+        // In a vertical flipping case it affects only the height.
+        // It means that we want to return a bottom-left corner to the top-left corner
+        targetCorner = {
+          x: 0,
+          y: height,
+        };
       }
+      const offset = transform.point(targetCorner);
+
+      return {
+        x: x + offset.x,
+        y: y + offset.y,
+        width,
+        height: -height,
+        rotation,
+      };
     },
 
     /**
@@ -492,6 +541,7 @@ const HtxRectangleView = ({ item, setShapeRef }) => {
     };
     eventHandlers.onTransformEnd = (e) => {
       const t = e.target;
+      const isFlipped = t.getAttr("scaleY") < 0;
 
       item.setPosition(
         t.getAttr("x"),
@@ -514,6 +564,12 @@ const HtxRectangleView = ({ item, setShapeRef }) => {
           width: item.canvasWidth,
           height: item.canvasHeight,
         });
+      }
+
+      if (isFlipped) {
+        // Somehow react-konva caches rotation, most probably as a controllable state,
+        // so we need to set it manually if it able to be reverted to the previous value
+        t.setAttr("rotation", item.rotation);
       }
 
       item.notifyDrawingFinished();

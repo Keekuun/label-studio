@@ -3,7 +3,7 @@ title: Website Rating
 type: templates
 category: Ranking and Scoring
 cat: ranking-and-scoring
-order: 505
+order: 410
 meta_title: Website Rating Data Labeling Template
 meta_description: Template for rating website content with Label Studio for your machine learning and data science projects.
 ---

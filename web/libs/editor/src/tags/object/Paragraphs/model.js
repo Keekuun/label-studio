@@ -14,6 +14,9 @@ import messages from "../../../utils/messages";
 import { clamp, isDefined, isValidObjectURL } from "../../../utils/utilities";
 import ObjectBase from "../Base";
 import styles from "./Paragraphs.module.scss";
+import { ff } from "@humansignal/core";
+
+const isSyncedBuffering = ff.isActive(ff.FF_SYNCED_BUFFERING);
 
 /**
  * The `Paragraphs` tag displays paragraphs of text on the labeling interface. Use to label dialogue transcripts for NLP and NER projects.
@@ -190,6 +193,7 @@ const PlayableAndSyncable = types
     audioRef: createRef(),
     audioDuration: null,
     audioFrameHandler: null,
+    _viewRef: null, // Add this line
   }))
   .views((self) => ({
     /**
@@ -252,24 +256,85 @@ const PlayableAndSyncable = types
       );
     },
 
+    triggerSyncBuffering(isBuffering) {
+      if (!self.audioRef?.current) return;
+      if (!isSyncedBuffering) return;
+      const playing = self.wasPlayingBeforeBuffering;
+
+      self.triggerSync("buffering", {
+        buffering: isBuffering,
+        playing,
+      });
+    },
+
     registerSyncHandlers() {
-      self.syncHandlers.set("pause", self.stopNow);
+      self.syncHandlers.set("pause", isSyncedBuffering ? self.handleSyncPause : self.stopNow);
       self.syncHandlers.set("play", self.handleSyncPlay);
       self.syncHandlers.set("seek", self.handleSyncPlay);
       self.syncHandlers.set("speed", self.handleSyncSpeed);
+      if (isSyncedBuffering) {
+        self.syncHandlers.set("buffering", self.handleSyncBuffering);
+      }
     },
 
-    handleSyncPlay({ time, playing }) {
+    handleSyncBuffering({ playing, ...data }) {
+      const audio = self.audioRef.current;
+
+      audio.currentTime = data.time;
+
+      self.isBuffering = self.syncManager?.isBuffering;
+
+      if (data.buffering) {
+        self.wasPlayingBeforeBuffering = playing;
+        audio?.pause();
+        self.playing = false;
+      }
+      if (!self.isBuffering && !data.buffering) {
+        if (playing) {
+          audio?.play();
+          self.playing = true;
+          self.trackPlayingId();
+        }
+      }
+    },
+
+    handleSyncPlay({ time, playing }, event) {
       const audio = self.audioRef.current;
 
       if (!audio) return;
 
-      // so we are changing time inside current region only
+      const isBuffering = self.syncManager?.isBuffering;
+
       audio.currentTime = time;
-      if (audio.paused && playing) {
-        self.play();
-      } else {
-        self.trackPlayingId();
+
+      // Normal logic when no buffering
+      if (!isSyncedBuffering || (!isBuffering && isDefined(playing))) {
+        // so we are changing time inside current region only
+        const isPaused = isSyncedBuffering ? !self.wasPlayingBeforeBuffering : audio.paused;
+        if (isPaused && playing) {
+          self.play();
+        } else if (isSyncedBuffering && !isPaused && !playing) {
+          // some times video can trigger `seek` event with `playing=false` and we need to pause at this case
+          self.stopNow();
+        } else {
+          self.trackPlayingId();
+        }
+      }
+      // during the buffering only these events have real `playing` values (in other cases it's paused all the time)
+      if (["play", "pause"].indexOf(event) > -1) {
+        self.wasPlayingBeforeBuffering = playing;
+      }
+    },
+
+    handleSyncPause({ playing }, event) {
+      if (event === "pause") {
+        self.wasPlayingBeforeBuffering = false;
+      }
+
+      const isBuffering = self.syncManager?.isBuffering;
+
+      if (!isSyncedBuffering || (!isBuffering && isDefined(playing))) {
+        self.stopNow();
       }
     },
 
@@ -309,7 +374,7 @@ const PlayableAndSyncable = types
 
       audio.pause();
       self.playing = false;
-      self.triggerSync("pause");
+      self.triggerSync("pause", isSyncedBuffering ? { playing: false } : undefined);
     },
 
     /**
@@ -336,6 +401,14 @@ const PlayableAndSyncable = types
     },
 
     trackPlayingId() {
+      if (!isSyncedBuffering) {
+        self._trackPlayingId();
+        return;
+      }
+      if (self.audioFrameHandler) cancelAnimationFrame(self.audioFrameHandler);
+      self.audioFrameHandler = requestAnimationFrame(self._trackPlayingId);
+    },
+    _trackPlayingId() {
       if (self.audioFrameHandler) cancelAnimationFrame(self.audioFrameHandler);
 
       const audio = self.audioRef.current;
@@ -353,8 +426,9 @@ const PlayableAndSyncable = types
         return currentTime >= start && currentTime < end;
       });
 
-      if (!audio.paused) {
-        self.audioFrameHandler = requestAnimationFrame(self.trackPlayingId);
+      const isPlaying = isSyncedBuffering ? self.playing && !self.isBuffering : !audio.paused;
+      if (isPlaying) {
+        self.audioFrameHandler = requestAnimationFrame(self._trackPlayingId);
       }
     },
 
@@ -367,7 +441,7 @@ const PlayableAndSyncable = types
 
       if (isPaused) {
         audio.play();
-        self.triggerSync("play");
+        self.triggerSync("play", isSyncedBuffering ? { playing: true } : undefined);
       }
 
       self.playing = true;
@@ -375,6 +449,7 @@ const PlayableAndSyncable = types
     },
 
     play(idx) {
+      self.wasPlayingBeforeBuffering = true;
       if (!isDefined(idx)) {
         self.playAny();
         return;
@@ -389,6 +464,7 @@ const PlayableAndSyncable = types
       const currentId = self.playingId;
 
       if (isPlaying && currentId === idx) {
+        self.wasPlayingBeforeBuffering = false;
         self.stopNow();
         return;
       }
@@ -400,8 +476,37 @@ const PlayableAndSyncable = types
       audio.play();
       self.playing = true;
       self.playingId = idx;
-      self.triggerSync("play");
+      self.triggerSync("play", isSyncedBuffering ? { playing: true } : undefined);
       self.trackPlayingId();
+    },
+    handleBuffering(isBuffering) {
+      if (!isSyncedBuffering) return;
+      if (self.syncManager?.isBufferingOrigin(self.name) === isBuffering) return;
+      const isAlreadyBuffering = self.syncManager?.isBuffering;
+      const isLastCauseOfBuffering =
+        self.syncManager?.bufferingOrigins.size === 1 && self.syncManager?.isBufferingOrigin(self.name);
+      const willStartBuffering = !isAlreadyBuffering && isBuffering;
+      const willStopBuffering = isLastCauseOfBuffering && !isBuffering;
+      const audio = self.audioRef?.current;
+
+      if (willStopBuffering) {
+        if (self.wasPlayingBeforeBuffering) {
+          audio?.play();
+        }
+      }
+
+      self.triggerSyncBuffering(isBuffering);
+
+      // The real value, relevant for all medias synced together we have only after triggering the buffering event
+      self.isBuffering = self.syncManager?.isBuffering;
+
+      if (willStartBuffering) {
+        audio?.pause();
+      }
+
+      if (willStopBuffering && self.wasPlayingBeforeBuffering) {
+        self.trackPlayingId();
+      }
     },
   }))
   .actions((self) => ({
@@ -411,6 +516,72 @@ const PlayableAndSyncable = types
 
     setAuthorFilter(value) {
       self.filterByAuthor = value;
+    },
+
+    seekToPhrase(idx) {
+      if (!isDefined(idx) || !self._value || idx < 0 || idx >= self._value.length) return;
+
+      const phrase = self._value[idx];
+
+      if (self.playingId === idx) {
+        return;
+      }
+
+      // Check if audio is currently playing
+      const audio = self.audioRef?.current;
+      const isAudioPlaying = audio && !audio.paused;
+
+      // If audio is playing and phrase has timing data, use play() method for proper transition
+      if (isAudioPlaying && phrase.start !== undefined) {
+        self.play(idx);
+        return;
+      }
+
+      // Always set playingId for visual selection, regardless of audio
+      self.playingId = idx;
+
+      // Only handle audio/sync logic if audio timing data exists
+      if (phrase.start !== undefined) {
+        if (self.syncSend) {
+          self.syncSend({ time: phrase.start, playing: false }, "seek");
+        } else {
+          if (audio) {
+            audio.currentTime = phrase.start;
+          }
+        }
+      }
+    },
+
+    setViewRef(ref) {
+      self._viewRef = ref;
+    },
+    selectPhraseText(phraseIndex) {
+      self._viewRef?.selectText?.(phraseIndex);
+    },
+    selectAndAnnotatePhrase(phraseIndex) {
+      // Select text and create annotation
+      self.selectPhraseText(phraseIndex);
+      self._viewRef?.createAnnotationForPhrase?.(phraseIndex);
+    },
+
+    selectAllAndAnnotateCurrentPhrase() {
+      if (!self._value || self._value.length === 0) return;
+      const idx = Math.max(0, self.playingId);
+      self.selectAndAnnotatePhrase(idx);
+    },
+
+    goToNextPhrase() {
+      if (!self._value || self._value.length === 0) return;
+      const currentIdx = self.playingId >= 0 ? self.playingId : -1;
+      const nextIdx = (currentIdx + 1) % self._value.length;
+      self.seekToPhrase(nextIdx);
+    },
+
+    goToPreviousPhrase() {
+      if (!self._value || self._value.length === 0) return;
+      const currentIdx = Math.max(0, self.playingId);
+      const prevIdx = (currentIdx - 1 + self._value.length) % self._value.length;
+      self.seekToPhrase(prevIdx);
     },
   }));
 
@@ -520,11 +691,13 @@ const ParagraphsLoadingModel = types.model().actions((self) => ({
 
     if (states.length === 0) return;
 
-    const control = states[0];
+    const [control, ...rest] = states;
     const labels = { [control.valueType]: control.selectedValues() };
 
     for (const range of ranges) {
-      const area = self.annotation.createResult(range, labels, control, self);
+      const area = ff.isActive(ff.FF_MULTIPLE_LABELS_REGIONS)
+        ? self.annotation.createResult(range, labels, control, self, false, rest)
+        : self.annotation.createResult(range, labels, control, self, false);
 
       area.setText(range.text);
 
@@ -544,9 +717,11 @@ const ParagraphsLoadingModel = types.model().actions((self) => ({
 
     if (states.length === 0) return;
 
-    const control = states[0];
+    const [control, ...rest] = states;
     const labels = { [control.valueType]: control.selectedValues() };
-    const area = self.annotation.createResult(range, labels, control, self);
+    const area = ff.isActive(ff.FF_MULTIPLE_LABELS_REGIONS)
+      ? self.annotation.createResult(range, labels, control, self, false, rest)
+      : self.annotation.createResult(range, labels, control, self, false);
 
     area.setText(range.text);
 

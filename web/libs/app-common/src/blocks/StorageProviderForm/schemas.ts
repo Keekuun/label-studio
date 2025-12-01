@@ -9,7 +9,7 @@ export const step1Schema = z.object({
 });
 
 // Helper function to get provider-specific schema
-export const getProviderSchema = (provider: string, isEditMode = false) => {
+export const getProviderSchema = (provider: string, isEditMode = false, target?: "import" | "export") => {
   const providerConfig = getProviderConfig(provider);
   if (!providerConfig) {
     return z.object({}); // Empty schema for unknown providers
@@ -26,12 +26,31 @@ export const getProviderSchema = (provider: string, isEditMode = false) => {
     },
   ];
 
+  // Add export-specific common fields
+  const exportFields: FieldDefinition[] =
+    target === "export"
+      ? [
+          {
+            name: "can_delete_objects",
+            type: "toggle",
+            label: "Can delete objects from storage",
+            description: "If unchecked, annotations will not be deleted from storage",
+            schema: z.boolean().default(false),
+          },
+        ]
+      : [];
+
   // Filter out message fields and combine with common fields
   const providerFields = providerConfig.fields.filter(
     (field): field is FieldDefinition => "type" in field && field.type !== "message",
   );
 
-  const allFields = [...commonFields, ...providerFields];
+  // Filter fields based on target if specified
+  const filteredProviderFields = target
+    ? providerFields.filter((field) => !field.target || field.target === target)
+    : providerFields;
+
+  const allFields = [...commonFields, ...exportFields, ...filteredProviderFields];
   return assembleSchema(allFields, isEditMode);
 };
 

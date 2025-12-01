@@ -25,6 +25,8 @@
 
   .username {
     font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
     line-height: 1;
     font-weight: bold;
     text-align: center;

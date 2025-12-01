@@ -1,18 +1,24 @@
-import { createRef, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  createRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  forwardRef,
+  createElement,
+} from "react";
 import { IconTimelinePause, IconTimelinePlay } from "@humansignal/icons";
-import { Block, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import { filename } from "../../../utils/helpers";
 import { Space } from "../Space/Space";
 import { Spinner } from "../Spinner";
 import "./MediaPlayer.scss";
 import { MediaSeeker } from "./MediaSeeker";
 import { Duration } from "./Duration";
-import { forwardRef } from "react";
-import { FF_LSDV_4711, isFF } from "../../../utils/feature-flags";
 
-const mediaDefaultProps = {};
-
-if (isFF(FF_LSDV_4711)) mediaDefaultProps.crossOrigin = "anonymous";
+const mediaDefaultProps = { crossOrigin: "anonymous" };
 
 const initialState = {
   duration: 0,
@@ -119,8 +125,6 @@ export const MediaPlayer = ({ src, video = false }) => {
   };
 
   useEffect(() => {
-    if (!isFF(FF_LSDV_4711)) return;
-
     // force reload on error if the source previously loaded,
     // as it may just require a new presigned url
     if (state.resetSource > 0) {
@@ -131,8 +135,6 @@ export const MediaPlayer = ({ src, video = false }) => {
   }, [state.resetSource]);
 
   useEffect(() => {
-    if (!isFF(FF_LSDV_4711)) return;
-
     // if the source was reloaded due to error, we need to wait for it to load
     // before we can set the current time and play if it was previously playing
     if (hasReloaded.current && state.loaded) {
@@ -143,28 +145,28 @@ export const MediaPlayer = ({ src, video = false }) => {
     }
   }, [state.loaded]);
 
-  const showError = isFF(FF_LSDV_4711) ? !state.resetSource && state.error : state.error;
+  const showError = !state.resetSource && state.error;
 
   return enabled ? (
-    <Block name="player" mod={{ video }} onClick={(e) => e.stopPropagation()}>
+    <div className={cn("player").mod({ video }).toClassName()} onClick={(e) => e.stopPropagation()}>
       {video && <MediaSource type="video" onClick={togglePlay} {...mediaProps} />}
       {showError ? (
-        <Elem name="loading">Unable to play</Elem>
+        <div className={cn("player").elem("loading").toClassName()}>Unable to play</div>
       ) : state.loaded ? (
-        <Elem name="playback">
-          <Elem name="controls" tag={Space} spread>
+        <div className={cn("player").elem("playback").toClassName()}>
+          <Space className={cn("player").elem("controls").toClassName()} spread>
             <Space size="small">
-              <Elem name="play" onClick={togglePlay}>
+              <div className={cn("player").elem("play").toClassName()} onClick={togglePlay}>
                 {state.playing ? <IconTimelinePause /> : <IconTimelinePlay />}
-              </Elem>
-              {!video && <Elem name="track">{filename(src)}</Elem>}
+              </div>
+              {!video && <div className={cn("player").elem("track").toClassName()}>{filename(src)}</div>}
             </Space>
-            <Elem tag={Space} size="small" name="time">
+            <Space className={cn("player").elem("time").toClassName()} size="small">
               <Duration value={state.currentTime} format={format} />
               {" / "}
               <Duration value={state.duration} format={format} />
-            </Elem>
-          </Elem>
+            </Space>
+          </Space>
 
           <MediaSeeker
             video={video}
@@ -175,41 +177,46 @@ export const MediaPlayer = ({ src, video = false }) => {
             onSeekEnd={onSeekEnd}
             onChange={onSeek}
           />
-        </Elem>
+        </div>
       ) : (
-        <Elem name="loading">
+        <div className={cn("player").elem("loading").toClassName()}>
           <Spinner size="24" />
-        </Elem>
+        </div>
       )}
 
       {!video && <MediaSource type="audio" {...mediaProps} ref={media} />}
-    </Block>
+    </div>
   ) : (
-    <Block
-      name="player"
+    <div
+      className={cn("player").toClassName()}
       onClick={(e) => {
         e.stopPropagation();
         setEnabled(true);
         waitForPlayer();
       }}
     >
-      <Elem name="controls" tag={Space} spread>
+      <Space className={cn("player").elem("controls").toClassName()} spread>
         <Space size="small">
-          <Elem name="play">
+          <div className={cn("player").elem("play").toClassName()}>
             <IconTimelinePlay />
-          </Elem>
-          <Elem name="track">Click to load</Elem>
+          </div>
+          <div className={cn("player").elem("track").toClassName()}>Click to load</div>
         </Space>
-        <Elem tag={Space} size="small" name="time" />
-      </Elem>
-    </Block>
+        <Space className={cn("player").elem("time").toClassName()} size="small" />
+      </Space>
+    </div>
   );
 };
 
 const MediaSource = forwardRef(({ type = "audio", src, ...props }, ref) => {
-  return (
-    <Elem {...mediaDefaultProps} name="media" tag={type} ref={ref} {...props}>
-      <source src={src} />
-    </Elem>
+  return createElement(
+    type,
+    {
+      ...mediaDefaultProps,
+      className: cn("player").elem("media").toClassName(),
+      ref,
+      ...props,
+    },
+    <source src={src} />,
   );
 });

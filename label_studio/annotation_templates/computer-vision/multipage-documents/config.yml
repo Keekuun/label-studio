@@ -2,7 +2,16 @@ title: Multi-page document annotation
 type: community
 group: Computer Vision
 image: /static/templates/multipage.png
-details: <h1>Annotate PDF documents</h1>
+details: |
+  <h1>Annotate PDF documents</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>legal document processing, contract analysis, financial document review, insurance claims processing, regulatory compliance, tax document processing, medical record analysis, audit documentation, due diligence, patent analysis, academic paper processing, government document digitization</dd>
+    <dt>Associated Models</dt>
+    <dd>document understanding, layout analysis, form extraction, table detection</dd>
+    <dt>Domain Terminology</dt>
+    <dd>multi-page annotation, document intelligence, structured document extraction, PDF processing</dd>
+  </dl>
 config: |
   <View>
     <RectangleLabels name="rectangles" toName="pdf" showInline="true">

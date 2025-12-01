@@ -78,6 +78,7 @@ const Model = types
     children: Types.unionArray([
       "view",
       "header",
+      "markdown",
       "labels",
       "label",
       "table",
@@ -99,6 +100,8 @@ const Model = types
       "rectanglelabels",
       "ellipselabels",
       "polygonlabels",
+      "vector",
+      "vectorlabels",
       "keypointlabels",
       "brushlabels",
       "hypertextlabels",
@@ -125,6 +128,8 @@ const Model = types
       "video",
       "videorectangle",
       "timelinelabels",
+      "custominterface",
+      ...Registry.customTags.map((t) => t.tag.toLowerCase()),
     ]),
   })
   .views((self) => ({

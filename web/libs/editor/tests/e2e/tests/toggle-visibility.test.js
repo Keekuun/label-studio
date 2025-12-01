@@ -130,8 +130,7 @@ Scenario("Hiding bulk visibility toggle", ({ I, LabelStudio, AtImageView, AtLabe
   I.seeElement(ALL_VISIBLE_SELECTOR);
 });
 
-// Skipping as flaky. Probably parallelization issue.
-Scenario.skip("Checking regions grouped by label", async ({ I, LabelStudio }) => {
+Scenario("Checking regions grouped by label", async ({ I, LabelStudio }) => {
   const checkVisible = async (num) => {
     switch (num) {
       case 0:

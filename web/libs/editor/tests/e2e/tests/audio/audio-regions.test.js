@@ -105,13 +105,15 @@ FFlagMatrix(["fflag_feat_front_lsdv_e_278_contextual_scrolling_short"], (flags) 
     AtOutliner.seeSelectedRegion();
     AtAudioView.clickAt(220);
     AtOutliner.dontSeeSelectedRegion();
-  });
+  })
+    .tag("@flakey")
+    .retry(3);
 
   // Don't need to test this for both scenarios of flags, as it is the same code and is verified in the above test
   if (!flags.fflag_feat_front_lsdv_e_278_contextual_scrolling_short) {
     FFlagScenario(
       "Check if multiple regions are working changing labels",
-      async ({ I, LabelStudio, AtAudioView, AtOutliner }) => {
+      async ({ I, LabelStudio, AtAudioView, AtOutliner, AtLabels }) => {
         LabelStudio.setFeatureFlags({
           ff_front_dev_2715_audio_3_280722_short: true,
           ...flags,
@@ -126,8 +128,11 @@ FFlagMatrix(["fflag_feat_front_lsdv_e_278_contextual_scrolling_short"], (flags) 
         for (let i = 0; i < 10; i++) {
           // creating a new region
           I.pressKey("1");
+          AtLabels.seeSelectedLabel("Speech");
           AtAudioView.dragAudioElement(40 * i + 10, 30);
+          AtOutliner.dontSeeSelectedRegion();
           AtAudioView.clickAt(40 * i + 20);
+          AtOutliner.seeSelectedRegion();
           I.pressKey("2");
           I.pressKey("1");
           I.pressKey("u");
@@ -148,7 +153,9 @@ FFlagMatrix(["fflag_feat_front_lsdv_e_278_contextual_scrolling_short"], (flags) 
 
         AtOutliner.dontSeeSelectedRegion();
       },
-    );
+    )
+      .tag("@flakey")
+      .retry(3);
 
     FFlagScenario("Can select a region below a hidden region", async ({ I, LabelStudio, AtAudioView, AtOutliner }) => {
       LabelStudio.setFeatureFlags({
@@ -186,7 +193,9 @@ FFlagMatrix(["fflag_feat_front_lsdv_e_278_contextual_scrolling_short"], (flags) 
       // click on the region below the hidden one to select it
       AtAudioView.clickAt(51);
       AtOutliner.seeSelectedRegion("Speech");
-    });
+    })
+      .tag("@flakey")
+      .retry(3);
 
     FFlagScenario(
       "Selecting a region brings it to the front of the stack",

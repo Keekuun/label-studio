@@ -2,7 +2,16 @@ title: Text Summarization
 type: community
 group: Natural Language Processing
 image: /static/templates/text-summarization.png
-details: <h1>Provide one sentence summary</h1>
+details: |
+  <h1>Summarize in one sentence</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>news summarization, research paper abstracts, meeting minutes, legal brief summaries, medical case summaries, financial reports, customer feedback summaries, document intelligence, executive summaries, literature reviews, patent analysis, regulatory compliance</dd>
+    <dt>Associated Models</dt>
+    <dd>extractive summarization, abstractive summarization, ROUGE evaluation, BERT summarization</dd>
+    <dt>Domain Terminology</dt>
+    <dd>information distillation, key insight extraction, content condensation, automatic abstracting</dd>
+  </dl>
 config: |
   <View>
     <Header value="Please read the text" />

@@ -24,6 +24,19 @@ module.exports = () =>
     },
 
     waitTicks(n) {
-      return this.wait(0.016 * n);
+      return this.executeScript((ticks) => {
+        return new Promise((resolve) => {
+          let count = 0;
+          const tick = () => {
+            count++;
+            if (count >= ticks) {
+              resolve();
+            } else {
+              requestAnimationFrame(tick);
+            }
+          };
+          requestAnimationFrame(tick);
+        });
+      }, n);
     },
   });

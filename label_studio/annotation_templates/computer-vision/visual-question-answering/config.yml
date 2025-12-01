@@ -2,7 +2,16 @@ title: Visual Question Answering
 type: community
 group: Computer Vision
 image: /static/templates/visual-question-answering.png
-details: <h1>Answer the questions related to what you see on the picture</h1>
+details: |
+  <h1>Answer the questions related to what you see on the picture</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>accessibility tools, educational assessment, autonomous systems, robotics navigation, medical image analysis, surveillance intelligence, content moderation, e-commerce search, museum guide systems, smart home automation, industrial quality control, retail analytics</dd>
+    <dt>Associated Models</dt>
+    <dd>ViLBERT, LXMERT, VisualBERT, UNITER, BLIP, GPT-4V, Flamingo</dd>
+    <dt>Domain Terminology</dt>
+    <dd>multimodal reasoning, visual reasoning, scene understanding, visual intelligence, cross-modal fusion</dd>
+  </dl>
 config: |
   <View>
     <Image name="image" value="$image"/>

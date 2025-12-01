@@ -3,7 +3,7 @@ title: Visual Ranker
 type: templates
 category: Ranking and Scoring
 cat: ranking-and-scoring
-order: 560
+order: 401
 is_new: t
 meta_title: Create a ranked dataset for text-to-image models with Label Studio
 meta_description: Template for creating a ranked dataset for text-to-image models with Label Studio for your machine learning and data science projects.

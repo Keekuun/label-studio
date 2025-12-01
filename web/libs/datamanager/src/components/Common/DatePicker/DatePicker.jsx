@@ -2,14 +2,12 @@ import { format, isMatch, isValid } from "date-fns";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { default as DP } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { BemWithSpecifiContext, cn } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import { isDefined } from "../../../utils/utils";
-import { Dropdown } from "../Dropdown/Dropdown";
+import { Dropdown } from "@humansignal/ui";
 import Input from "../Input/Input";
 import "./DatePicker.global.scss";
 import "./DatePicker.scss";
-
-const { Block, Elem } = BemWithSpecifiContext();
 
 export const DatePicker = ({
   size,
@@ -101,7 +99,7 @@ export const DatePicker = ({
   });
 
   return (
-    <Block name="datepicker">
+    <div className={cn("datepicker")}>
       <Dropdown.Trigger
         ref={dropdownRef}
         toggle={false}
@@ -122,7 +120,7 @@ export const DatePicker = ({
         }
         style={{ backgroundColor: "transparent", borderRadius: "1em" }}
       >
-        <Elem name="output" mod={{ range: selectRange }}>
+        <div className={cn("datepicker").elem("output").mod({ range: selectRange })}>
           <Input
             size={size}
             value={startDate || ""}
@@ -130,7 +128,7 @@ export const DatePicker = ({
           />
           {selectRange && (
             <>
-              <Elem name="separator">and</Elem>
+              <div className={cn("datepicker").elem("separator")}>and</div>
               <Input
                 size={size}
                 value={endDate || ""}
@@ -138,8 +136,8 @@ export const DatePicker = ({
               />
             </>
           )}
-        </Elem>
+        </div>
       </Dropdown.Trigger>
-    </Block>
+    </div>
   );
 };

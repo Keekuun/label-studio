@@ -199,7 +199,12 @@ class ResolveStorageUriAPIMixin:
         if metadata.get('ContentRange'):
             response.headers['Content-Range'] = metadata['ContentRange']
         if metadata.get('LastModified'):
-            response.headers['Last-Modified'] = metadata['LastModified'].strftime('%a, %d %b %Y %H:%M:%S GMT')
+            last_mod = metadata['LastModified']
+            # Accept either datetime-like (has strftime) or preformatted string
+            if hasattr(last_mod, 'strftime'):
+                response.headers['Last-Modified'] = last_mod.strftime('%a, %d %b %Y %H:%M:%S GMT')
+            else:
+                response.headers['Last-Modified'] = str(last_mod)
 
         # Always enable range requests
         response.headers['Accept-Ranges'] = 'bytes'

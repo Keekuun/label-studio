@@ -1,4 +1,4 @@
-import { toCamelCase } from "strman";
+import camelCase from "lodash/camelCase";
 
 export const formDataToJPO = (formData: FormData) => {
   if (formData instanceof FormData) {
@@ -96,10 +96,10 @@ export const camelizeKeys = <T extends AnyObject>(source: T): KeysToCamelCase<T>
 
   const pairs: Pair[] = split.map<Pair>(([key, value]) => {
     if (Object.prototype.toString.call(value) === "[object Object]") {
-      return [toCamelCase(key), camelizeKeys(value as T)];
+      return [camelCase(key), camelizeKeys(value as T)];
     }
 
-    return [toCamelCase(key), value];
+    return [camelCase(key), value];
   });
 
   return Object.fromEntries(pairs) as KeysToCamelCase<T>;

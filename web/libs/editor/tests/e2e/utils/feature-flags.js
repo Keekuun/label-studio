@@ -45,5 +45,5 @@ module.exports.FFlagScenario = function (scenarioName, scenario) {
     .map(([flag, state]) => `${flag}=${state}`)
     .join(",")}`;
 
-  Scenario(scenarioName + variant, scenario);
+  return Scenario(scenarioName + variant, scenario);
 };

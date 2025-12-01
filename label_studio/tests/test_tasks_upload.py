@@ -127,7 +127,25 @@ def test_json_task_annotation_and_meta_upload(setup_project_dialog, tasks, statu
     'tasks, status_code, task_count, prediction_count',
     [
         (
-            [{'data': {'dialog': 'Test'}, 'predictions': [{'result': [{'id': '123'}], 'model_version': 'test'}]}],
+            [
+                {
+                    'data': {'dialog': 'Test'},
+                    'predictions': [
+                        {
+                            'result': [
+                                {
+                                    'id': '123',
+                                    'from_name': 'answer',
+                                    'to_name': 'dialog',
+                                    'type': 'textarea',
+                                    'value': {'text': ['Test prediction']},
+                                }
+                            ],
+                            'model_version': 'test',
+                        }
+                    ],
+                }
+            ],
             201,
             1,
             1,

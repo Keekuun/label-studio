@@ -22,9 +22,7 @@ export const Spinner = injector(({ SDK, visible = true, ...props }) => {
     }
   }, [props.size]);
 
-  const source = React.useMemo(() => {
-    return Running.full;
-  }, [props.size]);
+  const source = Running.default;
 
   const videoStyles = {
     width: "100%",

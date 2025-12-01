@@ -5,6 +5,7 @@ interface FormFooterProps {
   totalSteps: number;
   onPrevious: () => void;
   onNext: () => void;
+  onSave?: () => void;
   isEditMode: boolean;
   connectionChecked: boolean;
   filesPreview: any[] | null;
@@ -19,6 +20,11 @@ interface FormFooterProps {
   createStorage: {
     isLoading: boolean;
   };
+  saveStorage?: {
+    isLoading: boolean;
+  };
+  target?: "import" | "export";
+  isProviderDisabled?: boolean;
 }
 
 export const FormFooter = ({
@@ -26,12 +32,16 @@ export const FormFooter = ({
   totalSteps,
   onPrevious,
   onNext,
+  onSave,
   isEditMode,
   connectionChecked,
   filesPreview,
   testConnection,
   loadPreview,
   createStorage,
+  saveStorage,
+  target,
+  isProviderDisabled = false,
 }: FormFooterProps) => {
   return (
     <div className="flex items-center justify-between p-wide border-t border-neutral-border bg-neutral-background">
@@ -66,10 +76,26 @@ export const FormFooter = ({
         <Button
           onClick={onNext}
           waiting={currentStep === totalSteps - 1 && createStorage.isLoading}
-          disabled={!isEditMode && currentStep === 1 && !connectionChecked}
+          disabled={
+            (!isEditMode && currentStep === 1 && !connectionChecked) || (currentStep === 0 && isProviderDisabled)
+          }
+          look={currentStep === totalSteps - 1 && target !== "export" ? "outlined" : undefined}
+          tooltip={
+            currentStep === 1 && !connectionChecked
+              ? "Test connection before continuing"
+              : currentStep === 0 && isProviderDisabled
+                ? "This provider is not available in the current version"
+                : undefined
+          }
         >
-          {currentStep < totalSteps - 1 ? "Next" : "Submit"}
+          {currentStep < totalSteps - 1 ? "Next" : target === "export" ? "Save" : "Save & Sync"}
         </Button>
+
+        {currentStep === totalSteps - 1 && target !== "export" && onSave && (
+          <Button onClick={onSave} waiting={saveStorage?.isLoading}>
+            Save
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -66,42 +66,37 @@ class TestRedisActivity(TestCase):
     @patch('users.functions.last_activity.get_connection')
     def test_get_user_last_activity_from_redis(self, mock_get_connection, mock_redis_connected):
         """Test getting user activity from Redis."""
-        mock_redis_client = MagicMock()
-        mock_get_connection.return_value = mock_redis_client
-        mock_redis_client.get.return_value = self.test_time.isoformat().encode('utf-8')
+        with patch('users.functions.last_activity._redis', MagicMock()):
+            mock_redis_client = MagicMock()
+            mock_get_connection.return_value = mock_redis_client
+            mock_redis_client.get.return_value = self.test_time.isoformat().encode('utf-8')
 
-        result = get_user_last_activity(self.user.id)
+            result = get_user_last_activity(self.user.id)
 
-        self.assertEqual(result, self.test_time)
-        mock_redis_client.get.assert_called_once()
+            self.assertEqual(result, self.test_time)
+            mock_redis_client.get.assert_called_once()
 
     @patch('users.functions.last_activity.redis_connected', return_value=True)
     @patch('users.functions.last_activity.get_connection')
-    def test_get_user_last_activity_fallback_to_db(self, mock_get_connection, mock_redis_connected):
-        """Test fallback to database when Redis has no data."""
-        mock_redis_client = MagicMock()
-        mock_get_connection.return_value = mock_redis_client
-        mock_redis_client.get.return_value = None
+    def test_get_user_last_activity_no_redis_data(self, mock_get_connection, mock_redis_connected):
+        """Test getting activity when Redis has no data (returns None)."""
+        with patch('users.functions.last_activity._redis', MagicMock()):
+            mock_redis_client = MagicMock()
+            mock_get_connection.return_value = mock_redis_client
+            mock_redis_client.get.return_value = None
 
-        # Update user's last_activity in database
-        self.user.last_activity = self.test_time
-        self.user.save(update_fields=['last_activity'])
+            result = get_user_last_activity(self.user.id)
 
-        result = get_user_last_activity(self.user.id)
-
-        self.assertEqual(result, self.test_time)
-        mock_redis_client.get.assert_called_once()
+            self.assertIsNone(result)
+            mock_redis_client.get.assert_called_once()
 
     @patch('users.functions.last_activity.redis_connected', return_value=False)
     def test_get_user_last_activity_redis_disconnected(self, mock_redis_connected):
-        """Test getting activity when Redis is disconnected."""
-        # Update user's last_activity in database
-        self.user.last_activity = self.test_time
-        self.user.save(update_fields=['last_activity'])
+        """Test getting activity when Redis is disconnected (returns None)."""
+        with patch('users.functions.last_activity._redis', None):
+            result = get_user_last_activity(self.user.id)
 
-        result = get_user_last_activity(self.user.id)
-
-        self.assertEqual(result, self.test_time)
+            self.assertIsNone(result)
 
     @patch('users.functions.last_activity.redis_connected', return_value=True)
     @patch('users.functions.last_activity.get_connection')

@@ -12,6 +12,8 @@ class FilterIn(BaseModel):
 
 
 class Filter(BaseModel):
+    child_filter: Optional['Filter'] = None
+
     filter: str
     operator: str
     type: str

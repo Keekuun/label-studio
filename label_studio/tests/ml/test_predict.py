@@ -13,7 +13,7 @@ def test_get_single_prediction_on_task(business_client, ml_backend_for_test_pred
             label_config="""
                 <View>
                   <Text name="text" value="$text"></Text>
-                  <Choices name="label" choice="single">
+                  <Choices name="label" choice="single" toName="text">
                     <Choice value="label_A"></Choice>
                     <Choice value="label_B"></Choice>
                   </Choices>
@@ -43,7 +43,7 @@ def test_get_single_prediction_on_task(business_client, ml_backend_for_test_pred
 
     # ensure task has a single prediction with the correct value
     assert len(payload['predictions']) == 1
-    assert payload['predictions'][0]['result'][0]['value']['choices'][0] == 'Single'
+    assert payload['predictions'][0]['result'][0]['value']['choices'][0] == 'label_A'
     assert payload['predictions'][0]['model_version'] == 'ModelSingle'
 
 
@@ -55,7 +55,7 @@ def test_get_multiple_predictions_on_task(business_client, ml_backend_for_test_p
             label_config="""
                 <View>
                   <Text name="text" value="$text"></Text>
-                  <Choices name="label" choice="single">
+                  <Choices name="label" choice="single" toName="text">
                     <Choice value="label_A"></Choice>
                     <Choice value="label_B"></Choice>
                   </Choices>

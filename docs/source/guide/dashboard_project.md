@@ -44,7 +44,7 @@ Use the carousel to click through the KPI cards which you can drag and drop to k
 
 - **Annotated Tasks**: Sum of annotated tasks depends on the “annotation tasks per minimum” setting under the project’s “Quality” tab (also called consensus or overlap settings). This card also displays the percentage of annotated tasks (annotated tasks divided by total tasks available for annotation at query time) and in the small numbers at the bottom of the card, it shows the skipped annotations count (if enabled), and the remaining number of annotations for the time period selected that have not yet met the criteria defined in the project’s consensus settings.
 
-- **Reviewed Annotations**: Sum of annotations reviewed depends on the selection chosen for “mark task as reviewed” found under “Reviewing Options” in the “Review” tab. The card also displays the number of rejected and accepted annotations by all reviewers for the time period selected.
+- **Reviewed Annotations**: Sum of annotations reviewed depends on the selection chosen for “task is reviewed” found under “Reviewing Options” in the “Review” tab. The card also displays the number of rejected and accepted annotations by all reviewers for the time period selected.
 
 - **Submitted Annotations**: Sum of annotations that have been submitted at any point in their lifecycle including skipped and [empty annotations](/guide/setup_project.html#Set-annotating-options) if applicable. Pre-annotations also count as submitted annotations. The smaller KPI’s include “Skipped” annotations which will only have a count if the skipped button is available to annotators and this count depends on what actions are available which are determined in “skip queue” settings under the “Annotation” tab found in project settings. The small number: “Submitted Annotations” does not include skipped annotations, but it does include empty annotations if that is enabled.
 
@@ -52,7 +52,7 @@ Use the carousel to click through the KPI cards which you can drag and drop to k
 
 - **Remaining Tasks**: Sum of tasks left to be completed (for the time period selected) which is dependent on several project settings: quality overlap (consensus) settings, review options for tasks marked as reviewed, and skipped queue settings for annotators. This card also displays the total tasks available in the project (at that point in time) and the percentage of tasks completed for the project for the time period selected.
 
-- **Tasks Pending Review**: Remaining tasks that have not been reviewed for annotations submitted during the time period specified. This card also displays the annotation count for annotations submitted but not yet reviewed.
+- **Tasks Pending Review**: Remaining tasks that have not been reviewed for annotations submitted during the time period specified. This card also displays the annotation count for annotations submitted but not yet reviewed. When the Review Stream uses Random sampling with a configured Task limit (%), this KPI respects the same limit (it won’t exceed the remaining capacity defined by the limit).
 
 - **Lead Time**: The average time in hours it has taken to complete all annotations for the time period selected.
 

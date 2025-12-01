@@ -3,7 +3,7 @@ title: Multi-Page Document Annotation
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 112
+order: 128
 meta_title: Multi-page Document Annotation 
 meta_description: Template for labeling large, multi-page documents more easily and efficiently.
 ---
@@ -13,6 +13,9 @@ meta_description: Template for labeling large, multi-page documents more easily 
 Multi-page document annotation allows you to annotate documents that consist of multiple pages. By representing each page as an image, you can import them into a single task and annotate each page while maintaining the context of the entire document.
 
 If you just need to classify a PDF document as a whole, you can also use the [PDF Classification template](pdf_classification).
+
+!!! error Enterprise
+    If you are performing OCR annotation and you are a Label Studio Enterprise users, see [OCR Labeling for PDFs](pdf_ocr).
 
 <a href="https://app.humansignal.com/b/MTk4"
   target="_blank" rel="noopener" aria-label="Open in Label Studio" style="all:unset;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;border:1px solid rgb(109,135,241);padding:8px 12px;background:rgb(87 108 193);color:white;font-weight:500;font-family:sans-serif;gap:6px;transition:background 0.2s ease;" onmouseover="this.style.background='rgb(97 122 218)'" onmouseout="this.style.background='rgb(87 108 193)'">

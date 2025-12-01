@@ -13,7 +13,7 @@ export function getProviderConfig(providerName?: string): ProviderConfig | undef
 
 // Add new storage provider
 export function addProvider(providerName: string, providerConfig: ProviderConfig) {
-  providerRegistry[providerName] = providerConfig;
+  providerRegistry[providerName.toLowerCase()] = providerConfig;
 }
 
 // Helper function to get provider schema

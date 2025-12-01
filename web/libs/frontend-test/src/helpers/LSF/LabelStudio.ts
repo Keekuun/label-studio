@@ -199,7 +199,36 @@ export const LabelStudio = {
 
       Cypress.on("window:before:load", windowLoadCallback);
 
+      const defaultCpuThrottling = Cypress.env("DEFAULT_CPU_THROTTLING");
+      const defaultNetworkThrottling = Cypress.env("DEFAULT_NETWORK_THROTTLING");
+
+      if (defaultCpuThrottling) {
+        cy.resetCPU();
+      }
+      if (defaultNetworkThrottling) {
+        cy.resetNetwork();
+      }
+
       cy.visit("/").then((win) => {
+        if (defaultCpuThrottling) {
+          cy.throttleCPU(defaultCpuThrottling);
+        }
+        if (defaultNetworkThrottling) {
+          // Parse network throttling preset
+          switch (defaultNetworkThrottling) {
+            case "slow3g":
+              cy.setSlow3GNetwork();
+              break;
+            case "fast3g":
+              cy.setFast3GNetwork();
+              break;
+            case "4g":
+              cy.set4GNetwork();
+              break;
+            default:
+              cy.log(`Unknown network throttling preset: ${defaultNetworkThrottling}`);
+          }
+        }
         cy.log(`Default feature flags set ${JSON.stringify(win.APP_SETTINGS.feature_flags, null, "  ")}`);
         const labelStudio = new win.LabelStudio("label-studio", fixLSParams(win.LSF_CONFIG, win));
 

@@ -7,6 +7,7 @@ import sys
 from core.models import AsyncMigrationStatus
 from core.redis import start_job_async_or_sync
 from core.utils.common import batch, batched_iterator
+from core.utils.iterators import iterate_queryset
 from data_export.mixins import ExportMixin
 from data_export.models import DataExport
 from data_export.serializers import ExportDataSerializer
@@ -210,8 +211,9 @@ def update_tasks_counters(queryset, from_scratch=True):
 
     updated_count = 0
 
-    tasks_iterator = queryset.only('id', 'total_annotations', 'cancelled_annotations', 'total_predictions').iterator(
-        chunk_size=settings.BATCH_SIZE
+    tasks_iterator = iterate_queryset(
+        queryset.only('id', 'total_annotations', 'cancelled_annotations', 'total_predictions'),
+        chunk_size=settings.BATCH_SIZE,
     )
 
     for _batch in batched_iterator(tasks_iterator, settings.BATCH_SIZE):

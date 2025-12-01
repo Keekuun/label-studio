@@ -1,6 +1,6 @@
 import { observer } from "mobx-react";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import { Block, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import { PanelBase, type PanelProps } from "../PanelBase";
 import { OutlinerTree } from "./OutlinerTree";
 import { ViewControls } from "./ViewControls";
@@ -14,11 +14,7 @@ import { Trans } from 'react-i18next';
 
 // Local type definitions based on ViewControls and RegionStore
 type GroupingOptions = "manual" | "label" | "type";
-type OrderingOptions = "score" | "date";
-type Region = {
-  id: string;
-  [key: string]: any; // Allow other properties for flexibility
-};
+type OrderingOptions = "score" | "date" | "mediaStartTime";
 
 interface OutlinerPanelProps extends PanelProps {
   regions: any;
@@ -49,13 +45,6 @@ const OutlinerPanelComponent: FC<OutlinerPanelProps> = ({ regions, ...props }) =
     [regions],
   );
 
-  const onFilterChange = useCallback(
-    (value: Region[] | null) => {
-      regions.setFilteredRegions(value);
-    },
-    [regions],
-  );
-
   useEffect(() => {
     setGroup(regions.group);
   }, []);
@@ -70,7 +59,6 @@ const OutlinerPanelComponent: FC<OutlinerPanelProps> = ({ regions, ...props }) =
         orderingDirection={regions.sortOrder}
         onOrderingChange={onOrderingChange}
         onGroupingChange={onGroupingChange}
-        onFilterChange={onFilterChange}
       />
       <OutlinerTreeComponent regions={regions} />
     </PanelBase>
@@ -92,25 +80,21 @@ const OutlinerStandAlone: FC<OutlinerPanelProps> = ({ regions }) => {
     [regions],
   );
 
-  const onFilterChange = useCallback(
-    (value: Region[] | null) => {
-      regions.setFilteredRegions(value);
-    },
-    [regions],
-  );
-
   return (
-    <Block name="outliner" mix={OutlinerFFClasses}>
+    <div
+      className={cn("outliner")
+        .mix(...OutlinerFFClasses)
+        .toClassName()}
+    >
       <ViewControls
         ordering={regions.sort}
         regions={regions}
         orderingDirection={regions.sortOrder}
         onOrderingChange={onOrderingChange}
         onGroupingChange={onGroupingChange}
-        onFilterChange={onFilterChange}
       />
       <OutlinerTreeComponent regions={regions} />
-    </Block>
+    </div>
   );
 };
 
@@ -141,24 +125,28 @@ const OutlinerTreeComponent: FC<OutlinerTreeComponentProps> = observer(({ region
   return (
     <>
       {allRegionsHidden ? (
-        <Block name="filters-info">
+        <div className={cn("filters-info").toClassName()}>
           <IconInfo width={21} height={20} />
-          <Elem name="filters-title">{i18n.t('all_regions_hidden')}</Elem>
-          <Elem name="filters-description">{i18n.t('adjust_to_view')}</Elem>
-        </Block>
+          <div className={cn("filters-info").elem("filters-title").toClassName()}>{i18n.t('all_regions_hidden')}</div>
+          <div className={cn("filters-info").elem("filters-description").toClassName()}>
+            {i18n.t('adjust_to_view')}
+          </div>
+        </div>
       ) : regions?.regions?.length > 0 ? (
         <>
           <OutlinerTree
             regions={regions}
             footer={
               hiddenRegions > 0 && (
-                <Block name="filters-info">
+                <div className={cn("filters-info").toClassName()}>
                   <IconInfo width={21} height={20} />
-                  <Elem name="filters-title">
+                  <div className={cn("filters-info").elem("filters-title").toClassName()}>
                     {i18n.t('there_regions_hidden', {num: hiddenRegions})}
-                  </Elem>
-                  <Elem name="filters-description">{i18n.t('adjust_to_view')}</Elem>
-                </Block>
+                  </div>
+                  <div className={cn("filters-info").elem("filters-description").toClassName()}>
+                    {i18n.t('adjust_to_view')}
+                  </div>
+                </div>
               )
             }
           />

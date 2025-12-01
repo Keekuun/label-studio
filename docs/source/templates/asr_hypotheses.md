@@ -3,7 +3,7 @@ title: ASR Hypotheses Selection
 type: templates
 category: Ranking and Scoring
 cat: ranking-and-scoring
-order: 551
+order: 435
 meta_title: Choose the most accurate Automatic Speech Recognition (ASR) hypotheses
 meta_description: 
 ---

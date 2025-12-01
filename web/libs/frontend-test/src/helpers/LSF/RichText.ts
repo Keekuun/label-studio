@@ -41,6 +41,7 @@ class RichTextHelper {
     const eventOptions = {
       eventConstructor: "MouseEvent",
       buttons: 1,
+      force: true,
     };
     console.log("el", el);
     cy.wrap(el)

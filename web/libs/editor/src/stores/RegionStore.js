@@ -135,13 +135,13 @@ const SelectionMap = types
 export default types
   .model("RegionStore", {
     sort: types.optional(
-      types.enumeration(["date", "score"]),
-      window.localStorage.getItem(localStorageKeys.sort) ?? "date",
+      types.enumeration(["date", "score", "mediaStartTime"]),
+      () => window.localStorage.getItem(localStorageKeys.sort) ?? "date",
     ),
 
     sortOrder: types.optional(
       types.enumeration(["asc", "desc"]),
-      window.localStorage.getItem(localStorageKeys.sortDirection) ?? "asc",
+      () => window.localStorage.getItem(localStorageKeys.sortDirection) ?? "asc",
     ),
 
     group: types.optional(
@@ -238,6 +238,18 @@ export default types
             [...self.filteredRegions].sort(isDesc ? (a, b) => b.ouid - a.ouid : (a, b) => a.ouid - b.ouid),
           score: (isDesc) =>
             [...self.filteredRegions].sort(isDesc ? (a, b) => b.score - a.score : (a, b) => a.score - b.score),
+          mediaStartTime: (isDesc) =>
+            [...self.filteredRegions].sort((a, b) => {
+              const aTime = self.getRegionMediaTime(a);
+              const bTime = self.getRegionMediaTime(b);
+
+              // Handle regions without media time (put them at the end)
+              if (aTime === null && bTime === null) return 0;
+              if (aTime === null) return 1;
+              if (bTime === null) return -1;
+
+              return isDesc ? bTime - aTime : aTime - bTime;
+            }),
         };
 
         const sorted = sorts[self.sort](self.sortOrder === "desc");
@@ -251,6 +263,26 @@ export default types
           map[region.id] = idx + 1;
         });
         return map;
+      },
+
+      getRegionMediaTime(region) {
+        // Handle audio regions - they have start time in seconds
+        if ((region.type === "audioregion" || region.type === "timeseriesregion") && typeof region.start === "number") {
+          return region.start;
+        }
+
+        // Handle timeline regions (video) - they have ranges with start frame
+        if (region.type === "timelineregion" && region.ranges?.[0]) {
+          return region.ranges[0].start;
+        }
+
+        // Handle video rectangle regions - they have sequence with frames
+        if (region.type === "videorectangleregion" && region.sequence?.[0]) {
+          return region.sequence[0].frame;
+        }
+
+        // Return null for regions without media time information
+        return null;
       },
 
       getRegionsTree(enrich) {

@@ -3,7 +3,7 @@ title: Activity Recognition
 type: templates
 category: Time Series Analysis
 cat: time-series-analysis
-order: 703
+order: 625
 meta_title: Activity Recognition Data Labeling Template
 meta_description: Template for labeling human activity recognition in a time series using Label Studio for your machine learning and data science projects.
 ---

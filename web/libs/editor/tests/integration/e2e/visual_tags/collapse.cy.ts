@@ -36,17 +36,18 @@ describe("Visual Tags - Collapse", () => {
       cy.get(".ant-collapse-content-active").should("have.length", 0);
 
       // Click to expand first panel
-      Collapse.findPanel("Panel 1").click();
+      Collapse.findTab("Panel 1").click();
       cy.get(".ant-collapse-content-active").should("have.length", 1);
       cy.contains("Content for panel 1").should("be.visible");
 
       // Click to collapse first panel
-      Collapse.findPanel("Panel 1").click();
+      Collapse.findTab("Panel 1").click();
+
       cy.get(".ant-collapse-content-active").should("have.length", 0);
       cy.contains("Content for panel 1").should("not.be.visible");
 
       // Click to expand second panel
-      Collapse.findPanel("Panel 2").click();
+      Collapse.findTab("Panel 2").click();
       cy.get(".ant-collapse-content-active").should("have.length", 1);
       cy.contains("Content for panel 2").should("be.visible");
 

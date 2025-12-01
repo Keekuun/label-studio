@@ -1,5 +1,5 @@
 const assert = require("assert");
-const { toKebabCase } = require("strman");
+const { kebabCase } = require("lodash");
 
 Feature("Images' labels type matching");
 
@@ -168,7 +168,7 @@ DataStore.Scenario(
         }, 0);
       };
 
-      const toolSelector = `[aria-label=${toKebabCase(`${shape}-tool`)}]`;
+      const toolSelector = `[aria-label=${kebabCase(`${shape}-tool`)}]`;
 
       LabelStudio.init(params);
       LabelStudio.waitForObjectsReady();

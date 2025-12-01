@@ -64,6 +64,13 @@ export const FF_DEV_4174 = "fflag_fix_back_dev_4174_overlap_issue_experiments_10
 export const FF_LSDV_E_278 = "fflag_feat_front_lsdv_e_278_contextual_scrolling_short";
 
 /**
+ * Enhanced paragraph annotation with automatic label selection and smart duplicate prevention
+ * Enables automatic phrase annotation when labels are selected, with priority for user text selection
+ * @link https://app.launchdarkly.com/default/production/features/fflag_feat_front_bros_199_enable_select_all_in_ner_phrase_short
+ */
+export const FF_NER_SELECT_ALL = "fflag_feat_front_bros_199_enable_select_all_in_ner_phrase_short";
+
+/**
  * Annotations with LLM assistance
  * @link https://app.launchdarkly.com/default/production/features/fflag_feat_all_lsdv_e_294_llm_annotations_180723_long
  */
@@ -99,11 +106,6 @@ export const FF_LEAD_TIME = "fflag_fix_front_lsdv_4600_lead_time_27072023_short"
  * @link https://app.launchdarkly.com/default/production/features/fflag_fix_front_lsdv_4620_memory_leaks_100723_short
  */
 export const FF_LSDV_4620_3_ML = "fflag_fix_front_lsdv_4620_memory_leaks_100723_short";
-
-/**
- * Fixes how presigned urls are generated and accessed to remove possibility of CORS errors.
- */
-export const FF_LSDV_4711 = "fflag_fix_all_lsdv_4711_cors_errors_accessing_task_data_short";
 
 /**
  * Fixing issues related to selection tool functional (selecting hidden regions, onClick in Konva, interaction with regions inside selection area)
@@ -177,8 +179,6 @@ export const FF_BULK_ANNOTATION = "fflag_feat_all_leap_1181_bulk_annotation_shor
  */
 export const FF_LEAP_1173 = "fflag_feat_front_leap_1173_disable_postpone_skip_short";
 
-export const FF_PER_FIELD_COMMENTS = "fflag_feat_all_leap_1430_per_field_comments_100924_short";
-
 export const FF_IMAGE_MEMORY_USAGE = "fflag_feat_front_optic_1479_improve_image_tag_memory_usage_short";
 
 export const FF_VIDEO_FRAME_SEEK_PRECISION = "fflag_fix_front_optic_1608_improve_video_frame_seek_precision_short";
@@ -210,11 +210,11 @@ function getFeatureFlags() {
 
 export function isFF(id: string) {
   const featureFlags = getFeatureFlags();
-
   // TODO: remove the override + if statement once LSE and LSO start building react the same way and fflag_fix_front_lsdv_4620_memory_leaks_100723_short is removed
   const override: Record<string, boolean> = {
     fflag_fix_front_lsdv_4620_memory_leaks_100723_short: false,
   };
+
   if (id in override) {
     return override[id];
   }

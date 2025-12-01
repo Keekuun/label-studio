@@ -3,7 +3,16 @@ type: community
 group: Computer Vision
 order: 2
 image: /static/templates/semantic-segmentation-with-masks.png
-details: <h1>Draw masks around the object with the brush tool</h1>
+details: |
+  <h1>Draw masks around the object with the brush tool</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>autonomous driving, medical image analysis, satellite imagery analysis, robotics vision, agriculture monitoring, urban planning, environmental monitoring, quality inspection, pathology diagnosis, dermatology, retinal analysis, manufacturing defects</dd>
+    <dt>Associated Models</dt>
+    <dd>U-Net, DeepLab, Mask R-CNN, SegNet, PSPNet, FCN</dd>
+    <dt>Domain Terminology</dt>
+    <dd>pixel-level classification, dense prediction, instance segmentation, panoptic segmentation</dd>
+  </dl>
 config: |
   <View>
     <Image name="image" value="$image" zoom="true"/>

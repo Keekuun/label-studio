@@ -81,7 +81,7 @@ These settings can also be configured in the Label Studio app from the **Organiz
 
 ### Roles
 
-You can assign roles to users through group mapping. Use the [Update SCIM settings API](https://app.heartex.com/docs/api/#tag/SSO/operation/api_scim_settings_list) or log in to Label Studio and go to the **Organization** page. Click **SCIM** in the upper right. 
+You can assign roles to users through group mapping. Use the [Update SCIM settings API](https://api.labelstud.io/api-reference/api-reference/sso/scim/update) or log in to Label Studio and go to the **Organization** page. Click **SCIM** in the upper right. 
 
 #### Organization-level roles
 

@@ -3,7 +3,7 @@ from core.permissions import ViewClassPermission, all_permissions
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from projects import models as project_models
 from rest_framework import generics
 from rest_framework.exceptions import NotFound
@@ -128,6 +128,12 @@ class WebhookAPI(generics.RetrieveUpdateDestroyAPIView):
     queryset = Webhook.objects.all()
     serializer_class = WebhookSerializer
     permission_classes = [IsAuthenticated]
+    permission_required = ViewClassPermission(
+        GET=all_permissions.webhooks_view,
+        PATCH=all_permissions.webhooks_change,
+        PUT=all_permissions.webhooks_change,
+        DELETE=all_permissions.webhooks_change,
+    )
 
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:
@@ -144,7 +150,27 @@ class WebhookAPI(generics.RetrieveUpdateDestroyAPIView):
         tags=['Webhooks'],
         summary='Get all webhook actions',
         description='Get descriptions of all available webhook actions to set up webhooks.',
-        responses={'200': 'Object with description data.'},
+        responses={
+            200: OpenApiResponse(
+                description='Object with webhook action descriptions.',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        action: {
+                            'type': 'object',
+                            'properties': {
+                                'name': {'type': 'string'},
+                                'description': {'type': 'string'},
+                                'key': {'type': 'string'},
+                                'organization-only': {'type': 'boolean'},
+                            },
+                            'required': ['name', 'description', 'key', 'organization-only'],
+                        }
+                        for action in WebhookAction.ACTIONS.keys()
+                    },
+                },
+            ),
+        },
         parameters=[
             OpenApiParameter(
                 name='organization-only',

@@ -1,5 +1,5 @@
 import { types } from "mobx-state-tree";
-
+import Registry from "../core/Registry";
 import { AudioRegionModel } from "./AudioRegion";
 import { BrushRegionModel, HtxBrush } from "./BrushRegion";
 import { BitmaskRegionModel, HtxBitmask } from "./BitmaskRegion";
@@ -8,12 +8,14 @@ import { TimeSeriesRegionModel } from "./TimeSeriesRegion";
 import { HtxKeyPoint, KeyPointRegionModel } from "./KeyPointRegion";
 import { PolygonPoint, PolygonPointView } from "./PolygonPoint";
 import { HtxPolygon, PolygonRegionModel } from "./PolygonRegion";
+import { HtxVector, VectorRegionModel } from "./VectorRegion";
 import { HtxRectangle, RectRegionModel } from "./RectRegion";
 import { EllipseRegionModel, HtxEllipse } from "./EllipseRegion";
 import { HtxTextAreaRegion, TextAreaRegionModel } from "./TextAreaRegion";
 import { RichTextRegionModel } from "./RichTextRegion";
 import { TimelineRegionModel } from "./TimelineRegion";
 import { VideoRectangleRegionModel } from "./VideoRectangleRegion";
+import { CustomRegionModel } from "./CustomRegion";
 
 const AllRegionsType = types.union(
   AudioRegionModel,
@@ -23,6 +25,7 @@ const AllRegionsType = types.union(
   TimeSeriesRegionModel,
   KeyPointRegionModel,
   PolygonRegionModel,
+  VectorRegionModel,
   RectRegionModel,
   TextAreaRegionModel,
   RichTextRegionModel,
@@ -30,6 +33,8 @@ const AllRegionsType = types.union(
   TimelineRegionModel,
   ParagraphsRegionModel,
   VideoRectangleRegionModel,
+  CustomRegionModel,
+  ...Registry.customTags.map((t) => t.region).filter(Boolean),
 );
 
 export {
@@ -42,6 +47,7 @@ export {
   HtxEllipse,
   HtxKeyPoint,
   HtxPolygon,
+  HtxVector,
   HtxRectangle,
   HtxTextAreaRegion,
   RichTextRegionModel,
@@ -51,8 +57,10 @@ export {
   PolygonPoint,
   PolygonPointView,
   PolygonRegionModel,
+  VectorRegionModel,
   RectRegionModel,
   TextAreaRegionModel,
   TimelineRegionModel,
   VideoRectangleRegionModel,
+  CustomRegionModel,
 };

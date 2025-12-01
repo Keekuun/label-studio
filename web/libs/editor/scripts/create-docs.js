@@ -84,19 +84,24 @@ function processTemplate(t) {
   if (regions) {
     for (const region of regions.value.split(/,\s*/)) {
       const files = path.resolve(`${__dirname}/../src/regions/${region}.${EXT}`);
-      const regionsData = jsdoc2md.getTemplateDataSync({ files });
-      // region descriptions named after region and defined as separate type:
-      // @typedef {Object} AudioRegionResult
-      const serializeData = regionsData.find((reg) => reg.name === `${region}Result`);
 
-      if (serializeData) {
-        results = jsdoc2md
-          .renderSync({ data: [serializeData], "example-lang": "json" })
-          .split("\n")
-          .slice(5) // remove first 5 lines with header
-          .join("\n")
-          .replace(/\*\*Example\*\*\s*\n/, "### Example JSON\n");
-        results = `### Result parameters\n${results}\n`;
+      try {
+        const regionsData = jsdoc2md.getTemplateDataSync({ files });
+        // region descriptions named after region and defined as separate type:
+        // @typedef {Object} AudioRegionResult
+        const serializeData = regionsData.find((reg) => reg.name === `${region}Result`);
+
+        if (serializeData) {
+          results = jsdoc2md
+            .renderSync({ data: [serializeData], "example-lang": "json" })
+            .split("\n")
+            .slice(5) // remove first 5 lines with header
+            .join("\n")
+            .replace(/\*\*Example\*\*\s*\n/, "### Example JSON\n");
+          results = `### Result parameters\n${results}\n`;
+        }
+      } catch (err) {
+        console.error(err, files);
       }
     }
   }

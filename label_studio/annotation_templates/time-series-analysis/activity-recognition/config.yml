@@ -2,7 +2,16 @@ title: Activity Recognition
 type: community
 group: Time Series Analysis
 image: /static/templates/activity-recognition.png
-details: <h1>Track and classify activity from sensors and IMU devices</h1>
+details: |
+  <h1>Track and classify activity from sensors and IMU devices</h1>
+  <dl>
+    <dt>Industry Applications</dt>
+    <dd>fitness tracking, health monitoring, elderly care, sports performance, rehabilitation, smartphone applications, wearable devices, smart home systems, assisted living, behavior analysis, clinical research, physical therapy, athlete training, IoT sensor monitoring</dd>
+    <dt>Associated Models</dt>
+    <dd>LSTM, CNN-LSTM, Random Forest, SVM, Hidden Markov Models, attention mechanisms</dd>
+    <dt>Domain Terminology</dt>
+    <dd>CSV, Excel, XLS, Sheet, human activity recognition, HAR, IMU sensors, accelerometer, gyroscope, motion sensing</dd>
+  </dl>
 config: |
   <View>
       <!-- Control tag for region labels -->

@@ -6,16 +6,20 @@ import { HotkeysManager } from "./Hotkeys";
 import type React from "react";
 import { PersonalJWTToken } from "./PersonalJWTToken";
 import type { AuthTokenSettings } from "../types";
+import { ABILITY, type AuthPermissions } from "@humansignal/core/providers/AuthProvider";
 import { ff } from "@humansignal/core";
+import { Badge } from "@humansignal/ui";
 
-type SectionType = {
-  title: string;
+export type SectionType = {
+  title: string | React.ReactNode;
   id: string;
   component: React.FC;
   description?: React.FC;
 };
 
-export const accountSettingsSections = (settings: AuthTokenSettings): SectionType[] => {
+export const accountSettingsSections = (settings: AuthTokenSettings, permissions: AuthPermissions): SectionType[] => {
+  const canCreateTokens = permissions.can(ABILITY.can_create_tokens);
+
   return [
     {
       title: "Personal Info",
@@ -23,7 +27,12 @@ export const accountSettingsSections = (settings: AuthTokenSettings): SectionTyp
       component: PersonalInfo,
     },
     {
-      title: "Hotkeys",
+      title: (
+        <div className="flex items-center gap-tight">
+          <span>Hotkeys</span>
+          <Badge variant="beta">Beta</Badge>
+        </div>
+      ),
       id: "hotkeys",
       component: HotkeysManager,
       description: () =>
@@ -40,17 +49,19 @@ export const accountSettingsSections = (settings: AuthTokenSettings): SectionTyp
       component: MembershipInfo,
     },
     settings.api_tokens_enabled &&
+      canCreateTokens &&
       ff.isActive(ff.FF_AUTH_TOKENS) && {
         title: "Personal Access Token",
         id: "personal-access-token",
         component: PersonalJWTToken,
         description: PersonalAccessTokenDescription,
       },
-    settings.legacy_api_tokens_enabled && {
-      title: ff.isActive(ff.FF_AUTH_TOKENS) ? "Legacy Token" : "Access Token",
-      id: "legacy-token",
-      component: PersonalAccessToken,
-      description: PersonalAccessTokenDescription,
-    },
+    settings.legacy_api_tokens_enabled &&
+      canCreateTokens && {
+        title: ff.isActive(ff.FF_AUTH_TOKENS) ? "Legacy Token" : "Access Token",
+        id: "legacy-token",
+        component: PersonalAccessToken,
+        description: PersonalAccessTokenDescription,
+      },
   ].filter(Boolean) as SectionType[];
 };

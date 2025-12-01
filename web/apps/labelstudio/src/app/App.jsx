@@ -18,13 +18,13 @@ import { FF_UNSAVED_CHANGES, isFF } from "../utils/feature-flags";
 import { TourProvider } from "@humansignal/core";
 import { ToastProvider, ToastViewport } from "@humansignal/ui";
 import { JotaiProvider, JotaiStore } from "../utils/jotai-store";
-import { CurrentUserProvider } from "../providers/CurrentUser";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@humansignal/core/lib/utils/query-client";
 import { RootPage } from "./RootPage";
 import { ff } from "@humansignal/core";
 import "@humansignal/ui/src/tailwind.css";
 import "./App.scss";
+import { AuthProvider } from "@humansignal/core/providers/AuthProvider";
 
 const baseURL = new URL(APP_SETTINGS.hostname || location.origin);
 export const UNBLOCK_HISTORY_MESSAGE = "UNBLOCK_HISTORY";
@@ -64,13 +64,13 @@ const App = ({ content }) => {
           providers={[
             <QueryClientProvider client={queryClient} key="query" />,
             <JotaiProvider key="jotai" store={JotaiStore} />,
+            <AuthProvider key="auth" />,
             <AppStoreProvider key="app-store" />,
             <ToastProvider key="toast" />,
             <ApiProvider key="api" />,
             <ConfigProvider key="config" />,
             <RoutesProvider key="rotes" />,
             <ProjectProvider key="project" />,
-            <CurrentUserProvider key="current-user" />,
             ff.isActive(ff.FF_PRODUCT_TOUR) && <TourProvider useAPI={useAPI} />,
           ].filter(Boolean)}
         >

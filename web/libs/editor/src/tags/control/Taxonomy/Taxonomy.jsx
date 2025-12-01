@@ -71,9 +71,9 @@ import { errorBuilder } from "../../../core/DataValidator/ConfigValidator";
  * @param {boolean} [showFullPath=false]  - Whether to show the full path of selected items
  * @param {string} [pathSeparator= / ]    - Separator to show in the full path (default is " / "). To avoid errors, ensure that your data does not include this separator
  * @param {number} [maxUsages]            - Maximum number of times a choice can be selected per task or per region
- * @param {number} [maxWidth]             - Maximum width for dropdown
- * @param {number} [minWidth]             - Minimum width for dropdown
- * @param {boolean} [required=false]      - Whether taxonomy validation is required
+ * @param {number} [maxWidth]             - Maximum width for dropdown with units (eg: "500px")
+ * @param {number} [minWidth]             - Minimum width for dropdown with units (eg: "300px")
+ * @param {boolean} [required=false]      - Whether it is required to have selected at least one option
  * @param {string} [requiredMessage]      - Message to show if validation fails
  * @param {string} [placeholder=]         - What to display as prompt on the input
  * @param {boolean} [perRegion]           - Use this tag to classify specific regions instead of the whole object
@@ -358,6 +358,10 @@ const Model = types
       } else {
         self.loading = false;
       }
+    },
+
+    afterClone(node) {
+      self.selected = [...node.selected];
     },
 
     /**

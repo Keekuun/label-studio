@@ -70,3 +70,27 @@ export const Interactive: Story = {
     );
   },
 };
+
+export const WithDisabledButton: Story = {
+  render: ({ children, ...props }) => {
+    return (
+      <div className="flex items-center gap-tight">
+        <Tooltip {...props} title="This button is disabled for the reason that it is disabled">
+          <Button disabled>hover over me</Button>
+        </Tooltip>
+      </div>
+    );
+  },
+};
+
+export const WithDisabledInput: Story = {
+  render: ({ children, ...props }) => {
+    return (
+      <div className="flex items-center gap-tight">
+        <Tooltip {...props} title="This input is disabled for the reason that it is disabled">
+          <input type="text" disabled className="border p-2" />
+        </Tooltip>
+      </div>
+    );
+  },
+};

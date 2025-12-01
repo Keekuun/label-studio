@@ -1,6 +1,5 @@
 import { ff } from "@humansignal/core";
 import { getEnv, getRoot, types } from "mobx-state-tree";
-import { cloneNode } from "../core/Helpers";
 import { FF_DEV_3391 } from "../utils/feature-flags";
 import { AnnotationMixin } from "./AnnotationMixin";
 
@@ -9,6 +8,7 @@ const ToolMixin = types
     selected: types.optional(types.boolean, false),
     group: types.optional(types.string, "default"),
     shortcut: types.optional(types.maybeNull(types.string), null),
+    disabled: false,
   })
   .views((self) => ({
     get obj() {
@@ -48,22 +48,6 @@ const ToolMixin = types
       return self.toolName + (self.dynamic ? "-dynamic" : "");
     },
 
-    get clonedStates() {
-      const states = [self.control];
-      const activeStates = states
-        ? states.filter((c) => c.isSelected)
-        : // .filter(
-          //   c =>
-          //     c.type === IMAGE_CONSTANTS.rectanglelabels ||
-          //     c.type === IMAGE_CONSTANTS.keypointlabels ||
-          //     c.type === IMAGE_CONSTANTS.polygonlabels ||
-          //     c.type === IMAGE_CONSTANTS.brushlabels,
-          // )
-          null;
-
-      return activeStates ? activeStates.map((s) => cloneNode(s)) : null;
-    },
-
     get getActiveShape() {
       // active shape here is the last one that was added
       const obj = self.obj;
@@ -80,9 +64,9 @@ const ToolMixin = types
     },
 
     get shouldPreserveSelectedState() {
-      if (!self.obj) return false;
+      if ((!ff.isActive(FF_DEV_3391) && !self.obj) || !self.control) return false;
 
-      const settings = getRoot(self.obj).settings;
+      const settings = getRoot(ff.isActive(FF_DEV_3391) ? self.control : self.obj).settings;
 
       return settings.preserveSelectedTool;
     },
@@ -125,6 +109,14 @@ const ToolMixin = types
       const hasSelection = self.control.annotation.hasSelection;
 
       return !!isCtrlPressed && !hasSelection;
+    },
+
+    disable() {
+      self.disabled = true;
+    },
+
+    enable() {
+      self.disabled = false;
     },
   }));
 

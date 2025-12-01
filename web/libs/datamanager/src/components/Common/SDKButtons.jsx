@@ -1,7 +1,7 @@
 import { useSDK } from "../../providers/SDKProvider";
 import { Button } from "@humansignal/ui";
 
-const SDKButton = ({ eventName, ...props }) => {
+const SDKButton = ({ eventName, testId, ...props }) => {
   const sdk = useSDK();
 
   return sdk.hasHandler(eventName) ? (
@@ -11,6 +11,7 @@ const SDKButton = ({ eventName, ...props }) => {
       look={props.look ?? "outlined"}
       variant={props.variant ?? "neutral"}
       aria-label={`${eventName.replace("Clicked", "")} button`}
+      data-testid={testId}
       onClick={() => {
         sdk.invoke(eventName);
       }}
@@ -23,9 +24,9 @@ export const SettingsButton = ({ ...props }) => {
 };
 
 export const ImportButton = ({ ...props }) => {
-  return <SDKButton {...props} eventName="importClicked" />;
+  return <SDKButton {...props} eventName="importClicked" testId="dm-import-button" />;
 };
 
 export const ExportButton = ({ ...props }) => {
-  return <SDKButton {...props} eventName="exportClicked" />;
+  return <SDKButton {...props} eventName="exportClicked" testId="dm-export-button" />;
 };

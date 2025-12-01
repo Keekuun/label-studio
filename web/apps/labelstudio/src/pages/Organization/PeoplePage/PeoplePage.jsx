@@ -1,9 +1,10 @@
 import { Button } from "@humansignal/ui";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useUpdatePageTitle } from "@humansignal/core";
 import { HeidiTips } from "../../../components/HeidiTips/HeidiTips";
 import { modal } from "../../../components/Modal/Modal";
 import { Space } from "../../../components/Space/Space";
-import { Block, Elem } from "../../../utils/bem";
+import { cn } from "../../../utils/bem";
 import { FF_AUTH_TOKENS, FF_LSDV_E_297, isFF } from "../../../utils/feature-flags";
 import "./PeopleInvitation.scss";
 import { PeopleList } from "./PeopleList";
@@ -19,6 +20,8 @@ export const PeoplePage = () => {
   const toast = useToast();
   const [selectedUser, setSelectedUser] = useState(null);
   const [invitationOpen, setInvitationOpen] = useState(false);
+
+  useUpdatePageTitle("People");
 
   const selectUser = useCallback(
     (user) => {
@@ -55,8 +58,8 @@ export const PeoplePage = () => {
   }, []);
 
   return (
-    <Block name="people">
-      <Elem name="controls">
+    <div className={cn("people").toClassName()}>
+      <div className={cn("people").elem("controls").toClassName()}>
         <Space spread>
           <Space />
 
@@ -71,12 +74,12 @@ export const PeoplePage = () => {
               onClick={() => setInvitationOpen(true)}
               aria-label="Invite new member"
             >
-              Add People
+              Add Members
             </Button>
           </Space>
         </Space>
-      </Elem>
-      <Elem name="content">
+      </div>
+      <div className={cn("people").elem("content").toClassName()}>
         <PeopleList
           selectedUser={selectedUser}
           defaultSelected={defaultSelected}
@@ -88,7 +91,7 @@ export const PeoplePage = () => {
         ) : (
           isFF(FF_LSDV_E_297) && <HeidiTips collection="organizationPage" />
         )}
-      </Elem>
+      </div>
       <InviteLink
         opened={invitationOpen}
         onClosed={() => {
@@ -96,7 +99,7 @@ export const PeoplePage = () => {
           setInvitationOpen(false);
         }}
       />
-    </Block>
+    </div>
   );
 };
 

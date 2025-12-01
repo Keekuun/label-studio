@@ -47,7 +47,7 @@ Once the initial organization account is created, you can begin inviting users:
 
 1. Open Label Studio and click the menu in the upper left. 
 2. Select **Organization**. 
-3. From the Organization page, click **Add People**. 
+3. From the Organization page, click **Add Members**. 
 
 From here you can copy a link that is unique to your organization. 
 

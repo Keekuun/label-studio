@@ -3,7 +3,7 @@ title: Image Captioning
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 105
+order: 130
 meta_title: Image Captioning Data Labeling Template
 meta_description: Template for adding captions to images with Label Studio for your machine learning and data science projects.
 ---

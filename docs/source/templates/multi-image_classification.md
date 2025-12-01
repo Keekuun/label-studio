@@ -3,7 +3,7 @@ title: Multi-Image Classification
 type: templates
 category: Computer Vision
 cat: computer-vision
-order: 111
+order: 140
 meta_title: Multi-Image Classification Data Labeling Template
 meta_description: Template for classifying multiple images at once with Label Studio for your machine learning and data science projects.
 ---

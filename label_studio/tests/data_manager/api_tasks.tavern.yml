@@ -16,6 +16,7 @@ stages:
       data:
         title: Test Draft 1
         show_collab_predictions: true
+        label_config: '<View><Text name="text" value="$text"/><Choices name="text_class" toName="text"><Choice value="class_A"/><Choice value="class_B"/><Choice value="class_TESTING"/><Choice value="class_PREDICTIONS_TESTING"/></Choices></View>'
       method: POST
       url: '{django_live_url}/api/projects'
     response:
@@ -355,6 +356,7 @@ stages:
       data:
         title: Test Draft 1
         show_collab_predictions: true
+        label_config: '<View><Text name="text" value="$text"/><Choices name="text_class" toName="text"><Choice value="class_A"/><Choice value="class_B"/><Choice value="class_TESTING"/><Choice value="class_PREDICTIONS_TESTING"/></Choices></View>'
       method: POST
       url: '{django_live_url}/api/projects'
     response:
@@ -709,6 +711,7 @@ stages:
       data:
         title: Test Draft 1
         show_collab_predictions: true
+        label_config: '<View><Text name="text" value="$text"/><Choices name="text_class" toName="text"><Choice value="class_A"/><Choice value="class_B"/><Choice value="class_TESTING"/><Choice value="class_PREDICTIONS_TESTING"/></Choices></View>'
       method: POST
       url: '{django_live_url}/api/projects'
     response:
@@ -1138,6 +1141,7 @@ stages:
       data:
         title: Test Draft 1
         show_collab_predictions: true
+        label_config: '<View><Text name="text" value="$text"/><Choices name="text_class" toName="text"><Choice value="class_A"/><Choice value="class_B"/><Choice value="class_TESTING"/><Choice value="class_PREDICTIONS_TESTING"/></Choices></View>'
       method: POST
       url: '{django_live_url}/api/projects'
     response:
@@ -1502,6 +1506,7 @@ stages:
       data:
         title: Test Draft 1
         show_collab_predictions: true
+        label_config: '<View><Text name="text" value="$text"/><Choices name="text_class" toName="text"><Choice value="class_A"/><Choice value="class_B"/><Choice value="class_TESTING"/><Choice value="class_PREDICTIONS_TESTING"/></Choices></View>'
       method: POST
       url: '{django_live_url}/api/projects'
     response:
@@ -1519,6 +1524,7 @@ stages:
         title: Testing S3 storage (bucket from conftest.py)
         use_blob_urls: true
         presign_ttl: 3600
+        recursive_scan: true
       method: POST
       url: '{django_live_url}/api/storages/s3'
     response:
@@ -1620,6 +1626,7 @@ stages:
       data:
         title: Test Draft 1
         show_collab_predictions: true
+        label_config: '<View><Text name="text" value="$text"/><Choices name="text_class" toName="text"><Choice value="class_A"/><Choice value="class_B"/><Choice value="class_TESTING"/><Choice value="class_PREDICTIONS_TESTING"/></Choices></View>'
       method: POST
       url: '{django_live_url}/api/projects'
     response:
@@ -1717,6 +1724,7 @@ stages:
     data:
       title: Test Draft 1
       show_collab_predictions: true
+      label_config: '<View><Text name="text" value="$text"/><Choices name="text_class" toName="text"><Choice value="class_A"/><Choice value="class_B"/><Choice value="class_TESTING"/><Choice value="class_PREDICTIONS_TESTING"/></Choices></View>'
     method: POST
     url: '{django_live_url}/api/projects'
   response:
@@ -1908,6 +1916,7 @@ stages:
     data:
       title: Test Draft 1
       show_collab_predictions: true
+      label_config: '<View><Text name="text" value="$text"/><Choices name="text_class" toName="text"><Choice value="class_A"/><Choice value="class_B"/><Choice value="class_TESTING"/><Choice value="class_PREDICTIONS_TESTING"/></Choices></View>'
     method: POST
     url: '{django_live_url}/api/projects'
   response:

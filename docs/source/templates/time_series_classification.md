@@ -3,7 +3,7 @@ title: Time Series Classification
 type: templates
 category: Time Series Analysis
 cat: time-series-analysis
-order: 706
+order: 605
 meta_title: Time Series Classification Data Labeling Template
 meta_description: Template for classifying time series data with Label Studio for your machine learning and data science projects.
 ---

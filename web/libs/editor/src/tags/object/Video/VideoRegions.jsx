@@ -1,5 +1,5 @@
 import chroma from "chroma-js";
-import { clamp } from "lodash";
+import clamp from "lodash/clamp";
 import { observer } from "mobx-react";
 import { getParentOfType } from "mobx-state-tree";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -258,13 +258,14 @@ const RegionsLayer = observer(({ regions, item, locked, isDrawing, workinAreaCoo
   );
 });
 
-const Shape = observer(({ reg, frame, stageRef, ...props }) => {
+const Shape = observer(({ id, reg, frame, stageRef, ...props }) => {
   const box = reg.getShape(frame);
 
   return (
     reg.isInLifespan(frame) &&
     box && (
       <Rectangle
+        id={id}
         reg={reg}
         box={box}
         frame={frame}

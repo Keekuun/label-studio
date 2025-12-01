@@ -40,6 +40,7 @@ module.exports = {
     await I.executeScript(Helpers.waitForAudio);
     I.waitForInvisible(this._progressBarSelector, 30);
     I.waitForDetached("loading-progress-bar", 30);
+    await I.executeScript(Helpers.waitForAudioCanvases);
     I.waitTicks(2);
   },
   getCurrentAudio() {
@@ -325,9 +326,17 @@ module.exports = {
    * Asserts whether the audio player is reporting as paused.
    * @returns {Promise<void>}
    */
-  async seeIsPlaying(playing) {
-    const isPaused = await I.grabAttributeFrom(this._audioElementSelector, "paused");
-
-    assert.equal(!isPaused, playing, playing ? "Audio is not playing" : "Audio is playing");
+  async seeIsPlaying(playing, timeout = 5) {
+    await I.waitForFunction(
+      ([selector, expectedPlaying]) => {
+        const audioElement = document.querySelector(selector);
+        if (!audioElement) return false;
+        const isPlaying = !audioElement.paused;
+        console.log("!> waitForFunction", isPlaying === expectedPlaying, expectedPlaying, isPlaying);
+        return isPlaying === expectedPlaying;
+      },
+      [this._audioElementSelector, playing],
+      timeout,
+    );
   },
 };

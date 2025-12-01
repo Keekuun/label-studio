@@ -24,6 +24,8 @@ export const TabFilter = types
     filter: types.reference(TabFilterType),
     operator: types.maybeNull(Operators),
     value: types.maybeNull(FilterValueType),
+
+    child_filter: types.maybeNull(types.late(() => TabFilter)),
   })
   .views((self) => ({
     get field() {
@@ -36,7 +38,23 @@ export const TabFilter = types
 
     /** @returns {import("./tab").View} */
     get view() {
-      return getParent(getParent(self));
+      // For child filters, we need to traverse up to find the tab
+      let current = self;
+      let parent = null;
+
+      try {
+        while (current) {
+          parent = getParent(current);
+          if (parent?.filters && Array.isArray(parent.filters)) {
+            return parent;
+          }
+          current = parent;
+        }
+      } catch {
+        return getParent(getParent(self));
+      }
+
+      return null;
     },
 
     get component() {
@@ -101,20 +119,30 @@ export const TabFilter = types
       if (self.operator === null) {
         self.setOperator(self.component[0].key);
       }
+
+      // If this filter's column has child_filter metadata and no child filter exists, create it
+      // This ensures child filters are automatically recreated after navigation
+      if (!self.child_filter && self.filter?.field?.child_filter) {
+        self.view?.applyChildFilter(self);
+      }
     },
 
     setFilter(value, save = true) {
       if (!isDefined(value)) return;
 
+      self.view.clearChildFilter(self);
+
       const previousFilterType = self.filter.currentType;
-      const previousFilter = self.filter.id;
+      const previousFilter = self.filter;
 
       self.filter = value;
 
       const typeChanged = previousFilterType !== self.filter.currentType;
-      const filterChanged = previousFilter !== self.filter.id;
+      const filterChanged = previousFilter !== self.filter;
 
       if (typeChanged || filterChanged) {
+        self.view.applyChildFilter(self);
+
         self.markUnsaved();
       }
 
@@ -200,5 +228,6 @@ export const TabFilter = types
     }, 300),
   }))
   .preProcessSnapshot((sn) => {
+    if (!sn) return sn;
     return { ...sn, value: sn.value ?? null };
   });
