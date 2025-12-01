@@ -21,4 +21,19 @@ _Important Note: These scripts must be executed within the web folder or its sub
 - **`yarn lsf:unit`: Run unit tests on LSF**
   - Essential for maintaining code quality and reliability, especially in collaborative development.
 
+### Documentation
+
+The editor comes with comprehensive documentation to help you understand and extend its functionality:
+
+- [Custom Component Development Guide](docs/DEVELOPING_COMPONENTS.md) - Learn how to create custom components for extending functionality
+- [Internationalization Implementation Guide](docs/I18N_IMPLEMENTATION_GUIDE.md) - Complete guide to the i18n system implementation
+- [i18n Quick Reference](docs/I18N_QUICK_REFERENCE.md) - Quick reference for working with internationalization
+- [Image Component and Controllers](docs/IMAGE_COMPONENT.md) - Detailed explanation of how Image components and controllers work
+- [Tool Shortcut Implementation](docs/TOOL_SHORTCUT_IMPLEMENTATION.md) - Analysis of how keyboard shortcuts are implemented in Tool components
+- [XML to React Rendering](docs/XML_TO_REACT_RENDERING.md) - Explanation of how XML configuration gets converted to React components
+
+### Language
+
+- [中文版本](README_zh-CN.md) - 简体中文版本的文档
+
 <img src="https://github.com/HumanSignal/label-studio/blob/develop/images/opossum_looking.png?raw=true" title="Hey everyone!" height="140" width="140" />
