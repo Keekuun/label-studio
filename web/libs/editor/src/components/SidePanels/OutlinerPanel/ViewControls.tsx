@@ -1,4 +1,3 @@
-import { type FC, useCallback, useContext, useMemo } from "react";
 import {
   IconBoundingBox,
   IconCursor,
