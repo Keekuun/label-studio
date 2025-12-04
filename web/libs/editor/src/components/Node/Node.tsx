@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { getType } from "mobx-state-tree";
 import { observer } from "mobx-react";
-import { ApartmentOutlined, AudioOutlined, LineChartOutlined, MessageOutlined } from "@ant-design/icons";
+import { ApartmentOutlined, AudioOutlined, ColumnWidthOutlined, LineChartOutlined, MessageOutlined } from "@ant-design/icons";
 
 import Registry from "../../core/Registry";
 import "./Node.scss";
@@ -21,6 +21,9 @@ import {
   IconText,
   IconTimelineRegion,
 } from "@humansignal/icons";
+
+// 带颜色的标尺图标组件
+const RulerIcon: FC<any> = (props) => <ColumnWidthOutlined {...props} style={{ color: "#1890ff", ...props.style }} />;
 
 interface NodeViewProps {
   name: string;
@@ -77,6 +80,12 @@ const NodeViews: Record<string, NodeViewProps> = {
     name: "Rect",
     icon: IconRectangleTool,
     altIcon: IconRectangleToolSmart,
+  },
+
+  RulerRegionModel: {
+    name: "Ruler",
+    icon: RulerIcon, // 使用列宽图标表示标尺，蓝色
+    altIcon: RulerIcon,
   },
 
   Rect3PointRegionModel: {

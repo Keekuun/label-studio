@@ -2,14 +2,18 @@
 /* eslint-disable no-unused-vars */
 import External from "../core/External";
 import Messages from "../utils/messages";
-import { ClassificationMixed } from "../examples/classification_mixed";
+// import { ClassificationMixed } from "../examples/classification_mixed";
+import { ImageBbox } from "../examples/image_bbox";
+import { ImageRuler } from "../examples/image_ruler";
 
 /**
  * Custom Data
  */
 // import { AllTypes } from "../examples/all_types";
 
-const data = ClassificationMixed;
+// const data = ClassificationMixed;
+// const data = ImageBbox;
+const data = ImageRuler;
 
 function getData(task) {
   if (task && task.data) {
@@ -44,6 +48,7 @@ async function getExample() {
   const predictions = datatype.tasks[0].predictions;
 
   const task = {
+    id: datatype.tasks[0].id,
     annotations,
     predictions,
     data: JSON.stringify(datatype.tasks[0].data),

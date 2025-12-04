@@ -255,6 +255,11 @@
     "description": "tool_magic_wand_description"
   },
 
+  "tool:ruler": {
+    "key": "L",
+    "description": "tool_ruler_description"
+  },
+
   "tool:polygon": {
     "key": "P",
     "description": "Select the polygon annotation tool"

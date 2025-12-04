@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "data": {
+      "instruction": "使用标尺工具在图片上划线。画一根线会显示长度，画多根线会显示长度比例（如 1:2, 1:2:3）。",
+      "image": "https://htx-pub.s3.amazonaws.com/examples/images/nick-owuor-astro-nic-visuals-wDifg5xc9Z4-unsplash.jpg"
+    },
+    "annotations": [],
+    "predictions": []
+  }
+]
+

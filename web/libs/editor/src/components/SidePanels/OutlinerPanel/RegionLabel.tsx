@@ -10,6 +10,18 @@ export const RegionLabel = observer(({ item }: RegionLabelProps) => {
   if (!type) {
     return i18n.t('no_label');
   }
+  // 标尺区域：显示 Line-1 / Line-2，并用区域颜色渲染
+  if (type === "rulerregion") {
+    const index = typeof item.lineIndex === "number" && item.lineIndex >= 0 ? item.lineIndex + 1 : null;
+    const label = index != null ? `Line-${index}` : i18n.t('no_label');
+    const color = item.color ?? "#000000";
+
+    return (
+      <div className={cn("labels-list").toClassName()} style={{ color }}>
+        {label}
+      </div>
+    );
+  }
   if (type.includes("label")) {
     return item.value;
   }

@@ -28,6 +28,8 @@ const resultTypes = [
   "ellipselabels",
   "timeserieslabels",
   "timelinelabels",
+  "ruler",
+  "rulerlabels",
   "choices",
   "datetime",
   "number",
@@ -64,6 +66,7 @@ const resultValues = {
   timeserieslabels: types.maybe(types.array(types.string)),
   timelinelabels: types.maybe(types.array(types.string)), // new one
   bitmasklabels: types.maybe(types.array(types.string)),
+  rulerlabels: types.maybe(types.array(types.string)),
   taxonomy: types.frozen(), // array of arrays of strings
   sequence: types.frozen(),
   custom: types.maybe(types.frozen()), // for CustomInterface regions

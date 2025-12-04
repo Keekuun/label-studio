@@ -93,6 +93,12 @@ export const ResultItem: FC<{ result: any }> = observer(({ result }) => {
 });
 
 export const RegionDetailsMain: FC<{ region: any }> = observer(({ region }) => {
+  const isRulerRegion = region?.type === "rulerregion";
+  const rulerIndex = typeof region?.lineIndex === "number" && region.lineIndex >= 0 ? region.lineIndex + 1 : null;
+  const rulerLength = typeof region?.length === "number" ? Math.round(region.length) : null;
+  const rulerRatios = region?.ratiosString as string | undefined;
+  const rulerSelfRatio = region?.selfRatio as string | undefined;
+
   return (
     <>
       <div className={cn("detailed-region").elem("result").toClassName()}>
@@ -113,6 +119,27 @@ export const RegionDetailsMain: FC<{ region: any }> = observer(({ region }) => {
             </div>
           </div>
         ) : null}
+        {isRulerRegion && rulerIndex != null && rulerLength != null && (
+          <div className={cn("region-meta").toClassName()}>
+            <div className={cn("region-meta").elem("result").toClassName()}>
+              <Typography size="small">标尺：</Typography>
+              <div className={cn("region-meta").elem("value").toClassName()}>
+                <Typography size="small">{`Line-${rulerIndex} · 长度：${rulerLength}px`}</Typography>
+              </div>
+            </div>
+            {rulerRatios && (
+              <div className={cn("region-meta").elem("result").toClassName()}>
+                <Typography size="small">比例：</Typography>
+                <div className={cn("region-meta").elem("value").toClassName()}>
+                  <Typography size="small">
+                    {`组比例：${rulerRatios}`}
+                    {rulerSelfRatio ? `（本线：${rulerSelfRatio}）` : ""}
+                  </Typography>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <RegionEditor region={region} />
     </>

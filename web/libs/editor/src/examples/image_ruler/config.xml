@@ -1,0 +1,7 @@
+<View>
+  <Header value="标尺工具 Demo：在图片上划线测量距离和比例" />
+  <Text name="instruction" value="$instruction" />
+  <Ruler name="ruler" toName="image" />
+  <Image name="image" value="$image" zoomControl="true" zoom="true" />
+</View>
+

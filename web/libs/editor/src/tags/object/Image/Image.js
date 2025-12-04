@@ -13,6 +13,7 @@ import { KeyPointRegionModel } from "../../../regions/KeyPointRegion";
 import { PolygonRegionModel } from "../../../regions/PolygonRegion";
 import { VectorRegionModel } from "../../../regions/VectorRegion";
 import { RectRegionModel } from "../../../regions/RectRegion";
+import { RulerRegionModel } from "../../../regions/RulerRegion";
 import * as Tools from "../../../tools";
 import ToolsManager from "../../../tools/Manager";
 import { parseValue } from "../../../utils/data";
@@ -182,6 +183,7 @@ const Model = types
         PolygonRegionModel,
         VectorRegionModel,
         KeyPointRegionModel,
+        RulerRegionModel,
       ),
       [],
     ),

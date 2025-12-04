@@ -24,6 +24,7 @@ import { EllipseModel } from "./Ellipse";
 import { KeyPointLabelsModel } from "./KeyPointLabels";
 import { KeyPointModel } from "./KeyPoint";
 import { MagicWandModel } from "./MagicWand";
+import { RulerModel } from "./Ruler";
 import { PolygonLabelsModel } from "./PolygonLabels";
 import { VectorLabelsModel } from "./VectorLabels";
 import { PolygonModel } from "./Polygon";
@@ -59,6 +60,7 @@ export {
   KeyPointLabelsModel,
   KeyPointModel,
   MagicWandModel,
+  RulerModel,
   PolygonLabelsModel,
   VectorLabelsModel,
   PolygonModel,

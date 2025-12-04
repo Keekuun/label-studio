@@ -45,6 +45,29 @@
             }
           }
         ]
+      },
+      {
+        "created_ago": "5 hours",
+        "model_version": "model 3",
+        "result": [
+          {
+            "from_name": "tag",
+            "id": "t5sp3TyXPo",
+            "source": "$image",
+            "to_name": "img",
+            "type": "rectanglelabels",
+            "value": {
+              "height": 4,
+              "rectanglelabels": [
+                "Moonwalker"
+              ],
+              "rotation": 0,
+              "width": 20,
+              "x": 10,
+              "y": 20
+            }
+          }
+        ]
       }
     ]
   },

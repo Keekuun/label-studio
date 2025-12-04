@@ -97,6 +97,7 @@ const Model = types
       "brush",
       "bitmask",
       "magicwand",
+      "ruler",
       "rectanglelabels",
       "ellipselabels",
       "polygonlabels",
