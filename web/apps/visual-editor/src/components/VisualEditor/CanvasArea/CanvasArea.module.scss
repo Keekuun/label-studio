@@ -1,0 +1,390 @@
+.canvasArea {
+  padding: 12px;
+  min-height: 100%;
+  background: radial-gradient(circle at 30% 20%, #f9fbff 0%, #f4f7fb 45%, #f0f4f9 100%);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(0deg, rgba(31, 45, 61, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(31, 45, 61, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+    opacity: 0.8;
+  }
+
+  &.dragOver {
+    background: linear-gradient(180deg, #e8f3ff 0%, #f5f9ff 100%);
+    border: 2px dashed #4096ff;
+    box-shadow: inset 0 0 0 1px rgba(64, 150, 255, 0.25);
+    cursor: copy;
+  }
+}
+
+.canvasHeader {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(31, 45, 61, 0.06);
+  border-radius: 10px;
+  background: linear-gradient(90deg, #f8fbff 0%, #eef4ff 100%);
+  box-shadow: 0 6px 14px rgba(31, 45, 61, 0.06);
+
+  h2 {
+    margin: 0 0 6px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2d3d;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7a90;
+  }
+}
+
+.canvasContent {
+  min-height: 460px;
+  position: relative;
+  z-index: 1;
+}
+
+.canvasEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 460px;
+  background: #ffffff;
+  border: 2px dashed rgba(64, 150, 255, 0.3);
+  border-radius: 12px;
+  padding: 56px 28px;
+  text-align: center;
+  transition: all 0.3s;
+  box-shadow: inset 0 0 0 1px rgba(31, 45, 61, 0.04);
+  cursor: crosshair;
+
+  .emptyIcon {
+    font-size: 48px;
+    color: #9abcf7;
+    margin-bottom: 18px;
+  }
+
+  .emptyTitle {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1f2d3d;
+    margin-bottom: 8px;
+  }
+
+  .emptyDescription {
+    font-size: 14px;
+    color: #6b7a90;
+    margin-bottom: 14px;
+  }
+
+  .emptyHint {
+    font-size: 12px;
+    color: #9aa7b8;
+    margin-top: 6px;
+  }
+}
+
+.canvasArea.dragOver .canvasEmpty {
+  border-color: #4096ff;
+  background: #f3f8ff;
+  border-width: 2px;
+}
+
+.dragHint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.dragHintContent {
+  background: linear-gradient(135deg, #4096ff 0%, #2f7ae5 100%);
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 10px 26px rgba(64, 150, 255, 0.35);
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.componentTreeNode {
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(31, 45, 61, 0.08);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 10px 22px rgba(31, 45, 61, 0.08);
+
+  // 移除默认的 hover 效果，改为使用 .hovered 类
+  // &:hover {
+  //   border-color: #4096ff;
+  //   background: #f4f8ff;
+  // }
+
+  &.hovered {
+    border-color: #4096ff;
+    background: #f4f8ff;
+  }
+
+  &.selected {
+    border-color: #4096ff;
+    background: #e9f2ff;
+    box-shadow: 0 0 0 3px rgba(64, 150, 255, 0.18);
+  }
+
+  &.dragOver {
+    border-color: #52c41a;
+    background: #f6ffed;
+    box-shadow: 0 0 0 3px rgba(82, 196, 26, 0.15);
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+  }
+
+  &.dragOverTop {
+    border-top: 3px solid #52c41a;
+    background: linear-gradient(to bottom, rgba(82, 196, 26, 0.1) 0%, transparent 30%);
+  }
+
+  &.dragOverBottom {
+    border-bottom: 3px solid #52c41a;
+    background: linear-gradient(to top, rgba(82, 196, 26, 0.1) 0%, transparent 30%);
+  }
+
+  &.dragOverInvalid {
+    border-color: #ff4d4f;
+    background: #fff1f0;
+    box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.15);
+    cursor: not-allowed;
+    animation: shake 0.3s ease-in-out;
+  }
+
+  &.sorting {
+    opacity: 0.6;
+    z-index: 1000;
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(64, 150, 255, 0.3);
+    border-color: #4096ff;
+    background: #e6f4ff;
+  }
+
+  .nodeHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+
+    .dragHandle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      cursor: grab;
+      color: #9aa7b8;
+      opacity: 0.6;
+      transition: all 0.2s;
+      border-radius: 6px;
+      flex-shrink: 0;
+      position: relative;
+
+      &:hover {
+        color: #4096ff;
+        opacity: 1;
+        background: rgba(64, 150, 255, 0.15);
+        transform: scale(1.1);
+      }
+
+      &:active {
+        cursor: grabbing;
+        transform: scale(0.95);
+      }
+
+      // 拖拽时的视觉反馈
+      &:active::after {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border: 2px dashed #4096ff;
+        border-radius: 8px;
+        animation: dragHandlePulse 1s ease-in-out infinite;
+      }
+    }
+
+    .expandButton {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: #9aa7b8;
+      opacity: 0.6;
+      transition: all 0.2s;
+      border-radius: 4px;
+      flex-shrink: 0;
+
+      &:hover {
+        color: #4096ff;
+        opacity: 1;
+        background: rgba(64, 150, 255, 0.1);
+      }
+    }
+
+    .expandPlaceholder {
+      width: 20px;
+      flex-shrink: 0;
+    }
+
+    .nodeIcon {
+      font-size: 16px;
+      color: #4096ff;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    .nodeType {
+      font-weight: 700;
+      color: #1f6bff;
+    }
+
+    .nodeKeyFields {
+      font-size: 12px;
+      color: #6b7a90;
+      margin-left: 8px;
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .nodeKeyField {
+      font-size: 11px;
+      color: #6b7a90;
+      background: rgba(107, 122, 144, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+      margin-right: 4px;
+
+      &:last-child {
+        margin-right: 0;
+      }
+    }
+
+    .deleteButton {
+      margin-left: auto;
+      padding: 4px 8px;
+      border: none;
+      background: transparent;
+      color: #ff4d4f;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #fff1f0;
+        color: #ff7875;
+      }
+
+      &:active {
+        background: #ffccc7;
+      }
+    }
+  }
+
+  // 移除通过 CSS hover 显示删除按钮的规则
+  // 现在通过 React 状态控制显示
+  // &:hover .nodeHeader .deleteButton,
+  // &.selected .nodeHeader .deleteButton {
+  //   display: block;
+  // }
+
+  .nodeChildren {
+    margin-top: 8px;
+    padding-left: 14px;
+    border-left: 2px solid #f0f2f5;
+    transition: all 0.2s ease;
+    
+    // 当父节点被拖拽悬停时，子节点区域高亮
+    .componentTreeNode.dragOver ~ & {
+      border-left-color: #52c41a;
+      background: rgba(82, 196, 26, 0.05);
+      border-radius: 4px;
+      padding: 4px 0 4px 14px;
+    }
+  }
+}
+
+// 放置指示线
+.dropIndicator {
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #52c41a 20%, #52c41a 80%, transparent 100%);
+  margin: 4px 0;
+  border-radius: 2px;
+  animation: dropIndicatorPulse 1s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(82, 196, 26, 0.5);
+}
+
+@keyframes dropIndicatorPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.05);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes dragHandlePulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+

@@ -43,12 +43,18 @@
     "storybook:serve": "nx storybook storybook",
     "storybook:build": "nx build-storybook storybook",
     "playground:serve": "cross-env FRONTEND_HOSTNAME=http://localhost:4200 MODE=standalone-playground nx run playground:serve:development",
-    "playground:build": "cross-env NODE_ENV=production MODE=standalone-playground nx run playground:build:production && mv dist/apps/playground/playground-assets/index.html dist/apps/playground/index.html"
+    "playground:build": "cross-env NODE_ENV=production MODE=standalone-playground nx run playground:build:production && mv dist/apps/playground/playground-assets/index.html dist/apps/playground/index.html",
+    "visual-editor:serve": "cross-env FRONTEND_HOSTNAME=http://localhost:4201 MODE=standalone-visual-editor nx run visual-editor:serve:development",
+    "visual-editor:build": "cross-env NODE_ENV=production MODE=standalone-visual-editor nx run visual-editor:build:production && mv dist/apps/visual-editor/visual-editor-assets/index.html dist/apps/visual-editor/index.html"
   },
   "private": true,
   "dependencies": {
     "@ant-design/colors": "6.0.0",
+    "@ant-design/fast-color": "^3.0.0",
     "@ant-design/icons": "4.8.1",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@humansignal/audio-file-decoder": "0.1.5",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-dialog": "^1.1.6",
@@ -118,6 +124,7 @@
     "sucrase": "^3.35.0",
     "tailwind-merge": "^2.6.0",
     "webfft": "^1.0.3",
+    "xml2js": "^0.6.2",
     "xpath-range": "^1.1.1",
     "zod": "^3.23.8"
   },

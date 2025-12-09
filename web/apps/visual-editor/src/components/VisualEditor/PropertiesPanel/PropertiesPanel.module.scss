@@ -1,0 +1,129 @@
+.propertiesPanel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.panelHeader {
+  padding: 18px 16px;
+  border-bottom: 1px solid rgba(31, 45, 61, 0.06);
+  background: linear-gradient(90deg, #f7faff 0%, #eef3ff 100%);
+  box-shadow: 0 4px 12px rgba(31, 45, 61, 0.05);
+
+  h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2d3d;
+  }
+
+  .selectedComponent {
+    font-size: 12px;
+    color: #6b7a90;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .componentDisplayName {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2d3d;
+  }
+
+  .componentTag {
+    font-size: 11px;
+    font-weight: 500;
+    color: #6b7a90;
+    background: rgba(107, 122, 144, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  }
+}
+
+.panelEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+
+  p {
+    font-size: 14px;
+    color: #9aa7b8;
+    text-align: center;
+  }
+}
+
+.panelContent {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  background: #ffffff;
+
+  :global {
+    .ant-form-item {
+      margin-bottom: 16px;
+    }
+
+    .ant-form-item-label {
+      padding-bottom: 4px;
+    }
+
+    .ant-form-item-label > label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f2d3d;
+    }
+
+    .ant-input,
+    .ant-input-number,
+    .ant-select-selector,
+    .ant-switch,
+    .ant-input-affix-wrapper {
+      border-radius: 8px !important;
+    }
+
+    // 高级属性折叠面板样式
+    .ant-collapse {
+      background: transparent;
+      border: none;
+
+      .ant-collapse-item {
+        border: none;
+        margin-bottom: 0;
+
+        .ant-collapse-header {
+          padding: 12px 16px;
+          background: #f8f9fa;
+          border-radius: 8px;
+          border: 1px solid #e9ecef;
+          transition: all 0.2s;
+
+          &:hover {
+            background: #e9ecef;
+            border-color: #4096ff;
+          }
+
+          .ant-collapse-arrow {
+            color: #6b7a90;
+            font-size: 12px;
+          }
+        }
+
+        .ant-collapse-content {
+          border: none;
+          background: transparent;
+
+          .ant-collapse-content-box {
+            padding: 16px 0 0 0;
+          }
+        }
+      }
+    }
+  }
+}
+

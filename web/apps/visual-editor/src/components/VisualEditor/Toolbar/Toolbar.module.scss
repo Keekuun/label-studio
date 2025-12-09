@@ -1,0 +1,39 @@
+.toolbar {
+  padding: 10px 18px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2d3d;
+
+  .badge {
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #4096ff 0%, #2f7ae5 100%);
+    color: #ffffff;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  :global {
+    .ant-btn {
+      border-radius: 8px;
+    }
+  }
+}
+

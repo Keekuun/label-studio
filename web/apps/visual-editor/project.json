@@ -1,0 +1,88 @@
+{
+  "name": "visual-editor",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/visual-editor/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "compiler": "babel",
+        "outputPath": "dist/apps/visual-editor/visual-editor-assets",
+        "index": "apps/visual-editor/src/index.html",
+        "baseHref": "/",
+        "main": "apps/visual-editor/src/main.tsx",
+        "tsConfig": "apps/visual-editor/tsconfig.app.json",
+        "assets": [],
+        "styles": [],
+        "scripts": [],
+        "isolatedConfig": true,
+        "webpackConfig": "webpack.config.js"
+      },
+      "configurations": {
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true,
+          "baseHref": "/"
+        },
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/visual-editor/src/environments/environment.ts",
+              "with": "apps/visual-editor/src/environments/environment.prod.ts"
+            }
+          ],
+          "optimization": true,
+          "sourceMap": false,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false,
+          "baseHref": "/visual-editor-assets/"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "visual-editor:build",
+        "port": 4200,
+        "hmr": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "visual-editor:build:development"
+        },
+        "production": {
+          "buildTarget": "visual-editor:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "serve-static": {
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "visual-editor:build"
+      }
+    },
+    "unit": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/visual-editor/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    }
+  }
+}

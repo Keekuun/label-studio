@@ -1,0 +1,15 @@
+/* eslint-disable */
+export default {
+  displayName: "visual-editor",
+  preset: "../../jest.preset.js",
+  transform: {
+    "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)": "@nx/react/plugins/jest",
+    "^.+\\.[tj]sx?$": ["babel-jest", { presets: ["@nx/react/babel"] }],
+  },
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx"],
+  moduleNameMapper: {
+    "^apps/visual-editor/(.*)$": "<rootDir>/$1",
+  },
+  coverageDirectory: "../../coverage/apps/visual-editor",
+};
+

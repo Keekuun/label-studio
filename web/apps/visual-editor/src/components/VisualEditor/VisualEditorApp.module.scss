@@ -1,0 +1,124 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: radial-gradient(circle at 20% 20%, #f8fbff 0%, #f2f5fb 40%, #eef1f6 100%);
+  color: #1f2d3d;
+}
+
+.toolbar {
+  height: 56px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #ffffff 0%, #f7f9fc 100%);
+  border-bottom: 1px solid rgba(31, 45, 61, 0.06);
+  box-shadow: 0 6px 18px rgba(31, 45, 61, 0.08);
+  z-index: 20;
+}
+
+.mainContent {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  gap: 12px;
+  padding: 12px;
+}
+
+.palette {
+  width: 270px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  border-radius: 14px;
+  border: 1px solid rgba(31, 45, 61, 0.06);
+  box-shadow: 0 12px 30px rgba(31, 45, 61, 0.08);
+  overflow: hidden auto;
+}
+
+.canvas {
+  flex: 1;
+  overflow: hidden auto;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(31, 45, 61, 0.06);
+  box-shadow: 0 16px 40px rgba(31, 45, 61, 0.12);
+  min-width: 0;
+  padding: 16px;
+  position: relative;
+}
+
+.properties {
+  width: 320px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  border-radius: 14px;
+  border: 1px solid rgba(31, 45, 61, 0.06);
+  box-shadow: 0 12px 30px rgba(31, 45, 61, 0.08);
+  overflow: hidden auto;
+}
+
+.previewModalContent {
+  height: 100%;
+  overflow: auto;
+}
+
+.dragOverlayCard {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  min-width: 200px;
+  background: #ffffff;
+  border: 2px solid #4096ff;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(64, 150, 255, 0.35);
+  cursor: grabbing;
+  transform: rotate(2deg);
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.dragOverlayIcon {
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #4096ff, #2f7ae5);
+  border-radius: 10px;
+  flex-shrink: 0;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.dragOverlayInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.dragOverlayName {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #1f2d3d;
+}
+
+.dragOverlayTag {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7a90;
+  background: rgba(107, 122, 144, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+}
+
+.dragOverlayDescription {
+  font-size: 12px;
+  color: #6b7a90;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
