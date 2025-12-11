@@ -37,7 +37,7 @@ export const CanvasArea: React.FC = () => {
               从左侧组件面板拖拽组件到这里
             </div>
             <div className={styles.emptyHint}>
-              提示：先添加 Object 类型组件（如 Image），再添加 Control 类型组件（如 RectangleLabels）
+              提示：先添加容器类型组件（如 View），再添加 Object类型（如 Image），最后添加 Control 类型组件（如 RectangleLabels）
             </div>
           </div>
         )}

@@ -2341,7 +2341,9 @@ export const componentMetas: ComponentMeta[] = [
         name: "value",
         type: "string",
         label: "数据源",
-        description: "音频数据路径或 URL",
+        required: true,
+        defaultValue: "$audio",
+        description: "音频数据路径或 URL。可以是数据字段名（如 $audio）或完整的 URL 地址（如 https://example.com/audio.mp3）",
       },
       {
         name: "defaultSpeed",

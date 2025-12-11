@@ -30,8 +30,30 @@ export const AttributeEditor: React.FC<AttributeEditorProps> = ({
     // 开发属性列表（应该放在最后）
     const devAttributes = ['style', 'className', 'idAttr'];
 
-    // 属性优先级顺序（常用属性中，name 和 value 应该在最前面）
-    const priorityOrder = ['name', 'value', 'toName', 'fromName'];
+    // 属性优先级顺序（常用属性中，必填属性优先，然后是常用非必填属性）
+    // 第一优先级：必填的关键属性
+    // 第二优先级：常用的非必填属性（颜色、透明度、位置、宽高等）
+    const priorityOrder = [
+      'name',           // 组件名称（必填）
+      'value',          // 数据源（必填）
+      'toName',         // 关联对象（必填）
+      'fromName',       // 来源对象
+      'color',          // 颜色
+      'fillColor',      // 填充颜色
+      'strokeColor',    // 描边颜色
+      'opacity',        // 透明度
+      'fillOpacity',    // 填充透明度
+      'strokeOpacity',  // 描边透明度
+      'width',          // 宽度
+      'height',         // 高度
+      'x',              // X 坐标
+      'y',              // Y 坐标
+      'left',           // 左边距
+      'top',            // 上边距
+      'right',          // 右边距
+      'bottom',         // 下边距
+      'url',            // URL
+    ];
 
     attributes.forEach((attr) => {
       // 开发属性（style, className, idAttr）默认归类为高级属性
@@ -50,14 +72,12 @@ export const AttributeEditor: React.FC<AttributeEditorProps> = ({
       } else if (attr.required) {
         // 必填属性默认归类为常用属性
         common.push(attr);
+      } else if (priorityOrder.includes(attr.name)) {
+        // 关键常用属性（即使非必填且有默认值）归类为常用属性
+        common.push(attr);
       } else {
-        // 其他属性根据是否有默认值判断
-        // 有默认值的通常是常用属性，没有的通常是高级属性
-        if (attr.defaultValue !== undefined) {
-          common.push(attr);
-        } else {
-          advanced.push(attr);
-        }
+        // 其他属性（包括有默认值的非关键属性）归类为高级属性
+        advanced.push(attr);
       }
     });
 
