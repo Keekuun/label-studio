@@ -29,9 +29,15 @@ export const PreviewPlayground: React.FC<PreviewPlaygroundProps> = ({
   const prevConfigRef = useRef<string>("");
   const isInitializedRef = useRef(false);
 
-  // 初始化配置（只在首次或配置真正变化时更新）
+  // 初始化配置（当 initialConfig 变化时总是更新）
   useEffect(() => {
-    if (!isInitializedRef.current || initialConfig !== prevConfigRef.current) {
+    // 如果配置确实变化了，更新配置
+    if (initialConfig !== prevConfigRef.current) {
+      setConfig(initialConfig);
+      prevConfigRef.current = initialConfig;
+      isInitializedRef.current = true;
+    } else if (!isInitializedRef.current) {
+      // 首次初始化
       setConfig(initialConfig);
       prevConfigRef.current = initialConfig;
       isInitializedRef.current = true;

@@ -120,12 +120,6 @@
       cursor: default;
     }
 
-    // 确保当 gutter 存在时，sizer 有左边距
-    // CodeMirror 的 JavaScript 会动态设置 marginLeft，但如果初始化失败，这个样式作为后备
-    // 使用 :has() 选择器（现代浏览器支持）
-    :global(.CodeMirror-scroll:has(.CodeMirror-gutters:not(:empty)) .CodeMirror-sizer) {
-      margin-left: 3em !important;
-    }
   }
 }
 

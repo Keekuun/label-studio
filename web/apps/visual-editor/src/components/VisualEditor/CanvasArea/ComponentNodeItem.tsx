@@ -239,10 +239,11 @@ export const ComponentNodeItem: React.FC<ComponentNodeItemProps> = ({
   const renderKeyFields = () => {
     const keyFields = getKeyFields(node);
     if (keyFields.length === 0) return null;
+    const meta = getComponentMeta(node.type);
 
     return (
       <span className={styles.nodeKeyFields}>
-        {keyFields.map((field, index) => {
+        {keyFields.map((field) => {
           const value = node.attributes[field];
           if (value === undefined || value === null || value === '') return null;
 
@@ -251,6 +252,15 @@ export const ComponentNodeItem: React.FC<ComponentNodeItemProps> = ({
           const maxLength = field === 'value' ? 25 : 20;
           if (displayValue.length > maxLength) {
             displayValue = displayValue.substring(0, maxLength - 3) + '...';
+          }
+
+          // Label 组件在画布上直接显示其 value，提升可视性
+          if (meta?.category === 'label-item' && field === 'value') {
+            return (
+              <span key={field} className={styles.nodeKeyField} title={`Label: ${value}`}>
+                {displayValue}
+              </span>
+            );
           }
 
           return (
