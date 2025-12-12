@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -7,17 +7,22 @@ import {
   closestCenter,
   pointerWithin
 } from "@dnd-kit/core";
-import {Modal, message} from "antd";
-import {ComponentPalette} from "./ComponentPalette";
-import {CanvasArea} from "./CanvasArea";
-import {PropertiesPanel} from "./PropertiesPanel";
-import {VisualPreviewPanel} from "./VisualPreviewPanel";
-import {Toolbar} from "./Toolbar";
-import {useComponentTree} from "../../hooks/useComponentTree";
-import {useKeyboardShortcuts} from "../../hooks/useKeyboardShortcuts";
-import {ComponentMeta} from "../../types";
-import {validateDragOperation} from "../../utils/constraintValidator";
-import {findNodeById} from "../../utils/componentTree";
+import { message } from "antd";
+import { useAtom } from "jotai";
+import { ComponentPalette } from "./ComponentPalette";
+import { CanvasArea } from "./CanvasArea";
+import { PropertiesPanel } from "./PropertiesPanel";
+import { Toolbar } from "./Toolbar";
+import { FullscreenModal } from "../FullscreenModal";
+import { PreviewPlayground } from "./PreviewPlayground";
+import { useComponentTree } from "../../hooks/useComponentTree";
+import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
+import { ComponentMeta } from "../../types";
+import { validateDragOperation } from "../../utils/constraintValidator";
+import { findNodeById } from "../../utils/componentTree";
+import { editorStateAtom } from "../../atoms/visualEditorAtoms";
+import { generateXMLFromNode, parseXMLToNode } from "../../utils/xmlConverter";
+import { createComponentNode } from "../../utils/componentTree";
 import styles from "./VisualEditorApp.module.scss";
 
 export const VisualEditorApp: React.FC = () => {
@@ -33,11 +38,48 @@ export const VisualEditorApp: React.FC = () => {
     canUndo,
     canRedo,
     selectedNodeId,
-    rootNode
+    rootNode,
+    updateRootNode
   } =
     useComponentTree();
+  const [editorState] = useAtom(editorStateAtom);
   const [previewVisible, setPreviewVisible] = React.useState(false);
   const [activeDragMeta, setActiveDragMeta] = React.useState<ComponentMeta | null>(null);
+
+  // 生成 XML 配置
+  const xmlConfig = useMemo(() => {
+    if (!editorState.rootNode) {
+      return "<View>\n  <!-- 拖拽组件到画布开始构建配置 -->\n</View>";
+    }
+    try {
+      return generateXMLFromNode(editorState.rootNode);
+    } catch (error) {
+      console.error("XML 生成错误:", error);
+      return "<View>\n  <!-- XML 生成错误 -->\n</View>";
+    }
+  }, [editorState.rootNode]);
+
+  // 处理预览中 XML 配置的变化（同步回画布）
+  const handleConfigChange = React.useCallback((config: string) => {
+    try {
+      const parsedNode = parseXMLToNode(config);
+      if (!parsedNode) {
+        return;
+      }
+
+      let newRootNode = parsedNode;
+      if (parsedNode.type !== "View") {
+        newRootNode = createComponentNode("View", "visual", {}, undefined);
+        newRootNode.children = [parsedNode];
+        parsedNode.parentId = newRootNode.id;
+        parsedNode.order = 0;
+      }
+
+      updateRootNode(newRootNode);
+    } catch (error: any) {
+      console.error("XML 同步错误:", error);
+    }
+  }, [updateRootNode]);
 
   // 键盘快捷键
   useKeyboardShortcuts({
@@ -284,20 +326,19 @@ export const VisualEditorApp: React.FC = () => {
           </DragOverlay>
         </div>
       </DndContext>
-      <Modal
+      <FullscreenModal
         open={previewVisible}
         footer={null}
         title={null}
         onCancel={() => setPreviewVisible(false)}
-        centered
-        width={'80vw'}
-        bodyStyle={{padding: 0, minHeight: 640, display: "flex", flexDirection: "column",}}
+        fullscreen
         destroyOnClose={false}
       >
-        <div className={styles.previewModalContent} style={{width: "100%", height: "100%", minHeight: 640}}>
-          <VisualPreviewPanel />
-        </div>
-      </Modal>
+        <PreviewPlayground
+          initialConfig={xmlConfig}
+          onConfigChange={handleConfigChange}
+        />
+      </FullscreenModal>
     </>
   );
 };

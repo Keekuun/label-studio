@@ -2335,7 +2335,8 @@ export const componentMetas: ComponentMeta[] = [
         type: "string",
         label: "名称",
         required: true,
-        description: "音频对象的唯一标识",
+        defaultValue: "audio",
+        description: "音频对象的唯一标识名称。示例：audio、sound、clip。此名称会被 Control 组件的 toName 属性引用",
       },
       {
         name: "value",

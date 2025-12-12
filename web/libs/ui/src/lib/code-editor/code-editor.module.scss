@@ -99,6 +99,32 @@
       background-color: var(--color-neutral-surface-inset);
       color: var(--color-neutral-content-subtlest);
       border-right: 1px solid var(--color-neutral-border);
+      white-space: nowrap;
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 3;
+    }
+
+    :global(.CodeMirror-linenumbers) {
+      min-width: 3em;
+      width: 3em;
+    }
+
+    :global(.CodeMirror-linenumber) {
+      padding: 0 8px 0 4px;
+      min-width: 20px;
+      text-align: right;
+      color: var(--color-neutral-content-subtlest);
+      white-space: nowrap;
+      cursor: default;
+    }
+
+    // 确保当 gutter 存在时，sizer 有左边距
+    // CodeMirror 的 JavaScript 会动态设置 marginLeft，但如果初始化失败，这个样式作为后备
+    // 使用 :has() 选择器（现代浏览器支持）
+    :global(.CodeMirror-scroll:has(.CodeMirror-gutters:not(:empty)) .CodeMirror-sizer) {
+      margin-left: 3em !important;
     }
   }
 }

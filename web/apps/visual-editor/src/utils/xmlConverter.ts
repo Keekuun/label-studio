@@ -140,12 +140,28 @@ function elementToNode(
   // 确定分类
   const category = determineCategory(tagName);
   
+  // 获取组件元数据，应用默认值
+  const meta = getComponentMeta(tagName);
+  const defaultAttributes: Record<string, any> = {};
+  
+  if (meta) {
+    meta.attributes.forEach((attr) => {
+      // 如果属性在 XML 中不存在，且有默认值，则应用默认值
+      if (attr.defaultValue !== undefined && !(attr.name in attributes)) {
+        defaultAttributes[attr.name] = attr.defaultValue;
+      }
+    });
+  }
+  
+  // 合并默认值和 XML 中的属性（XML 中的属性优先级更高）
+  const finalAttributes = { ...defaultAttributes, ...attributes };
+  
   // 创建节点
   const node: ComponentNode = {
     id: nanoid(),
     type: tagName,
     category,
-    attributes,
+    attributes: finalAttributes,
     children: [],
     parentId,
     order,
