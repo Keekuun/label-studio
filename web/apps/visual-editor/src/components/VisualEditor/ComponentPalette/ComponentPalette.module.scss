@@ -9,6 +9,31 @@
   border-bottom: 1px solid rgba(31, 45, 61, 0.06);
   background: linear-gradient(90deg, #f3f7ff 0%, #eef5ff 100%);
 
+  .headerTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+  :global(.ant-btn) {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  :global(.ant-btn .anticon) {
+    line-height: 1;
+    vertical-align: 0;
+    transform: translateY(-1px);
+  }
+  }
+
   h3 {
     margin: 0 0 6px 0;
     font-size: 15px;

@@ -33,6 +33,15 @@
   :global {
     .ant-btn {
       border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+
+      .anticon {
+        line-height: 1;
+        vertical-align: 0;
+        transform: translateY(-1px);
+      }
     }
   }
 }

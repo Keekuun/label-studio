@@ -206,6 +206,18 @@ export const ComponentNodeItem: React.FC<ComponentNodeItemProps> = ({
     setIsHovered(false);
   };
 
+  const layoutColumns = React.useMemo(() => {
+    if (node.type !== "View") return 0;
+    const styleStr = (node.attributes?.style || "").toString().toLowerCase();
+    const isFlex = styleStr.includes("display: flex");
+    const isColumnDir = styleStr.includes("flex-direction: column");
+    if (!isFlex || isColumnDir) return 0; // 列布局仅在横向 flex 时预览，多列子列内的 column 不走这里
+    const count = node.children?.length || 0;
+    if (count >= 3) return 3;
+    if (count === 2) return 2;
+    return 0;
+  }, [node]);
+
   // 获取组件关键字段用于显示
   const getKeyFields = (node: ComponentNode): string[] => {
     const keyFields: string[] = [];
@@ -344,7 +356,11 @@ export const ComponentNodeItem: React.FC<ComponentNodeItemProps> = ({
         )}
       </div>
       {hasChildren && isExpanded && (
-        <div className={styles.nodeChildren}>
+        <div
+          className={`${styles.nodeChildren} ${
+            layoutColumns === 2 ? styles.layoutTwoCols : layoutColumns === 3 ? styles.layoutThreeCols : ""
+          }`}
+        >
           {node.children
             .sort((a, b) => a.order - b.order)
             .map((child) => (

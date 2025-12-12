@@ -27,6 +27,48 @@ export const templates: Template[] = [
 </View>`,
   },
   {
+    id: "layout-two-columns",
+    name: "两列布局",
+    description: "左右分栏的布局示例（含图片与选择）",
+    category: "布局",
+    icon: "🧱",
+    xml: `<View>
+  <View style="display: flex; gap: 16px;">
+    <View style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+      <Header value="左侧" size="4" />
+      <!-- 这里放置左侧组件 -->
+    </View>
+    <View style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+      <Header value="右侧" size="4" />
+      <!-- 这里放置右侧组件 -->
+    </View>
+  </View>
+</View>`,
+  },
+  {
+    id: "layout-three-columns",
+    name: "三列布局",
+    description: "三栏自适应布局示例（含图片与选择）",
+    category: "布局",
+    icon: "🏗️",
+    xml: `<View>
+  <View style="display: flex; gap: 16px;">
+    <View style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+      <Header value="列 1" size="4" />
+      <!-- 这里放置第一列组件 -->
+    </View>
+    <View style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+      <Header value="列 2" size="4" />
+      <!-- 这里放置第二列组件 -->
+    </View>
+    <View style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+      <Header value="列 3" size="4" />
+      <!-- 这里放置第三列组件 -->
+    </View>
+  </View>
+</View>`,
+  },
+  {
     id: "image-classification",
     name: "图像分类",
     description: "对图像进行分类选择",

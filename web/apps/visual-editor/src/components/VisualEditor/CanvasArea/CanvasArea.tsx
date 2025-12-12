@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { useAtom } from "jotai";
 import { DragOutlined } from "@ant-design/icons";
@@ -16,6 +16,19 @@ export const CanvasArea: React.FC = () => {
     },
   });
 
+  const layoutColumns = useMemo(() => {
+    const root = editorState.rootNode;
+    if (!root || root.type !== "View") return 0;
+    const style = (root.attributes?.style || "").toString().toLowerCase();
+    const isFlex = style.includes("display: flex");
+    const isColumnDir = style.includes("flex-direction: column");
+    if (!isFlex || isColumnDir) return 0;
+    const count = root.children.length;
+    if (count >= 3) return 3;
+    if (count === 2) return 2;
+    return 0;
+  }, [editorState.rootNode]);
+
   return (
     <div
       ref={setNodeRef}
@@ -27,6 +40,15 @@ export const CanvasArea: React.FC = () => {
       </div>
       <div className={styles.canvasContent} style={{ position: "relative" }}>
         {isOver && <DragHint isOver={isOver} />}
+        {layoutColumns > 0 && (
+          <div className={styles.layoutPreview} data-cols={layoutColumns}>
+            {Array.from({ length: layoutColumns }).map((_, idx) => (
+              <div key={idx} className={styles.layoutColumn}>
+                {layoutColumns === 2 ? (idx === 0 ? "左列" : "右列") : `列 ${idx + 1}`}
+              </div>
+            ))}
+          </div>
+        )}
         {editorState.rootNode ? (
           <ComponentTree node={editorState.rootNode} />
         ) : (

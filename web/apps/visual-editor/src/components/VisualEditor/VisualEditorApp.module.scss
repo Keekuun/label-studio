@@ -32,7 +32,16 @@
   border-radius: 14px;
   border: 1px solid rgba(31, 45, 61, 0.06);
   box-shadow: 0 12px 30px rgba(31, 45, 61, 0.08);
-  overflow: hidden auto;
+  overflow: visible;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+
+  &.collapsed {
+    padding: 0;
+    overflow: hidden;
+  }
 }
 
 .canvas {
@@ -54,8 +63,64 @@
   border-radius: 14px;
   border: 1px solid rgba(31, 45, 61, 0.06);
   box-shadow: 0 12px 30px rgba(31, 45, 61, 0.08);
-  overflow: hidden auto;
+  overflow: visible;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+
+  &.collapsed {
+    padding: 0;
+    overflow: hidden;
+  }
 }
+
+.resizer {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition: background 0.12s ease;
+  z-index: 5;
+
+  &:hover {
+    background: rgba(64, 150, 255, 0.12);
+  }
+}
+
+.palette .resizer {
+  right: 0;
+}
+
+.properties .resizer {
+  left: 0;
+}
+
+.panelBody {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.fixedToggleLeft,
+.fixedToggleRight {
+  position: fixed;
+  bottom: 0;
+  // top: 50%;
+  transform: translateY(-50%);
+  z-index: 1200;
+}
+
+.fixedToggleLeft {
+  left: 0px;
+}
+
+.fixedToggleRight {
+  right: 0px;
+}
+
 
 .previewModalContent {
   height: 100%;

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -7,7 +7,8 @@ import {
   closestCenter,
   pointerWithin
 } from "@dnd-kit/core";
-import { message } from "antd";
+import { message, Button } from "antd";
+import { DoubleLeftOutlined, DoubleRightOutlined } from "@ant-design/icons";
 import { useAtom } from "jotai";
 import { ComponentPalette } from "./ComponentPalette";
 import { CanvasArea } from "./CanvasArea";
@@ -45,6 +46,14 @@ export const VisualEditorApp: React.FC = () => {
   const [editorState] = useAtom(editorStateAtom);
   const [previewVisible, setPreviewVisible] = React.useState(false);
   const [activeDragMeta, setActiveDragMeta] = React.useState<ComponentMeta | null>(null);
+  const [paletteWidth, setPaletteWidth] = useState(270);
+  const [propertiesWidth, setPropertiesWidth] = useState(320);
+  const [isPaletteCollapsed, setPaletteCollapsed] = useState(false);
+  const [isPropertiesCollapsed, setPropertiesCollapsed] = useState(false);
+
+  const resizingRef = useRef<null | "left" | "right">(null);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
 
   // 生成 XML 配置
   const xmlConfig = useMemo(() => {
@@ -122,6 +131,39 @@ export const VisualEditorApp: React.FC = () => {
       }
     },
   });
+
+  const handleResizeStart = useCallback((side: "left" | "right", clientX: number) => {
+    resizingRef.current = side;
+    startXRef.current = clientX;
+    startWidthRef.current = side === "left" ? paletteWidth : propertiesWidth;
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "col-resize";
+  }, [paletteWidth, propertiesWidth]);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!resizingRef.current) return;
+      const delta = e.clientX - startXRef.current;
+      if (resizingRef.current === "left") {
+        const next = Math.min(420, Math.max(200, startWidthRef.current + delta));
+        setPaletteWidth(next);
+      } else {
+        const next = Math.min(480, Math.max(240, startWidthRef.current - delta));
+        setPropertiesWidth(next);
+      }
+    };
+    const onMouseUp = () => {
+      resizingRef.current = null;
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
 
   const handleDragStart = (event: DragStartEvent) => {
     const {active} = event;
@@ -291,8 +333,23 @@ export const VisualEditorApp: React.FC = () => {
           {/* 主要内容区域 */}
           <div className={styles.mainContent}>
             {/* 左侧：组件面板 */}
-            <div className={styles.palette}>
-              <ComponentPalette/>
+            <div
+              className={`${styles.palette} ${isPaletteCollapsed ? styles.collapsed : ""}`}
+              style={{ width: isPaletteCollapsed ? 24 : paletteWidth }}
+            >
+              {!isPaletteCollapsed && (
+                <div className={styles.panelBody}>
+                  <ComponentPalette/>
+                </div>
+              )}
+              {!isPaletteCollapsed && (
+                <div
+                  className={styles.resizer}
+                  onMouseDown={(e) => handleResizeStart("left", e.clientX)}
+                  role="separator"
+                  aria-orientation="vertical"
+                />
+              )}
             </div>
 
             {/* 中间：画布区域 */}
@@ -301,8 +358,23 @@ export const VisualEditorApp: React.FC = () => {
             </div>
 
             {/* 右侧：属性面板 */}
-            <div className={styles.properties}>
-              <PropertiesPanel/>
+            <div
+              className={`${styles.properties} ${isPropertiesCollapsed ? styles.collapsed : ""}`}
+              style={{ width: isPropertiesCollapsed ? 24 : propertiesWidth }}
+            >
+              {!isPropertiesCollapsed && (
+                <div
+                  className={styles.resizer}
+                  onMouseDown={(e) => handleResizeStart("right", e.clientX)}
+                  role="separator"
+                  aria-orientation="vertical"
+                />
+              )}
+              {!isPropertiesCollapsed && (
+                <div className={styles.panelBody}>
+                  <PropertiesPanel/>
+                </div>
+              )}
             </div>
           </div>
 
@@ -326,6 +398,28 @@ export const VisualEditorApp: React.FC = () => {
           </DragOverlay>
         </div>
       </DndContext>
+    <div className={styles.fixedToggleLeft}>
+      <Button
+        type="primary"
+        size="small"
+        shape="circle"
+        icon={isPaletteCollapsed ? <DoubleRightOutlined style={{color: "#fff", fontSize: 12}}/>: <DoubleLeftOutlined style={{color: "#fff", fontSize: 12}}/>}
+        onClick={() => setPaletteCollapsed((v) => !v)}
+        title={isPaletteCollapsed ? "展开组件面板" : "收起组件面板"}
+        style={{ opacity: previewVisible ? 0 : 0.8 }}
+      />
+    </div>
+    <div className={styles.fixedToggleRight}>
+      <Button
+        type="primary"
+        size="small"
+        shape="circle"
+        icon={isPropertiesCollapsed ? <DoubleLeftOutlined style={{color: "#fff", fontSize: 12}}/>: <DoubleRightOutlined style={{color: "#fff", fontSize: 12}}/>}
+        onClick={() => setPropertiesCollapsed((v) => !v)}
+        title={isPropertiesCollapsed ? "展开属性面板" : "收起属性面板"}
+        style={{ opacity: previewVisible ? 0 : 0.8 }}
+      />
+    </div>
       <FullscreenModal
         open={previewVisible}
         footer={null}

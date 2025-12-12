@@ -1,11 +1,10 @@
 import React, { useState, useMemo } from "react";
-import { Button, Space, message, Dropdown, MenuProps, Modal, Input, Select } from "antd";
+import { Button, Space, message, Modal, Input, Select } from "antd";
 import {
   ClearOutlined,
   CopyOutlined,
   DownloadOutlined,
   UploadOutlined,
-  AppstoreOutlined,
   SaveOutlined,
 } from "@ant-design/icons";
 import { useAtom, useSetAtom } from "jotai";
@@ -39,7 +38,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onOpenPreview }) => {
   const copyIcon = React.useMemo(() => React.createElement(CopyOutlined), []);
   const downloadIcon = React.useMemo(() => React.createElement(DownloadOutlined), []);
   const uploadIcon = React.useMemo(() => React.createElement(UploadOutlined), []);
-  const templateIcon = React.useMemo(() => React.createElement(AppstoreOutlined), []);
   const saveIcon = React.useMemo(() => React.createElement(SaveOutlined), []);
 
   const handleClear = () => {
@@ -225,57 +223,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onOpenPreview }) => {
     }
   };
 
-  const handleTemplateMenuClick: MenuProps["onClick"] = ({ key }) => {
-    handleLoadTemplate(key as string);
-  };
-
-  // 构建模板菜单（包含自定义模板）
-  const templateMenuItems: MenuProps["items"] = allCategories.map((category) => {
-    const categoryTemplates = allTemplates.filter((t) => t.category === category);
-    return {
-      key: category,
-      label: category,
-      type: "group",
-      children: categoryTemplates.map((template) => ({
-        key: template.id,
-        label: (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
-              {template.icon && <span>{template.icon}</span>}
-              <div>
-                <div style={{ fontWeight: 500 }}>
-                  {template.name}
-                  {isCustomTemplate(template.id) && (
-                    <span style={{ fontSize: 12, color: "#999", marginLeft: 4 }}>(自定义)</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 12, color: "#999" }}>{template.description}</div>
-              </div>
-            </div>
-            {isCustomTemplate(template.id) && (
-              <Button
-                type="text"
-                size="small"
-                danger
-                onClick={(e) => handleDeleteTemplate(template.id, e)}
-                style={{ padding: 0, height: "auto" }}
-              >
-                删除
-              </Button>
-            )}
-          </div>
-        ),
-      })),
-    };
-  });
-
   return (
     <>
       <div className={styles.toolbar}>
@@ -285,18 +232,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onOpenPreview }) => {
         </div>
         <div className={styles.actions}>
           <Space>
-            <Dropdown
-              menu={{
-                items: templateMenuItems,
-                onClick: handleTemplateMenuClick,
-              }}
-              trigger={["click"]}
-              placement="bottomLeft"
-            >
-              <Button icon={templateIcon}>
-                模板
-              </Button>
-            </Dropdown>
             <Button
               icon={saveIcon}
               onClick={() => setSaveTemplateVisible(true)}
