@@ -3,6 +3,7 @@ import { Input, message, Button, Dropdown, MenuProps } from "antd";
 import { SearchOutlined, AppstoreOutlined } from "@ant-design/icons";
 import { getAllComponentMetas } from "../../../data/componentMetas";
 import { ComponentCard } from "./ComponentCard";
+import { LayoutTemplateCard } from "./LayoutTemplateCard";
 import { templates, getAllCategories } from "../../../data/templates";
 import { parseXMLToNode } from "../../../utils/xmlConverter";
 import { createComponentNode } from "../../../utils/componentTree";
@@ -232,30 +233,7 @@ export const ComponentPalette: React.FC = () => {
             </h4>
             <div className={styles.cardGrid}>
               {layoutTemplates.map((tpl) => (
-                <div
-                  key={tpl.id}
-                  className={`${styles.componentCard} ${styles.containerCard}`}
-                  onClick={() => handleApplyTemplate(tpl.xml, tpl.name)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleApplyTemplate(tpl.xml, tpl.name);
-                    }
-                  }}
-                >
-                  <div className={styles.componentIcon}>
-                    <span className={styles.defaultIcon}>{tpl.icon || "🧱"}</span>
-                  </div>
-                  <div className={styles.componentInfo}>
-                    <div className={styles.componentName}>
-                      {tpl.name}
-                      <span className={styles.componentTag}>Layout</span>
-                    </div>
-                    <div className={styles.componentDescription}>{tpl.description}</div>
-                  </div>
-                </div>
+                <LayoutTemplateCard key={tpl.id} template={tpl} />
               ))}
             </div>
           </div>

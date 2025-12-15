@@ -29,7 +29,7 @@ export const templates: Template[] = [
   {
     id: "layout-two-columns",
     name: "两列布局",
-    description: "左右分栏的布局示例（含图片与选择）",
+    description: "左右分栏的布局示例",
     category: "布局",
     icon: "🧱",
     xml: `<View>
@@ -48,7 +48,7 @@ export const templates: Template[] = [
   {
     id: "layout-three-columns",
     name: "三列布局",
-    description: "三栏自适应布局示例（含图片与选择）",
+    description: "三栏自适应布局示例",
     category: "布局",
     icon: "🏗️",
     xml: `<View>

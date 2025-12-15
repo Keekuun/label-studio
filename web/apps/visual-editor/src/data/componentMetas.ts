@@ -3,7 +3,7 @@ import { getComponentIcon } from "./componentIcons";
 
 /**
  * Label Studio 组件元数据配置
- * 
+ *
  * 根据 web/libs/editor/docs/COMPONENT_CONSTRAINTS_AND_ATTRIBUTES.md 文档生成
  * 包含所有组件的属性、约束关系和嵌套规则
  */
@@ -27,8 +27,9 @@ export const componentMetas: ComponentMeta[] = [
         options: [
           { label: "块级", value: "block" },
           { label: "内联", value: "inline" },
+          { label: "弹性", value: "flex" },
         ],
-        description: "View 容器的显示方式。block：块级显示（独占一行）；inline：内联显示（与其他元素同一行）。默认：block",
+        description: "View 容器的显示方式。block：块级显示（独占一行）；inline：内联显示（与其他元素同一行）；flex：弹性盒子（灵活多样）。默认：block",
       },
       {
         name: "visibleWhen",
@@ -84,14 +85,6 @@ export const componentMetas: ComponentMeta[] = [
         type: "string",
         label: "CSS 样式",
         isCommon: false,
-        commonOptions: [
-          { label: "padding: 10px", value: "padding: 10px;" },
-          { label: "margin: 10px", value: "margin: 10px;" },
-          { label: "background-color: #f0f0f0", value: "background-color: #f0f0f0;" },
-          { label: "border: 1px solid #ddd", value: "border: 1px solid #ddd;" },
-          { label: "display: flex", value: "display: flex;" },
-          { label: "justify-content: center", value: "justify-content: center;" },
-        ],
         description: "应用到 View 容器的内联 CSS 样式字符串。示例：background-color: red; padding: 10px;",
       },
       {

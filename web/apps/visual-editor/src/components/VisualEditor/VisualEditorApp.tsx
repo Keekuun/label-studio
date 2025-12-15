@@ -23,7 +23,7 @@ import { validateDragOperation } from "../../utils/constraintValidator";
 import { findNodeById } from "../../utils/componentTree";
 import { editorStateAtom } from "../../atoms/visualEditorAtoms";
 import { generateXMLFromNode, parseXMLToNode } from "../../utils/xmlConverter";
-import { createComponentNode } from "../../utils/componentTree";
+import { createComponentNode, addChildNode, cloneNode, getAllNames, generateUniqueName } from "../../utils/componentTree";
 import styles from "./VisualEditorApp.module.scss";
 
 export const VisualEditorApp: React.FC = () => {
@@ -183,6 +183,215 @@ export const VisualEditorApp: React.FC = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const {active, over} = event;
     const activeData = active.data.current;
+
+    // 如果是从组件面板拖拽的模板
+    if (activeData?.type === "palette-template") {
+      const template = activeData.template;
+
+      if (!over) {
+        // 如果没有 over，默认添加到根节点（View）
+        if (!rootNode) {
+          message.warning("请先创建根节点");
+          return;
+        }
+        try {
+          const parsedNode = parseXMLToNode(template.xml);
+          if (!parsedNode) {
+            message.error("模板解析失败");
+            return;
+          }
+
+          let updatedRoot = rootNode;
+          const existingNames = getAllNames(rootNode);
+
+          // 如果解析的节点是 View，将其子节点添加到根节点
+          if (parsedNode.type === "View") {
+            parsedNode.children.forEach((child) => {
+              // 确保 name 属性唯一
+              if (child.attributes.name) {
+                child.attributes.name = generateUniqueName(
+                  child.attributes.name,
+                  existingNames
+                );
+                existingNames.add(child.attributes.name);
+              }
+              // 克隆子节点并设置新的父节点
+              const clonedChild = cloneNode(child, updatedRoot.id);
+              const newRoot = addChildNode(updatedRoot, updatedRoot.id, clonedChild);
+              if (newRoot) {
+                updatedRoot = newRoot;
+              }
+            });
+            updateRootNode(updatedRoot);
+            message.success(`已添加模板：${template.name}`);
+          } else {
+            // 如果不是 View，将整个节点作为单个组件添加
+            const validation = validateDragOperation(parsedNode.type, rootNode);
+            if (!validation.valid) {
+              message.warning(validation.message || "无法添加组件");
+              return;
+            }
+            // 确保 name 属性唯一
+            if (parsedNode.attributes.name) {
+              parsedNode.attributes.name = generateUniqueName(
+                parsedNode.attributes.name,
+                existingNames
+              );
+            }
+            const clonedNode = cloneNode(parsedNode, rootNode.id);
+            const newRoot = addChildNode(rootNode, rootNode.id, clonedNode);
+            if (newRoot) {
+              updateRootNode(newRoot);
+              message.success(`已添加模板：${template.name}`);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          message.error("模板解析失败");
+        }
+        return;
+      }
+
+      const overData = over.data.current;
+
+      // 从组件面板拖拽到画布：添加到根节点
+      if (overData?.type === "canvas") {
+        if (!rootNode) {
+          message.warning("请先创建根节点");
+          return;
+        }
+        try {
+          const parsedNode = parseXMLToNode(template.xml);
+          if (!parsedNode) {
+            message.error("模板解析失败");
+            return;
+          }
+
+          let updatedRoot = rootNode;
+          const existingNames = getAllNames(rootNode);
+
+          // 如果解析的节点是 View，将其子节点添加到根节点
+          if (parsedNode.type === "View") {
+            parsedNode.children.forEach((child) => {
+              // 确保 name 属性唯一
+              if (child.attributes.name) {
+                child.attributes.name = generateUniqueName(
+                  child.attributes.name,
+                  existingNames
+                );
+                existingNames.add(child.attributes.name);
+              }
+              // 克隆子节点并设置新的父节点
+              const clonedChild = cloneNode(child, updatedRoot.id);
+              const newRoot = addChildNode(updatedRoot, updatedRoot.id, clonedChild);
+              if (newRoot) {
+                updatedRoot = newRoot;
+              }
+            });
+            updateRootNode(updatedRoot);
+            message.success(`已添加模板：${template.name}`);
+          } else {
+            // 如果不是 View，将整个节点作为单个组件添加
+            const validation = validateDragOperation(parsedNode.type, rootNode);
+            if (!validation.valid) {
+              message.warning(validation.message || "无法添加组件");
+              return;
+            }
+            // 确保 name 属性唯一
+            if (parsedNode.attributes.name) {
+              parsedNode.attributes.name = generateUniqueName(
+                parsedNode.attributes.name,
+                existingNames
+              );
+            }
+            const clonedNode = cloneNode(parsedNode, rootNode.id);
+            const newRoot = addChildNode(rootNode, rootNode.id, clonedNode);
+            if (newRoot) {
+              updateRootNode(newRoot);
+              message.success(`已添加模板：${template.name}`);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          message.error("模板解析失败");
+        }
+        return;
+      }
+
+      // 从组件面板拖拽到画布中的节点：添加到该节点
+      if (overData?.type === "canvas-node") {
+        const parentId = overData.nodeId;
+        const parentNode = findNodeById(rootNode, parentId);
+
+        if (!parentNode) {
+          message.warning("目标节点不存在");
+          return;
+        }
+
+        try {
+          const parsedNode = parseXMLToNode(template.xml);
+          if (!parsedNode) {
+            message.error("模板解析失败");
+            return;
+          }
+
+          let updatedRoot = rootNode;
+          const existingNames = getAllNames(rootNode);
+
+          // 如果解析的节点是 View，将其子节点添加到目标节点
+          if (parsedNode.type === "View") {
+            parsedNode.children.forEach((child) => {
+              // 验证约束
+              const validation = validateDragOperation(child.type, parentNode);
+              if (!validation.valid) {
+                message.warning(`${child.type}: ${validation.message || "无法添加组件"}`);
+                return;
+              }
+              // 确保 name 属性唯一
+              if (child.attributes.name) {
+                child.attributes.name = generateUniqueName(
+                  child.attributes.name,
+                  existingNames
+                );
+                existingNames.add(child.attributes.name);
+              }
+              // 克隆子节点并设置新的父节点
+              const clonedChild = cloneNode(child, parentId);
+              const newRoot = addChildNode(updatedRoot, parentId, clonedChild);
+              if (newRoot) {
+                updatedRoot = newRoot;
+              }
+            });
+            updateRootNode(updatedRoot);
+            message.success(`已添加模板：${template.name}`);
+          } else {
+            // 如果不是 View，将整个节点作为单个组件添加
+            const validation = validateDragOperation(parsedNode.type, parentNode);
+            if (!validation.valid) {
+              message.warning(validation.message || "无法添加组件");
+              return;
+            }
+            // 确保 name 属性唯一
+            if (parsedNode.attributes.name) {
+              parsedNode.attributes.name = generateUniqueName(
+                parsedNode.attributes.name,
+                existingNames
+              );
+            }
+            const clonedNode = cloneNode(parsedNode, parentId);
+            const newRoot = addChildNode(rootNode, parentId, clonedNode);
+            if (newRoot) {
+              updateRootNode(newRoot);
+              message.success(`已添加模板：${template.name}`);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          message.error("模板解析失败");
+        }
+        return;
+      }
+    }
 
     // 如果是从组件面板拖拽的
     if (activeData?.type === "palette-item") {
