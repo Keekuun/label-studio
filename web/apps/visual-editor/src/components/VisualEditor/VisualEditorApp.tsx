@@ -9,7 +9,7 @@ import {
 } from "@dnd-kit/core";
 import { message, Button } from "antd";
 import { DoubleLeftOutlined, DoubleRightOutlined, EyeOutlined, AppstoreOutlined } from "@ant-design/icons";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { ComponentPalette } from "./ComponentPalette";
 import { CanvasArea } from "./CanvasArea";
 import { PropertiesPanel } from "./PropertiesPanel";
@@ -22,6 +22,7 @@ import { ComponentMeta } from "../../types";
 import { validateDragOperation } from "../../utils/constraintValidator";
 import { findNodeById } from "../../utils/componentTree";
 import { editorStateAtom } from "../../atoms/visualEditorAtoms";
+import { configAtom } from "../../../../playground/src/atoms/configAtoms";
 import { generateXMLFromNode, parseXMLToNode } from "../../utils/xmlConverter";
 import { createComponentNode, addChildNode, cloneNode, getAllNames, generateUniqueName } from "../../utils/componentTree";
 import styles from "./VisualEditorApp.module.scss";
@@ -51,6 +52,7 @@ export const VisualEditorApp: React.FC = () => {
   const [isPaletteCollapsed, setPaletteCollapsed] = useState(false);
   const [isPropertiesCollapsed, setPropertiesCollapsed] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const setConfig = useSetAtom(configAtom);
 
   const resizingRef = useRef<null | "left" | "right">(null);
   const startXRef = useRef(0);
@@ -68,6 +70,13 @@ export const VisualEditorApp: React.FC = () => {
       return "<View>\n  <!-- XML 生成错误 -->\n</View>";
     }
   }, [editorState.rootNode]);
+
+  const handleTogglePreviewInline = useCallback(() => {
+    if (xmlConfig) {
+      setConfig(xmlConfig);
+    }
+    setShowPreview((v) => !v);
+  }, [xmlConfig, setConfig]);
 
   // 处理预览中 XML 配置的变化（同步回画布）
   const handleConfigChange = React.useCallback((config: string) => {
@@ -575,10 +584,10 @@ export const VisualEditorApp: React.FC = () => {
                 type="dashed"
                 size="middle"
                 shape="circle"
-                icon={showPreview ? <AppstoreOutlined style={{color: "#fff", fontSize: 16}} color="#fff"/> : <EyeOutlined style={{color: "#fff", fontSize: 16}} color="#fff"/>}
-                onClick={() => setShowPreview(!showPreview)}
+                icon={showPreview ? React.createElement(AppstoreOutlined) : React.createElement(EyeOutlined)}
+                onClick={handleTogglePreviewInline}
                 className={styles.canvasToggleButton}
-                style={{position: "absolute", bottom: 0, right: 0, color: "#fff"}}
+                style={{position: "absolute", bottom: 4, right: 4, borderRadius: "50%"}}
                 title={showPreview ? "切换到画布视图" : "切换到预览视图"}
               />
             </div>
@@ -631,10 +640,10 @@ export const VisualEditorApp: React.FC = () => {
       </DndContext>
     <div className={styles.fixedToggleLeft}>
       <Button
-        type="outline"
+        type="dashed"
         size="small"
         shape="circle"
-        icon={isPaletteCollapsed ? <DoubleRightOutlined style={{color: "#fff", fontSize: 12}}/>: <DoubleLeftOutlined style={{color: "#fff", fontSize: 12}}/>}
+        icon={isPaletteCollapsed ? React.createElement(DoubleRightOutlined) : React.createElement(DoubleLeftOutlined)}
         onClick={() => setPaletteCollapsed((v) => !v)}
         title={isPaletteCollapsed ? "展开组件面板" : "收起组件面板"}
         style={{ opacity: previewVisible ? 0 : 0.8 }}
@@ -642,10 +651,10 @@ export const VisualEditorApp: React.FC = () => {
     </div>
     <div className={styles.fixedToggleRight}>
       <Button
-        type="outline"
+        type="dashed"
         size="small"
         shape="circle"
-        icon={isPropertiesCollapsed ? <DoubleLeftOutlined style={{color: "#fff", fontSize: 12}}/>: <DoubleRightOutlined style={{color: "#fff", fontSize: 12}}/>}
+        icon={isPropertiesCollapsed ? React.createElement(DoubleLeftOutlined) : React.createElement(DoubleRightOutlined)}
         onClick={() => setPropertiesCollapsed((v) => !v)}
         title={isPropertiesCollapsed ? "展开属性面板" : "收起属性面板"}
         style={{ opacity: previewVisible ? 0 : 0.8 }}
