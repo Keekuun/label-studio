@@ -46,7 +46,7 @@
 
 .canvas {
   flex: 1;
-  overflow: hidden auto;
+  overflow: hidden;
   background: #ffffff;
   border-radius: 16px;
   border: 1px solid rgba(31, 45, 61, 0.06);
@@ -54,6 +54,31 @@
   min-width: 0;
   padding: 16px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvasToggleButton {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(64, 150, 255, 0.3);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(64, 150, 255, 0.4);
+  }
+
+  .anticon {
+    font-size: 18px;
+  }
 }
 
 .properties {

@@ -8,7 +8,7 @@ import {
   pointerWithin
 } from "@dnd-kit/core";
 import { message, Button } from "antd";
-import { DoubleLeftOutlined, DoubleRightOutlined } from "@ant-design/icons";
+import { DoubleLeftOutlined, DoubleRightOutlined, EyeOutlined, AppstoreOutlined } from "@ant-design/icons";
 import { useAtom } from "jotai";
 import { ComponentPalette } from "./ComponentPalette";
 import { CanvasArea } from "./CanvasArea";
@@ -50,6 +50,7 @@ export const VisualEditorApp: React.FC = () => {
   const [propertiesWidth, setPropertiesWidth] = useState(320);
   const [isPaletteCollapsed, setPaletteCollapsed] = useState(false);
   const [isPropertiesCollapsed, setPropertiesCollapsed] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const resizingRef = useRef<null | "left" | "right">(null);
   const startXRef = useRef(0);
@@ -545,6 +546,11 @@ export const VisualEditorApp: React.FC = () => {
             <div
               className={`${styles.palette} ${isPaletteCollapsed ? styles.collapsed : ""}`}
               style={{ width: isPaletteCollapsed ? 24 : paletteWidth }}
+              onClick={() => {
+                if (showPreview) {
+                  setShowPreview(false);
+                }
+              }}
             >
               {!isPaletteCollapsed && (
                 <div className={styles.panelBody}>
@@ -563,13 +569,29 @@ export const VisualEditorApp: React.FC = () => {
 
             {/* 中间：画布区域 */}
             <div className={styles.canvas}>
-              <CanvasArea/>
+              <CanvasArea showPreview={showPreview} />
+              {/* 切换按钮 - 固定在中间区域右下角 */}
+              <Button
+                type="dashed"
+                size="middle"
+                shape="circle"
+                icon={showPreview ? <AppstoreOutlined style={{color: "#fff", fontSize: 16}} color="#fff"/> : <EyeOutlined style={{color: "#fff", fontSize: 16}} color="#fff"/>}
+                onClick={() => setShowPreview(!showPreview)}
+                className={styles.canvasToggleButton}
+                style={{position: "absolute", bottom: 0, right: 0, color: "#fff"}}
+                title={showPreview ? "切换到画布视图" : "切换到预览视图"}
+              />
             </div>
 
             {/* 右侧：属性面板 */}
             <div
               className={`${styles.properties} ${isPropertiesCollapsed ? styles.collapsed : ""}`}
               style={{ width: isPropertiesCollapsed ? 24 : propertiesWidth }}
+              onClick={() => {
+                if (showPreview) {
+                  setShowPreview(false);
+                }
+              }}
             >
               {!isPropertiesCollapsed && (
                 <div
@@ -609,7 +631,7 @@ export const VisualEditorApp: React.FC = () => {
       </DndContext>
     <div className={styles.fixedToggleLeft}>
       <Button
-        type="primary"
+        type="outline"
         size="small"
         shape="circle"
         icon={isPaletteCollapsed ? <DoubleRightOutlined style={{color: "#fff", fontSize: 12}}/>: <DoubleLeftOutlined style={{color: "#fff", fontSize: 12}}/>}
@@ -620,7 +642,7 @@ export const VisualEditorApp: React.FC = () => {
     </div>
     <div className={styles.fixedToggleRight}>
       <Button
-        type="primary"
+        type="outline"
         size="small"
         shape="circle"
         icon={isPropertiesCollapsed ? <DoubleLeftOutlined style={{color: "#fff", fontSize: 12}}/>: <DoubleRightOutlined style={{color: "#fff", fontSize: 12}}/>}

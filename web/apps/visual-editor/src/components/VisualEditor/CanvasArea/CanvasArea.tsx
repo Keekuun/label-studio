@@ -1,14 +1,22 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { DragOutlined } from "@ant-design/icons";
+import { configAtom } from "../../../../../playground/src/atoms/configAtoms";
 import { editorStateAtom } from "../../../atoms/visualEditorAtoms";
 import { ComponentTree } from "./ComponentTree";
 import { DragHint } from "./DragHint";
+import { generateXMLFromNode } from "../../../utils/xmlConverter";
+import { PreviewPanel } from "../../PreviewPanel";
 import styles from "./CanvasArea.module.scss";
 
-export const CanvasArea: React.FC = () => {
+interface CanvasAreaProps {
+  showPreview?: boolean;
+}
+
+export const CanvasArea: React.FC<CanvasAreaProps> = ({ showPreview = false }) => {
   const [editorState] = useAtom(editorStateAtom);
+  const setConfig = useSetAtom(configAtom);
   const { setNodeRef, isOver } = useDroppable({
     id: "canvas-root",
     data: {
@@ -29,6 +37,26 @@ export const CanvasArea: React.FC = () => {
     return 0;
   }, [editorState.rootNode]);
 
+  // 生成 XML 配置并同步到 configAtom
+  const xmlConfig = useMemo(() => {
+    if (!editorState.rootNode) {
+      return "<View>\n  <!-- 拖拽组件到画布开始构建配置 -->\n</View>";
+    }
+    try {
+      return generateXMLFromNode(editorState.rootNode);
+    } catch (error) {
+      console.error("XML 生成错误:", error);
+      return "<View>\n  <!-- XML 生成错误 -->\n</View>";
+    }
+  }, [editorState.rootNode]);
+
+  // 当配置变化或预览状态变化时，同步到 configAtom（用于预览面板）
+  useEffect(() => {
+    if (showPreview && xmlConfig) {
+      setConfig(xmlConfig);
+    }
+  }, [xmlConfig, showPreview, setConfig]);
+
   return (
     <div
       ref={setNodeRef}
@@ -39,29 +67,37 @@ export const CanvasArea: React.FC = () => {
         <p>拖拽组件到这里开始构建配置</p>
       </div>
       <div className={styles.canvasContent} style={{ position: "relative" }}>
-        {isOver && <DragHint isOver={isOver} />}
-        {layoutColumns > 0 && (
-          <div className={styles.layoutPreview} data-cols={layoutColumns}>
-            {Array.from({ length: layoutColumns }).map((_, idx) => (
-              <div key={idx} className={styles.layoutColumn}>
-                {layoutColumns === 2 ? (idx === 0 ? "左列" : "右列") : `列 ${idx + 1}`}
-              </div>
-            ))}
+        {showPreview ? (
+          <div className={styles.previewContainer}>
+            <PreviewPanel />
           </div>
-        )}
-        {editorState.rootNode ? (
-          <ComponentTree node={editorState.rootNode} />
         ) : (
-          <div className={styles.canvasEmpty}>
-            <DragOutlined className={styles.emptyIcon} />
-            <div className={styles.emptyTitle}>开始构建配置</div>
-            <div className={styles.emptyDescription}>
-              从左侧组件面板拖拽组件到这里
-            </div>
-            <div className={styles.emptyHint}>
-              提示：先添加容器类型组件（如 View），再添加 Object类型（如 Image），最后添加 Control 类型组件（如 RectangleLabels）
-            </div>
-          </div>
+          <>
+            {isOver && <DragHint isOver={isOver} />}
+            {layoutColumns > 0 && (
+              <div className={styles.layoutPreview} data-cols={layoutColumns}>
+                {Array.from({ length: layoutColumns }).map((_, idx) => (
+                  <div key={idx} className={styles.layoutColumn}>
+                    {layoutColumns === 2 ? (idx === 0 ? "左列" : "右列") : `列 ${idx + 1}`}
+                  </div>
+                ))}
+              </div>
+            )}
+            {editorState.rootNode ? (
+              <ComponentTree node={editorState.rootNode} />
+            ) : (
+              <div className={styles.canvasEmpty}>
+                <DragOutlined className={styles.emptyIcon} />
+                <div className={styles.emptyTitle}>开始构建配置</div>
+                <div className={styles.emptyDescription}>
+                  从左侧组件面板拖拽组件到这里
+                </div>
+                <div className={styles.emptyHint}>
+                  提示：先添加容器类型组件（如 View），再添加 Object类型（如 Image），最后添加 Control 类型组件（如 RectangleLabels）
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
