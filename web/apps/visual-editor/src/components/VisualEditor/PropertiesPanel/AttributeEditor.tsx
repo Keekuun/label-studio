@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Form, Input, InputNumber, Switch, Select, Input as AntdInput, Collapse, AutoComplete } from "antd";
 const { TextArea } = AntdInput;
 const { Panel } = Collapse;
@@ -103,7 +103,7 @@ export const AttributeEditor: React.FC<AttributeEditorProps> = ({
     return { commonAttributes: common, advancedAttributes: advanced };
   }, [attributes]);
 
-  // 初始化表单值
+  // 初始化表单值 - 当节点 ID 改变时更新表单值
   useEffect(() => {
     const initialValues: Record<string, any> = {};
     attributes.forEach((attr) => {
@@ -235,9 +235,22 @@ export const AttributeEditor: React.FC<AttributeEditorProps> = ({
     return rules;
   };
 
+  // 检查 style 属性是否包含 display 相关的 CSS
+  const styleHasDisplay = useMemo(() => {
+    const styleValue = node.attributes.style;
+    if (!styleValue || typeof styleValue !== 'string') return false;
+    const styleLower = styleValue.toLowerCase();
+    return styleLower.includes('display:') || styleLower.includes('display :');
+  }, [node.attributes.style]);
+
   // 渲染属性输入组件
   const renderAttributeInput = (attr: AttributeMeta) => {
     const rules = buildValidationRules(attr);
+
+    // 如果 style 属性包含 display，且当前属性是 display，则隐藏它
+    if (attr.name === 'display' && styleHasDisplay) {
+      return null;
+    }
 
     // 处理特殊属性（如 toName 需要引用已存在的 Object）
     if (attr.name === "toName" && attr.type === "select") {
@@ -470,7 +483,10 @@ export const AttributeEditor: React.FC<AttributeEditorProps> = ({
       {/* 常用属性 */}
       {commonAttributes.length > 0 && (
         <div style={{ marginBottom: 16 }}>
-          {commonAttributes.map((attr) => renderAttributeInput(attr))}
+          {commonAttributes.map((attr) => {
+            const input = renderAttributeInput(attr);
+            return input;
+          }).filter(Boolean)}
         </div>
       )}
 
@@ -497,7 +513,30 @@ export const AttributeEditor: React.FC<AttributeEditorProps> = ({
             }}
           >
             <div style={{ padding: 8 }}>
-              {advancedAttributes.map((attr) => renderAttributeInput(attr))}
+              {advancedAttributes.map((attr) => {
+                const input = renderAttributeInput(attr);
+                // 如果是 style 属性且包含 display，添加提示
+                if (attr.name === 'style' && styleHasDisplay) {
+                  return (
+                    <React.Fragment key={attr.name}>
+                      {input}
+                      <div style={{ 
+                        marginTop: -8, 
+                        marginBottom: 16, 
+                        padding: '8px 12px', 
+                        background: '#fff3cd', 
+                        border: '1px solid #ffc107', 
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        color: '#856404'
+                      }}>
+                        💡 提示：style 属性中已包含 display 设置，display 属性将被忽略
+                      </div>
+                    </React.Fragment>
+                  );
+                }
+                return input;
+              }).filter(Boolean)}
             </div>
           </Panel>
         </Collapse>

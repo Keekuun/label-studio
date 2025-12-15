@@ -57,6 +57,7 @@ export const PropertiesPanel: React.FC = () => {
       </div>
       <div className={styles.panelContent}>
         <AttributeEditor
+          key={selectedNode.id}
           node={selectedNode}
           attributes={componentMeta.attributes}
         />
