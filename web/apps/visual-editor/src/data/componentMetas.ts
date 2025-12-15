@@ -226,9 +226,17 @@ export const componentMetas: ComponentMeta[] = [
     description: "显示 Markdown 格式的文本内容",
     attributes: [
       {
+        name: "name",
+        type: "string",
+        label: "名称",
+        required: true,
+        defaultValue: "md",
+        description: "Markdown 组件的唯一标识名称。示例：md、markdown-content、doc-markdown。此名称用于标识该组件",
+      },
+      {
         name: "value",
         type: "string",
-        label: "Markdown 内容",
+        label: "内容",
         required: true,
         defaultValue: "# 标题\n\n这是 Markdown 内容",
         description: "Markdown 格式的文本内容。可以是静态文本（如：# 标题）或数据字段名（如：$markdown）。示例：$markdown、# 标题\\n\\n内容",
