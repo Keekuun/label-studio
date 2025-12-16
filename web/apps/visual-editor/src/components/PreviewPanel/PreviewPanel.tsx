@@ -9,6 +9,7 @@ import {
   interfacesAtom,
   annotationAtom,
   sampleTaskAtom,
+  taskDataAtom,
   displayModeAtom,
 } from "../../../../playground/src/atoms/configAtoms";
 import { onSnapshot } from "mobx-state-tree";
@@ -26,6 +27,7 @@ export const PreviewPanel: FC<PreviewPanelProps> = memo(
     const interfaces = useAtomValue(interfacesAtom);
     const setAnnotation = useSetAtom(annotationAtom);
     const setSampleTask = useSetAtom(sampleTaskAtom);
+    const setTaskData = useSetAtom(taskDataAtom);
     const displayMode = useAtomValue(displayModeAtom);
     const [showPreview, setShowPreview] = useAtom(showPreviewAtom);
     const rootRef = useRef<HTMLDivElement>(null);
@@ -81,6 +83,7 @@ export const PreviewPanel: FC<PreviewPanelProps> = memo(
         setShowPreview(true);
         const sampleTask = await generateSampleTaskFromConfig(config);
         setSampleTask(sampleTask);
+        setTaskData(JSON.stringify(sampleTask?.data ?? {}, null, 2));
 
         try {
           const rootEl = await ensureRootReady();

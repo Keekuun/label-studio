@@ -54,7 +54,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   position: relative;
   z-index: 1;
 }
@@ -72,7 +72,6 @@
 
 .layoutColumn {
   flex: 1;
-  border: 1px dashed #4096ff;
   border-radius: 8px;
   background: linear-gradient(180deg, rgba(64, 150, 255, 0.08) 0%, rgba(64, 150, 255, 0.02) 100%);
   display: flex;
@@ -188,7 +187,12 @@
   &.selected {
     border-color: #4096ff;
     background: #e9f2ff;
-    box-shadow: 0 0 0 3px rgba(64, 150, 255, 0.18);
+    box-shadow: 0 0 5px 5px rgba(64, 150, 255, 0.18);
+    transform: scale(1.02);
+    transform-origin: left top;
+    min-width: 200px !important;
+    z-index: 1;
+    position: relative;
   }
 
   &.dragOver {
@@ -370,7 +374,7 @@
     padding-left: 14px;
     border-left: 2px solid #f0f2f5;
     transition: all 0.2s ease;
-    
+
     // 当父节点被拖拽悬停时，子节点区域高亮
     .componentTreeNode.dragOver ~ & {
       border-left-color: #52c41a;
@@ -379,31 +383,35 @@
       padding: 4px 0 4px 14px;
     }
 
-  &.layoutTwoCols {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    border-left: none;
-    padding-left: 0;
+    &.layoutTwoCols {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(100px, auto));
+      gap: 12px;
+      border-left: none;
+      padding-left: 0;
+      width: fit-content;
+      min-width: 100%;
 
-    .componentTreeNode {
-      width: 100%;
-      min-width: 0;
+      .componentTreeNode {
+        width: 100%;
+        min-width: 100px;
+      }
     }
-  }
 
-  &.layoutThreeCols {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    border-left: none;
-    padding-left: 0;
+    &.layoutThreeCols {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(100px, auto));
+      gap: 12px;
+      border-left: none;
+      padding-left: 0;
+      width: fit-content;
+      min-width: 100%;
 
-    .componentTreeNode {
-      width: 100%;
-      min-width: 0;
+      .componentTreeNode {
+        width: 100%;
+        min-width: 100px;
+      }
     }
-  }
   }
 }
 
