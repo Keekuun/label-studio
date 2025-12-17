@@ -11,7 +11,9 @@ import {
   sampleTaskAtom,
   taskDataAtom,
   displayModeAtom,
-} from "../../../../playground/src/atoms/configAtoms";
+  previewConfigAtom,
+  previewTaskDataAtom,
+} from "../../atoms/configAtoms";
 import { onSnapshot } from "mobx-state-tree";
 import { generateSampleTaskFromConfig } from "../../utils/generateSampleTask";
 
@@ -27,7 +29,10 @@ export const PreviewPanel: FC<PreviewPanelProps> = memo(
     const interfaces = useAtomValue(interfacesAtom);
     const setAnnotation = useSetAtom(annotationAtom);
     const setSampleTask = useSetAtom(sampleTaskAtom);
-    const setTaskData = useSetAtom(taskDataAtom);
+    const [taskData, setTaskData] = useAtom(taskDataAtom);
+    const previewConfig = useAtomValue(previewConfigAtom);
+    const previewTaskData = useAtomValue(previewTaskDataAtom);
+    const setPreviewTaskData = useSetAtom(previewTaskDataAtom);
     const displayMode = useAtomValue(displayModeAtom);
     const [showPreview, setShowPreview] = useAtom(showPreviewAtom);
     const rootRef = useRef<HTMLDivElement>(null);
@@ -81,9 +86,36 @@ export const PreviewPanel: FC<PreviewPanelProps> = memo(
         if (!LabelStudio) return;
         cleanup();
         setShowPreview(true);
-        const sampleTask = await generateSampleTaskFromConfig(config);
-        setSampleTask(sampleTask);
-        setTaskData(JSON.stringify(sampleTask?.data ?? {}, null, 2));
+        const effectiveConfig = previewConfig ?? config;
+        const autoSampleTask = await generateSampleTaskFromConfig(effectiveConfig);
+
+        const sourceTaskData = previewTaskData ?? taskData;
+
+        let finalSampleTask = autoSampleTask;
+
+        if (sourceTaskData) {
+          try {
+            const parsed = JSON.parse(sourceTaskData);
+            if (parsed && typeof parsed === "object") {
+              finalSampleTask = {
+                ...autoSampleTask,
+                data: parsed,
+              };
+            }
+          } catch (e) {
+            console.error("解析自定义任务数据失败，将使用自动生成的数据：", e);
+          }
+        }
+
+        setSampleTask(finalSampleTask);
+
+        if (!taskData) {
+          const pretty = JSON.stringify(finalSampleTask?.data ?? {}, null, 2);
+          setTaskData(pretty);
+          if (!previewTaskData) {
+            setPreviewTaskData(pretty);
+          }
+        }
 
         try {
           const rootEl = await ensureRootReady();
@@ -91,8 +123,8 @@ export const PreviewPanel: FC<PreviewPanelProps> = memo(
           if (!rootEl || cancelled) return;
 
           lsfInstance.current = new LabelStudio(rootEl, {
-            config,
-            task: sampleTask,
+            config: effectiveConfig,
+            task: finalSampleTask,
             interfaces,
             instanceOptions: {
               reactVersion: "v18",
@@ -125,7 +157,7 @@ export const PreviewPanel: FC<PreviewPanelProps> = memo(
         }
       }
 
-      if (!loading && !error && config) {
+      if (!loading && !error && (previewConfig || config)) {
         rafId.current = requestAnimationFrame(() => {
           loadLSF();
         });
@@ -136,7 +168,7 @@ export const PreviewPanel: FC<PreviewPanelProps> = memo(
         cleanup();
       };
       // eslint-disable-next-line
-    }, [config, loading, error, interfaces, onAnnotationUpdate]);
+    }, [loading, error, interfaces, displayMode, previewConfig, previewTaskData, onAnnotationUpdate]);
 
     return (
       <div className="h-full flex flex-col min-h-0">

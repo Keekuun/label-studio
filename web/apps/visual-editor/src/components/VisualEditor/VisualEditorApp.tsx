@@ -22,7 +22,13 @@ import { ComponentMeta } from "../../types";
 import { validateDragOperation } from "../../utils/constraintValidator";
 import { findNodeById } from "../../utils/componentTree";
 import { editorStateAtom } from "../../atoms/visualEditorAtoms";
-import { configAtom } from "../../../../playground/src/atoms/configAtoms";
+import {
+  configAtom,
+  showPreviewAtom,
+  previewConfigAtom,
+  previewTaskDataAtom,
+  taskDataAtom,
+} from "../../atoms/configAtoms";
 import { generateXMLFromNode, parseXMLToNode } from "../../utils/xmlConverter";
 import { createComponentNode, addChildNode, cloneNode, getAllNames, generateUniqueName } from "../../utils/componentTree";
 import styles from "./VisualEditorApp.module.scss";
@@ -53,6 +59,10 @@ export const VisualEditorApp: React.FC = () => {
   const [isPropertiesCollapsed, setPropertiesCollapsed] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const setConfig = useSetAtom(configAtom);
+  const setGlobalShowPreview = useSetAtom(showPreviewAtom);
+  const setPreviewConfig = useSetAtom(previewConfigAtom);
+  const setPreviewTaskData = useSetAtom(previewTaskDataAtom);
+  const setTaskData = useSetAtom(taskDataAtom);
 
   const resizingRef = useRef<null | "left" | "right">(null);
   const startXRef = useRef(0);
@@ -546,7 +556,17 @@ export const VisualEditorApp: React.FC = () => {
         <div className={styles.container}>
           {/* 顶部工具栏 */}
           <div className={styles.toolbar}>
-            <Toolbar onOpenPreview={() => setPreviewVisible(true)}/>
+            <Toolbar
+              onOpenPreview={() => {
+                // 打开预览弹窗前，将当前画布 XML 同步为预览配置
+                setPreviewConfig(xmlConfig);
+                // 重置任务数据，让预览根据最新 XML 自动生成一次样例数据
+                setTaskData("");
+                setPreviewTaskData(null);
+                setPreviewVisible(true);
+                setGlobalShowPreview(true);
+              }}
+            />
           </div>
 
           {/* 主要内容区域 */}

@@ -2,7 +2,7 @@ import React, { useMemo, useEffect } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { useAtom, useSetAtom } from "jotai";
 import { DragOutlined } from "@ant-design/icons";
-import { configAtom } from "../../../../../playground/src/atoms/configAtoms";
+import { configAtom } from "../../../atoms/configAtoms";
 import { editorStateAtom } from "../../../atoms/visualEditorAtoms";
 import { ComponentTree } from "./ComponentTree";
 import { DragHint } from "./DragHint";

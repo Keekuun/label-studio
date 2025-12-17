@@ -13,6 +13,7 @@ import { generateXMLFromNode, parseXMLToNode } from "../../../utils/xmlConverter
 import { useComponentTree } from "../../../hooks/useComponentTree";
 import { handleXMLParseError } from "../../../utils/errorHandler";
 import { templates, getAllCategories, getTemplatesByCategory } from "../../../data/templates";
+import { previewConfigAtom, previewTaskDataAtom, taskDataAtom } from "../../../atoms/configAtoms";
 import {
   getAllTemplates,
   getCustomTemplates,
@@ -33,6 +34,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onOpenPreview }) => {
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
   const [templateCategory, setTemplateCategory] = useState("自定义");
+  const setPreviewConfig = useSetAtom(previewConfigAtom);
+  const setPreviewTaskData = useSetAtom(previewTaskDataAtom);
+  const setTaskData = useSetAtom(taskDataAtom);
 
   const clearIcon = React.useMemo(() => React.createElement(ClearOutlined), []);
   const copyIcon = React.useMemo(() => React.createElement(CopyOutlined), []);
@@ -170,6 +174,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({ onOpenPreview }) => {
         rootNode: parsedNode,
         selectedNodeId: undefined,
       });
+
+      // 预览相关状态同步到新模板
+      setPreviewConfig(template.xml);
+      setTaskData("");
+      setPreviewTaskData(null);
 
       message.success(`已加载模板: ${template.name}`);
     } catch (error: unknown) {

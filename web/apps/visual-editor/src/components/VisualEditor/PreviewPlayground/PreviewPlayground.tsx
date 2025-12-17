@@ -5,7 +5,7 @@ import { ToastProvider, ToastViewport } from "@humansignal/ui/lib/toast/toast";
 import { cnm } from "@humansignal/shad/utils";
 import { PreviewPanel } from "../../PreviewPanel";
 import { EditorPanel } from "./EditorPanel";
-import { configAtom, displayModeAtom } from "../../../../../playground/src/atoms/configAtoms";
+import { configAtom, displayModeAtom } from "../../../atoms/configAtoms";
 import styles from "./PreviewPlayground.module.scss";
 
 const DEFAULT_EDITOR_WIDTH_PERCENT = 50;
