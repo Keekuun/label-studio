@@ -1,5 +1,7 @@
 # Label Studio Visual Editor
 
+![screenshot_2025](./public/images/screenshot_2025-12-18_14-21-31.png)
+
 可视化拖拽编辑器，用于通过拖拽组件的方式配置 Label Studio XML 模板。
 
 ## ✨ 功能特性
